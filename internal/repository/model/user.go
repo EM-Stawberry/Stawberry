@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 )
 
 type User struct {

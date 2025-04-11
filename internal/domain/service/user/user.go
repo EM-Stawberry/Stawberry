@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/pkg/security"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/pkg/security"
 )
 
 const maxUsers = 5

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/google/uuid"
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/golang-jwt/jwt"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 )
 
 var signingMethod = jwt.SigningMethodHS256

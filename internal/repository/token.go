@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/repository/model"
 )
 
 type tokenRepository struct {

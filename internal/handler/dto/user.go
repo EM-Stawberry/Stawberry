@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 )
 
 type RegistrationUserReq struct {
