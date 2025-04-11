@@ -71,7 +71,7 @@ func initializeApp() error {
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	tokenService := token.NewTokenService(tokenRepository, "secret", 30*24*time.Hour, 1*time.Hour)
+	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
 	userService := user.NewUserService(userRepository, tokenService)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
