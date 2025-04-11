@@ -22,12 +22,10 @@ func SetupRouter(
 ) *gin.Engine {
 	router := gin.New()
 
-	// Add default middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
@@ -103,7 +101,9 @@ func handleOfferError(c *gin.Context, err error) {
 
 func handleUserError(c *gin.Context, err error) {
 	var userError *apperror.UserError
+
 	if errors.As(err, &userError) {
+
 		status := http.StatusInternalServerError
 
 		switch userError.Code {
@@ -113,6 +113,8 @@ func handleUserError(c *gin.Context, err error) {
 			status = http.StatusConflict
 		case apperror.DatabaseError:
 			status = http.StatusInternalServerError
+		case apperror.Unauthorized:
+			status = http.StatusUnauthorized
 		}
 
 		c.JSON(status, gin.H{
