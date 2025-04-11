@@ -54,7 +54,7 @@ func (h *userHandler) Registration(c *gin.Context) {
 	}
 
 	accessToken, refreshToken, err := h.userService.CreateUser(
-		context.Background(),
+		c.Request.Context(),
 		regUserDTO.ConvertToSvc(),
 		regUserDTO.Fingerprint,
 	)
@@ -84,7 +84,7 @@ func (h *userHandler) Login(c *gin.Context) {
 	}
 
 	accessToken, refreshToken, err := h.userService.Authenticate(
-		context.Background(),
+		c.Request.Context(),
 		loginUserDTO.Email,
 		loginUserDTO.Password,
 		loginUserDTO.Fingerprint,
@@ -129,7 +129,7 @@ func (h *userHandler) Refresh(c *gin.Context) {
 	}
 
 	accessToken, refreshToken, err := h.userService.Refresh(
-		context.Background(),
+		c.Request.Context(),
 		refreshDTO.RefreshToken,
 		refreshDTO.Fingerprint,
 	)
@@ -173,7 +173,7 @@ func (h *userHandler) Logout(c *gin.Context) {
 	}
 
 	if err := h.userService.Logout(
-		context.Background(),
+		c.Request.Context(),
 		logoutDTO.RefreshToken,
 		logoutDTO.Fingerprint,
 	); err != nil {
