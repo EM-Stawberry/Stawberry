@@ -11,7 +11,7 @@ MOCKS_DESTINATION=tests/mocks
 .PHONY: mocks
 # put the files with interfaces you'd like to mock in prerequisites
 # wildcards are allowed
-mocks: internal/handler/user.go
+mocks: internal/handler/user.go internal/domain/service/token/token.go
 	@echo "Generating mocks..."
 	@rm -rf $(MOCKS_DESTINATION)
 	@for file in $^ ; do \

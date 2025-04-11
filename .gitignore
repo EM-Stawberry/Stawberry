@@ -1,9 +1,9 @@
 .idea
 
-*.env
+.env
 
 # Test coverage
-.out
+*.out
 
 #Frontend
 
