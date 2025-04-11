@@ -25,7 +25,7 @@ func TestUserHandler_Registration(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/register", h.Registration)
 
 	tests := []struct {
@@ -112,7 +112,7 @@ func TestUserHandler_Registration_InvalidJSON(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/register", h.Registration)
 
 	jsonData := []byte(`{"invalid json"`)
@@ -132,7 +132,7 @@ func TestUserHandler_Login(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/login", h.Login)
 
 	tests := []struct {
@@ -205,7 +205,7 @@ func TestUserHandler_Login_InvalidJSON(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/login", h.Login)
 
 	jsonData := []byte(`{"invalid json"`)
@@ -225,7 +225,7 @@ func TestUserHandler_Refresh(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/refresh", h.Refresh)
 
 	tests := []struct {
@@ -337,7 +337,7 @@ func TestUserHandler_Refresh_EmptyToken(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/refresh", h.Refresh)
 
 	tests := []struct {
@@ -419,7 +419,7 @@ func TestUserHandler_Refresh_InvalidJSON(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/refresh", h.Refresh)
 
 	jsonData := []byte(`{"invalid json"`)
@@ -439,7 +439,7 @@ func TestUserHandler_Logout(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/logout", h.Logout)
 
 	tests := []struct {
@@ -499,7 +499,7 @@ func TestUserHandler_Logout_EmptyToken(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/logout", h.Logout)
 
 	tests := []struct {
@@ -570,7 +570,7 @@ func TestUserHandler_Logout_InvalidJSON(t *testing.T) {
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/logout", h.Logout)
 
 	jsonData := []byte(`{"invalid json"`)
