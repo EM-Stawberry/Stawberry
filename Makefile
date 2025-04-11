@@ -32,7 +32,7 @@ mocks: internal/handler/user.go internal/domain/service/token/token.go
 
 .PHONY: test
 test:
-	go test -v -count=1 -parallel=4 -coverprofile=cov.out ./...
+	go test -v -coverprofile=cov.out ./...
 	go tool cover -func=cov.out
 
 coverage:
