@@ -70,15 +70,15 @@ func (e *UserError) Error() string {
 }
 
 var (
-	ErrUserNotFound = &ProductError{
+	ErrUserNotFound = &UserError{
 		Code:    NotFound,
 		Message: "product not found",
 	}
-	ErrIncorrectPassword = &ProductError{
+	ErrIncorrectPassword = &UserError{
 		Code:    Unauthorized,
 		Message: "incorrect password",
 	}
-	ErrFailedToGeneratePassword = &ProductError{
+	ErrFailedToGeneratePassword = &UserError{
 		Code:    InternalError,
 		Message: "failed to generate password",
 	}
