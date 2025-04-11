@@ -50,7 +50,6 @@ func SetupRouter(
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
