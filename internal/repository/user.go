@@ -2,20 +2,18 @@ package repository
 
 import (
 	"context"
-	"errors"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
+	"github.com/jmoiron/sqlx"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
 	"github.com/zuzaaa-dev/stawberry/internal/repository/model"
-	"gorm.io/gorm"
 )
 
 type userRepository struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
-func NewUserRepository(db *gorm.DB) *userRepository {
+func NewUserRepository(db *sqlx.DB) *userRepository {
 	return &userRepository{db: db}
 }
 
@@ -24,22 +22,8 @@ func (r *userRepository) InsertUser(
 	ctx context.Context,
 	user user.User,
 ) (uint, error) {
-	userModel := model.ConvertUserFromSvc(user)
-	if err := r.db.WithContext(ctx).Create(userModel).Error; err != nil {
-		if isDuplicateError(err) {
-			return 0, &apperror.UserError{
-				Code:    apperror.DuplicateError,
-				Message: "user with this email already exists",
-				Err:     err,
-			}
-		}
-		return 0, &apperror.UserError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to create user",
-			Err:     err,
-		}
-	}
 
+	userModel := model.ConvertUserFromSvc(user)
 	return userModel.ID, nil
 }
 
@@ -49,16 +33,6 @@ func (r *userRepository) GetUser(
 	email string,
 ) (entity.User, error) {
 	var userModel model.User
-	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&userModel).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return entity.User{}, apperror.ErrUserNotFound
-		}
-		return entity.User{}, &apperror.UserError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch user by email",
-			Err:     err,
-		}
-	}
 
 	return model.ConvertUserToEntity(userModel), nil
 }
@@ -69,16 +43,6 @@ func (r *userRepository) GetUserByID(
 	id uint,
 ) (entity.User, error) {
 	var userModel model.User
-	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&userModel).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return entity.User{}, apperror.ErrUserNotFound
-		}
-		return entity.User{}, &apperror.UserError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch user by ID",
-			Err:     err,
-		}
-	}
 
 	return model.ConvertUserToEntity(userModel), nil
 }

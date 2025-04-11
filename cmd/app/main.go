@@ -56,6 +56,9 @@ func initializeApp() error {
 	// Initialize database connection
 	db := repository.InitDB(cfg)
 
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+
 	// Run migrations
 	migrator.RunMigrations(db, "migrations")
 
