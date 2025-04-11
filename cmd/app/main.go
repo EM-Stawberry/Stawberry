@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
+	"github.com/zuzaaa-dev/stawberry/internal/domain/service/token"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
 
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
@@ -66,10 +67,12 @@ func initializeApp() error {
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
+	tokenRepository := repository.NewTokenRepository(db)
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	userService := user.NewUserService(userRepository)
+	tokenService := token.NewTokenService(tokenRepository, "secret", 30*24*time.Hour, 1*time.Hour)
+	userService := user.NewUserService(userRepository, tokenService)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
 	productHandler := handler.NewProductHandler(productService)
