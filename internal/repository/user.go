@@ -22,7 +22,21 @@ func (r *userRepository) InsertUser(
 	ctx context.Context,
 	user user.User,
 ) (uint, error) {
-
+	// userModel := model.ConvertUserFromSvc(user)
+	// if err := r.db.WithContext(ctx).Create(&userModel).Error; err != nil {
+	// 	if isDuplicateError(err) {
+	// 		return 0, &apperror.UserError{
+	// 			Code:    apperror.DuplicateError,
+	// 			Message: "user with this email already exists",
+	// 			Err:     err,
+	// 		}
+	// 	}
+	// 	return 0, &apperror.UserError{
+	// 		Code:    apperror.DatabaseError,
+	// 		Message: "failed to create user",
+	// 		Err:     err,
+	// 	}
+	// }
 	userModel := model.ConvertUserFromSvc(user)
 	return userModel.ID, nil
 }
