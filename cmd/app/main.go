@@ -62,6 +62,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationRepository := repository.NewNotificationRepository(db)
 	tokenRepository := repository.NewTokenRepository(db)
 	log.Info("Repositories initialized")
+	tokenRepository := repository.NewTokenRepository(db)
 
 	passwordManager := security.NewArgon2idPasswordManager()
 	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
