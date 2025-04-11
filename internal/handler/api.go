@@ -11,12 +11,12 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/EM-Stawberry/Stawberry/docs"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
+	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/zuzaaa-dev/stawberry/docs"
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
-	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

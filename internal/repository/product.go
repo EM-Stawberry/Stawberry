@@ -4,11 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
-	"github.com/zuzaaa-dev/stawberry/internal/repository/model"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
+	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/jmoiron/sqlx"
+
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type productRepository struct {

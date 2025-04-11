@@ -3,7 +3,7 @@ package offer
 import (
 	"context"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type Repository interface {
