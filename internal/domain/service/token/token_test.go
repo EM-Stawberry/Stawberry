@@ -2,7 +2,6 @@ package token
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	mock_token "github.com/zuzaaa-dev/stawberry/tests/mocks/domain/service/token"
 	"go.uber.org/mock/gomock"
 )
 
@@ -20,7 +18,7 @@ func TestNewTokenService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mock_token.NewMockRepository(ctrl)
+	repo := NewMockRepository(ctrl)
 	secret := "test-secret"
 	refreshLife := 24 * time.Hour
 	accessLife := time.Hour
@@ -38,7 +36,7 @@ func TestTokenService_GenerateTokens(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mock_token.NewMockRepository(ctrl)
+	repo := NewMockRepository(ctrl)
 	service := NewTokenService(repo, "test-secret", 24*time.Hour, time.Hour)
 
 	tests := []struct {
@@ -77,7 +75,7 @@ func TestTokenService_ValidateToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mock_token.NewMockRepository(ctrl)
+	repo := NewMockRepository(ctrl)
 	secret := "test-secret"
 	service := NewTokenService(repo, secret, 24*time.Hour, time.Hour)
 
@@ -111,7 +109,6 @@ func TestTokenService_ValidateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(tt.name, tt.token)
 			accessToken, err := service.ValidateToken(context.Background(), tt.token)
 
 			if tt.wantErr != nil {
@@ -129,7 +126,7 @@ func TestTokenService_Repository_Methods(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mock_token.NewMockRepository(ctrl)
+	repo := NewMockRepository(ctrl)
 	service := NewTokenService(repo, "test-secret", 24*time.Hour, time.Hour)
 	ctx := context.Background()
 
@@ -181,7 +178,7 @@ func TestTokenService_Parse(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := mock_token.NewMockRepository(ctrl)
+	repo := NewMockRepository(ctrl)
 	secret := "test-secret"
 	service := NewTokenService(repo, secret, 24*time.Hour, time.Hour)
 
