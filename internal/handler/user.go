@@ -89,6 +89,7 @@ func (h *userHandler) Login(c *gin.Context) {
 		loginUserDTO.Password,
 		loginUserDTO.Fingerprint,
 	)
+
 	if err != nil {
 		handleUserError(c, err)
 		return
