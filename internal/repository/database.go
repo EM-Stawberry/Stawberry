@@ -3,7 +3,7 @@ package repository
 import (
 	"log"
 
-	"github.com/zuzaaa-dev/stawberry/config"
+	"github.com/EM-Stawberry/Stawberry/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
-	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
+	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 
 	"github.com/gin-gonic/gin"
 )
