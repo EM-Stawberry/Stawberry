@@ -11,6 +11,8 @@ import (
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=user Repository, TokenService
+
 const maxUsers = 5
 
 type Repository interface {

@@ -14,6 +14,8 @@ import (
 
 var signingMethod = jwt.SigningMethodHS256
 
+//go:generate mockgen -source=$GOFILE -destination=token_mock_test.go -package=token Repository
+
 type Repository interface {
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
 	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)

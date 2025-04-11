@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=handler UserService
+
 type UserService interface {
 	CreateUser(ctx context.Context, user user.User, fingerprint string) (string, string, error)
 	Authenticate(ctx context.Context, email, password, fingerprint string) (string, string, error)

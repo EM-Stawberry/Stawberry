@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 	"github.com/zuzaaa-dev/stawberry/internal/handler/dto"
-	mock_handler "github.com/zuzaaa-dev/stawberry/tests/mocks/handler"
 	"go.uber.org/mock/gomock"
 )
 
@@ -21,7 +20,7 @@ func TestUserHandler_Registration(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -108,7 +107,7 @@ func TestUserHandler_Registration_InvalidJSON(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -128,7 +127,7 @@ func TestUserHandler_Login(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -201,7 +200,7 @@ func TestUserHandler_Login_InvalidJSON(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -221,7 +220,7 @@ func TestUserHandler_Refresh(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -333,7 +332,7 @@ func TestUserHandler_Refresh_EmptyToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -415,7 +414,7 @@ func TestUserHandler_Refresh_InvalidJSON(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -435,7 +434,7 @@ func TestUserHandler_Logout(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -495,7 +494,7 @@ func TestUserHandler_Logout_EmptyToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
@@ -566,7 +565,7 @@ func TestUserHandler_Logout_InvalidJSON(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock_handler.NewMockUserService(ctrl)
+	mockService := NewMockUserService(ctrl)
 	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
 
 	gin.SetMode(gin.TestMode)
