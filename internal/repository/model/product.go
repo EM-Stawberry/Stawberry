@@ -25,14 +25,9 @@ type UpdateProduct struct {
 func ConvertProductFromSvc(p product.Product) Product {
 	return Product{
 		ID:          p.ID,
-		StoreID:     p.StoreID,
 		Name:        p.Name,
 		Description: p.Description,
-		Price:       p.Price,
-		Category:    p.Category,
-		InStock:     p.InStock,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		CategoryID:  p.CategoryID,
 	}
 }
 
