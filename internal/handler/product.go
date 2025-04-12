@@ -18,6 +18,7 @@ import (
 type ProductService interface {
 	CreateProduct(ctx context.Context, product product.Product) (uint, error)
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
+	GetProductByName(ctx context.Context, id string) (entity.Product, error)
 	GetProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error

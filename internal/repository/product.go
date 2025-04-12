@@ -67,7 +67,28 @@ func (r *productRepository) GetProductByID(
 	return model.ConvertProductToEntity(productModel), nil
 }
 
-func (r *productRepository) SelectProducts(
+func (r *productRepository) GetProductByName(
+	ctx context.Context, 
+	name string,
+	) (entity.Product, error) {
+	var productModel model.Product
+	query := "SELECT id, name, description, category_id from products WHERE name = $1"
+	if err := r.db.GetContext(ctx, &productModel, query, name); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Product{}, apperror.ErrProductNotFound
+		}
+		return entity.Product{}, &apperror.ProductError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to fetch product",
+			Err:     err,
+		}
+	}
+
+	return model.ConvertProductToEntity(productModel), nil
+}	
+
+
+func (r *productRepository) GetProducts(
 	ctx context.Context,
 	offset,
 	limit int,
@@ -96,7 +117,7 @@ func (r *productRepository) SelectProducts(
 			SELECT c.id FROM categories c
 			INNER JOIN category_tree ct ON c.parent_id = ct.id
 		)
-		SELECT * FROM products
+		SELECT id, name, description, category_id FROM products
 		WHERE category_id IN (SELECT id FROM category_tree)
 		LIMIT $2 OFFSET $3
 	`
