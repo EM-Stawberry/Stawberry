@@ -1,23 +1,16 @@
 package model
 
 import (
-	"time"
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
 )
 
 type Product struct {
-	ID          uint `gorm:"primaryKey;autoIncrement"`
-	StoreID     uint
-	Name        string
-	Description string
-	Price       float64
-	Category    string
-	InStock     bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Store       Store `gorm:"foreignKey:StoreID"`
+	ID          uint   `db:"id"`
+	Name        string `db:"name"`
+	Description string `db:"description"`
+	CategoryID  uint   `db:"category_id"`
 }
 
 type UpdateProduct struct {
