@@ -129,11 +129,11 @@ func (us *userService) Refresh(
 	}
 
 	if !refresh.IsValid() {
-		return "", "", errors.New("invalid refresh token")
+		return "", "", apperror.ErrInvalidToken
 	}
 
 	if refresh.Fingerprint != fingerprint {
-		return "", "", errors.New("invalid fingerprint")
+		return "", "", apperror.ErrInvalidFingerprint
 	}
 
 	now := time.Now()
@@ -177,7 +177,7 @@ func (us *userService) Logout(
 	}
 
 	if refresh.Fingerprint != fingerprint {
-		return errors.New("invalid fingerprint")
+		return apperror.ErrInvalidFingerprint
 	}
 
 	now := time.Now()

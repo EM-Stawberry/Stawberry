@@ -124,6 +124,26 @@ func handleUserError(c *gin.Context, err error) {
 		return
 	}
 
+	var tokenError *apperror.TokenError
+	if errors.As(err, &tokenError) {
+		status := http.StatusInternalServerError
+
+		switch tokenError.Code {
+		case apperror.InvalidToken:
+			status = http.StatusUnauthorized
+		case apperror.NotFound:
+			status = http.StatusUnauthorized
+		case apperror.InvalidFingerprint:
+			status = http.StatusUnauthorized
+		}
+
+		c.JSON(status, gin.H{
+			"code":    tokenError.Code,
+			"message": tokenError.Message,
+		})
+		return
+	}
+
 	c.JSON(http.StatusInternalServerError, gin.H{
 		"code":    apperror.InternalError,
 		"message": "An unexpected error occurred",
