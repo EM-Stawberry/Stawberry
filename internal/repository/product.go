@@ -88,21 +88,14 @@ func (r *productRepository) GetProductByName(
 }	
 
 
-func (r *productRepository) GetProducts(
+func (r *productRepository) SelectProducts(
 	ctx context.Context,
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
 	var total int64
-	countQuery := `
-		WITH RECURSIVE category_tree AS (
-			SELECT id FROM categories WHERE id = $1
-			UNION
-			SELECT c.id FROM categories c
-			INNER JOIN category_tree ct ON c.parent_id = ct.id
-		)
-		SELECT COUNT(*) FROM products WHERE category_id IN (SELECT id FROM category_tree)
-	`
+	countQuery := "SELECT COUNT(*) FROM products"
+	
 	if err := r.db.GetContext(ctx, &total, countQuery); err != nil {
 		return nil, 0, &apperror.ProductError{
 			Code:    apperror.DatabaseError,
@@ -110,17 +103,7 @@ func (r *productRepository) GetProducts(
 			Err:     err,
 		}
 	}
-	query := `
-		WITH RECURSIVE category_tree AS (
-			SELECT id FROM categories WHERE id = $1
-			UNION
-			SELECT c.id FROM categories c
-			INNER JOIN category_tree ct ON c.parent_id = ct.id
-		)
-		SELECT id, name, description, category_id FROM products
-		WHERE category_id IN (SELECT id FROM category_tree)
-		LIMIT $2 OFFSET $3
-	`
+	query := "SELECT * FROM products LIMIT $1 OFFSET $2"
 	var productModels []model.Product
 	if err := r.db.SelectContext(ctx, &productModels, query, limit, offset); err != nil {
 		return nil, 0, &apperror.ProductError{
@@ -137,6 +120,41 @@ func (r *productRepository) GetProducts(
 
 	return products, int(total), nil
 }
+
+func (r *productRepository) SelectProductsByCategory(
+	ctx context.Context, 
+	categoryID int, 
+	offset, limit int) ([]entity.Product, int, error) {
+	var products []entity.Product
+    query := `
+        WITH RECURSIVE category_tree AS (
+            SELECT id FROM categories WHERE id = $1
+            UNION
+            SELECT c.id FROM categories c
+            INNER JOIN category_tree ct ON c.parent_id = ct.id
+        )
+        SELECT * FROM products WHERE category_id IN (SELECT id FROM category_tree) LIMIT $2 OFFSET $3;
+    `
+    if err := r.db.SelectContext(ctx, &products, query, categoryID, limit, offset); err != nil {
+        return nil, 0, err
+    }
+
+    var total int
+    countQuery := `
+        WITH RECURSIVE category_tree AS (
+            SELECT id FROM categories WHERE id = $1
+            UNION
+            SELECT c.id FROM categories c
+            INNER JOIN category_tree ct ON c.parent_id = ct.id
+        )
+        SELECT COUNT(*) FROM products WHERE category_id IN (SELECT id FROM category_tree);
+    `
+    if err := r.db.GetContext(ctx, &total, countQuery, categoryID); err != nil {
+        return nil, 0, err
+    }
+
+    return products, total, nil
+	}
 
 func (r *productRepository) SelectStoreProducts(
 	ctx context.Context,

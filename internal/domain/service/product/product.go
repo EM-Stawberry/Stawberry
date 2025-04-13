@@ -9,7 +9,9 @@ import (
 type Repository interface {
 	InsertProduct(ctx context.Context, product Product) (uint, error)
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
+	GetProductByName(ctx context.Context, name string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByCategory(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
 	SelectStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 }
@@ -36,7 +38,22 @@ func (ps *productService) GetProductByID(
 	return ps.productRepository.GetProductByID(ctx, id)
 }
 
-func (ps *productService) GetProducts(
+func (ps *productService) GetProductByName(
+	ctx context.Context,
+	name string,
+) (entity.Product, error) {
+	return ps.productRepository.GetProductByID(ctx, name)
+}
+
+func (ps *productService) SelectProducts(
+	ctx context.Context,
+	offset,
+	limit int,
+) ([]entity.Product, int, error) {
+	return ps.productRepository.SelectProducts(ctx, offset, limit)
+}
+
+func (ps *productService) SelectProductsByCategory(
 	ctx context.Context,
 	offset,
 	limit int,
