@@ -81,7 +81,7 @@ func initializeApp() error {
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	s3 := objectstorage.ObjectStorageConn(cfg)
 
-	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
+	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, userService, tokenService, s3, "api/v1")
 
 	return nil
 }
