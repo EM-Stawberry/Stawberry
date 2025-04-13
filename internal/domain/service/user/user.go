@@ -19,7 +19,6 @@ type Repository interface {
 	InsertUser(ctx context.Context, user User) (uint, error)
 	GetUser(ctx context.Context, email string) (entity.User, error)
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
-	UpdateUser(ctx context.Context, user User) error
 }
 
 type TokenService interface {
@@ -193,8 +192,4 @@ func (us *userService) Logout(
 
 func (us *userService) GetUserByID(ctx context.Context, id uint) (entity.User, error) {
 	return us.userRepository.GetUserByID(ctx, id)
-}
-
-func (us *userService) UpdateUser(ctx context.Context, id uint, updateUser UpdateUser) error {
-	panic("implement me")
 }

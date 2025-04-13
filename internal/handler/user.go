@@ -20,7 +20,6 @@ type UserService interface {
 	Refresh(ctx context.Context, refreshToken, fingerprint string) (string, string, error)
 	Logout(ctx context.Context, refreshToken, fingerprint string) error
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
-	UpdateUser(ctx context.Context, id uint, updateUser user.UpdateUser) error
 }
 
 type userHandler struct {
