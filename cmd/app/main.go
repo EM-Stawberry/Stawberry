@@ -99,9 +99,9 @@ func initializeApp() error {
 		productHandler,
 		offerHandler,
 		userHandler,
-		notificationHandler,
+		notificationHandler, userService, tokenService,
 		s3,
-		"api",
+		"api/v1",
 		log,
 	)
 

@@ -33,6 +33,8 @@ func SetupRouter(
 	offerH offerHandler,
 	userH userHandler,
 	notificationH notificationHandler,
+	userS middleware.UserGetter,
+	tokenS middleware.TokenValidator,
 	s3 *objectstorage.BucketBasics,
 	basePath string,
 	logger *zap.Logger,
@@ -61,6 +63,16 @@ func SetupRouter(
 		auth.POST("/login", userH.Login)
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
+	}
+
+	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
+	{
+		secured.GET("/auth_required", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"status": "ok",
+				"time":   time.Now().Unix(),
+			})
+		})
 	}
 
 	return router
