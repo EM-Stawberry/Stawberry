@@ -60,7 +60,3 @@ func (r *userRepository) GetUserByID(
 
 	return model.ConvertUserToEntity(userModel), nil
 }
-
-func (r *userRepository) UpdateUser(ctx context.Context, user user.User) error {
-	panic("implement me")
-}
