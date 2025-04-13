@@ -22,6 +22,7 @@ func (ru *RegistrationUserReq) ConvertToSvc() user.User {
 		Name:     ru.Name,
 		Password: ru.Password,
 		Email:    ru.Email,
+		Phone:    ru.Phone,
 	}
 }
 
