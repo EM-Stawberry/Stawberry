@@ -259,7 +259,7 @@ func TestUserService_Refresh(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, accessToken)
 		assert.Empty(t, newRefreshToken)
-		assert.Contains(t, err.Error(), "invalid fingerprint")
+		assert.Contains(t, err.Error(), "fingerprints don't match")
 	})
 
 	t.Run("user not found during refresh", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestUserService_Logout(t *testing.T) {
 		err := userService.Logout(ctx, refreshTokenStr, "wrong-fingerprint")
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid fingerprint")
+		assert.Contains(t, err.Error(), "fingerprints don't match")
 	})
 
 	t.Run("token update failure during logout", func(t *testing.T) {
