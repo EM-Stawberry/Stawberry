@@ -79,7 +79,7 @@ func (ts *tokenService) ValidateToken(
 // parse извлекает токен JWT и извлекает claims.
 func (ts *tokenService) parse(token string) (entity.AccessToken, error) {
 	claim := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] != signingMethod.Alg() {
 			appError := apperror.ErrInvalidToken
 			appError.Err = fmt.Errorf("invalid signing method")
