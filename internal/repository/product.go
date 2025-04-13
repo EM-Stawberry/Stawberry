@@ -67,27 +67,6 @@ func (r *productRepository) GetProductByID(
 	return model.ConvertProductToEntity(productModel), nil
 }
 
-func (r *productRepository) GetProductByName(
-	ctx context.Context, 
-	name string,
-	) (entity.Product, error) {
-	var productModel model.Product
-	query := "SELECT id, name, description, category_id from products WHERE name = $1"
-	if err := r.db.GetContext(ctx, &productModel, query, name); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return entity.Product{}, apperror.ErrProductNotFound
-		}
-		return entity.Product{}, &apperror.ProductError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch product",
-			Err:     err,
-		}
-	}
-
-	return model.ConvertProductToEntity(productModel), nil
-}	
-
-
 func (r *productRepository) SelectProducts(
 	ctx context.Context,
 	offset,
@@ -121,9 +100,38 @@ func (r *productRepository) SelectProducts(
 	return products, int(total), nil
 }
 
+func (r *productRepository) SelectProductsByName(
+	ctx context.Context,
+	name string,
+	offset, limit int,
+) ([]entity.Product, int, error) {
+	var total int
+	countQuery := `
+		SELECT COUNT(*) FROM products 
+		WHERE name ILIKE '%' || $1 || '%'`
+	if err := r.db.GetContext(ctx, &total, countQuery, name); err != nil {
+		return nil, 0, err
+	}
+
+	var models []model.Product
+	searchQuery := `
+		SELECT * FROM products 
+		WHERE name ILIKE '%' || $1 || '%' 
+		LIMIT $2 OFFSET $3`
+	if err := r.db.SelectContext(ctx, &models, searchQuery, name, limit, offset); err != nil {
+		return nil, 0, err
+	}
+
+	products := make([]entity.Product, len(models))
+	for i, p := range models {
+		products[i] = model.ConvertProductToEntity(p)
+	}
+	return products, total, nil
+}
+
 func (r *productRepository) SelectProductsByCategory(
 	ctx context.Context, 
-	categoryID int, 
+	categoryID string, 
 	offset, limit int) ([]entity.Product, int, error) {
 	var products []entity.Product
     query := `
