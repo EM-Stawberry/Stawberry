@@ -83,7 +83,7 @@ func (h *productReviewHandler) GetReviews(c *gin.Context) {
 	reviews, err := h.prs.GetReviewsByProductID(c.Request.Context(), productID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
-		log.Warn("failed to fetch reviews", zap.Error(err))
+		log.Warn("Failed to fetch reviews", zap.Error(err))
 		return
 	}
 
