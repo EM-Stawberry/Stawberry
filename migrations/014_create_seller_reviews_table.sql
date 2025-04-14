@@ -4,9 +4,9 @@ CREATE TABLE seller_reviews (
     id SERIAL PRIMARY KEY,
     seller_id INT NOT NULL,
     user_id INT NOT NULL,
-    rating INT, NOT NULL,
-    review INT, NOT NULL,
-    created_at TIMESTAMP NOT NULL CURRENT_TIMESTAMP,
+    rating INT NOT NULL,
+    review TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (seller_id) REFERENCES users(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
