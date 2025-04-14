@@ -138,7 +138,7 @@ func (r *productRepository) SelectProductsByName(
 	return products, int(total), nil
 }
 
-func (r *productRepository) SelectProductsByCategory(
+func (r *productRepository) SelectProductsByCategoryID(
 	ctx context.Context, 
 	categoryID string, 
 	offset, 

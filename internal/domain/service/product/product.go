@@ -11,7 +11,7 @@ type Repository interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) (entity.Product, int, error)
-	SelectProductsByCategory(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
 	SelectStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 }
@@ -55,13 +55,13 @@ func (ps *productService) SelectProductsByName(
 	return ps.productRepository.SelectProductsByName(ctx, name, offset, limit)
 }
 
-func (ps *productService) SelectProductsByCategory(
+func (ps *productService) SelectProductsByCategoryID(
 	ctx context.Context,
 	categoryID string,
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	return ps.productRepository.SelectProductsByCategory(ctx,categoryID, offset, limit)
+	return ps.productRepository.SelectProductsByCategoryID(ctx,categoryID, offset, limit)
 }
 
 func (ps *productService) GetStoreProducts(

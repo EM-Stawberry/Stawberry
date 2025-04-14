@@ -20,7 +20,7 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) (entity.Product,int, error)
-	SelectProductsByCategory(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
 	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 }
@@ -129,6 +129,46 @@ func (h *productHandler) SearchProductsByName(c *gin.Context) {
 	offset := (page - 1) * limit
 
 	products, total, err := h.productService.SelectProductsByName(c.Request.Context(), name, offset, limit)
+	if err != nil {
+		handleProductError(c, err)
+		return
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": products,
+		"meta": gin.H{
+			"current_page": page,
+			"per_page":     limit,
+			"total_items":  total,
+			"total_pages":  totalPages,
+		},
+	})
+}
+
+func (h *productHandler) SearchProductsByCategoryID(c *gin.Context) {
+	categoryID := c.Query("category")
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    apperror.BadRequest,
+			"message": "Invalid page number",
+		})
+		return
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil || limit < 1 || limit > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    apperror.BadRequest,
+			"message": "Invalid limit value (should be between 1 and 100)",
+		})
+		return
+	}
+
+	offset := (page - 1) * limit
+
+	products, total, err := h.productService.SelectProductsByCategoryID(c.Request.Context(), categoryID, offset, limit)
 	if err != nil {
 		handleProductError(c, err)
 		return
