@@ -12,8 +12,8 @@ import (
 )
 
 type ProductReviewService interface {
-	AddRewiew(ctx context.Context, productID int, userID int, rating int, review string) error
-	GetReviewsByProductId(ctx context.Context, productID int) ([]entity.ProductReview, error)
+	AddReview(ctx context.Context, productID int, userID int, rating int, review string) error
+	GetReviewsByProductID(ctx context.Context, productID int) ([]entity.ProductReview, error)
 }
 
 type productReviewHandler struct {
@@ -21,13 +21,15 @@ type productReviewHandler struct {
 	logger *zap.Logger
 }
 
-func NewProductReviewHandler(prs ProductReviewService) productReviewHandler {
-	return productReviewHandler{prs: prs}
+func NewProductReviewHandler(prs ProductReviewService, l *zap.Logger) *productReviewHandler {
+	return &productReviewHandler{
+		prs: prs, logger: l,
+	}
 }
 
-func (prh *productReviewHandler) AddReview(c *gin.Context) {
+func (h *productReviewHandler) AddReview(c *gin.Context) {
 	const op = "productReviewHandler.AddReviews()"
-	log := prh.logger.With(zap.String("op", op))
+	log := h.logger.With(zap.String("op", op))
 
 	productID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -50,7 +52,14 @@ func (prh *productReviewHandler) AddReview(c *gin.Context) {
 		return
 	}
 
-	err = prh.prs.AddRewiew(c.Request.Context(), productID, userID.(int), addReview.Rating, addReview.Review)
+	uid, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid userID type"})
+		log.Warn("Invalid userID type")
+		return
+	}
+
+	err = h.prs.AddReview(c.Request.Context(), productID, uid, addReview.Rating, addReview.Review)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
 		log.Warn("Failed to add review", zap.Error(err))
@@ -60,9 +69,9 @@ func (prh *productReviewHandler) AddReview(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Review added successfully"})
 }
 
-func (prh *productReviewHandler) GetReviews(c *gin.Context) {
+func (h *productReviewHandler) GetReviews(c *gin.Context) {
 	const op = "productReviewHandler.GetReviews()"
-	log := prh.logger.With(zap.String("op", op))
+	log := h.logger.With(zap.String("op", op))
 
 	productID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -71,7 +80,7 @@ func (prh *productReviewHandler) GetReviews(c *gin.Context) {
 		return
 	}
 
-	reviews, err := prh.prs.GetReviewsByProductId(c.Request.Context(), productID)
+	reviews, err := h.prs.GetReviewsByProductID(c.Request.Context(), productID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
 		log.Warn("failed to fetch reviews", zap.Error(err))
