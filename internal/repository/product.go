@@ -50,7 +50,7 @@ func (r *productRepository) InsertProduct(
 func (r *productRepository) GetProductByID(
 	ctx context.Context,
 	id string,
-) (entity.Product, error) {
+	) (entity.Product, error) {
 	var productModel model.Product
 	query := "SELECT id, name, description, category_id from products WHERE id = $1"
 	if err := r.db.GetContext(ctx, &productModel, query, id); err != nil {
@@ -71,7 +71,7 @@ func (r *productRepository) SelectProducts(
 	ctx context.Context,
 	offset,
 	limit int,
-) ([]entity.Product, int, error) {
+	) ([]entity.Product, int, error) {
 	var total int64
 	countQuery := "SELECT COUNT(*) FROM products"
 	
@@ -103,14 +103,19 @@ func (r *productRepository) SelectProducts(
 func (r *productRepository) SelectProductsByName(
 	ctx context.Context,
 	name string,
-	offset, limit int,
-) ([]entity.Product, int, error) {
-	var total int
+	offset, 
+	limit int,
+	) ([]entity.Product, int, error) {
+	var total int64
 	countQuery := `
 		SELECT COUNT(*) FROM products 
 		WHERE name ILIKE '%' || $1 || '%'`
 	if err := r.db.GetContext(ctx, &total, countQuery, name); err != nil {
-		return nil, 0, err
+		return nil, 0, &apperror.ProductError{
+			Code: apperror.NotFound,
+			Message: "product not found",
+			Err: err,
+		}
 	}
 
 	var models []model.Product
@@ -119,21 +124,44 @@ func (r *productRepository) SelectProductsByName(
 		WHERE name ILIKE '%' || $1 || '%' 
 		LIMIT $2 OFFSET $3`
 	if err := r.db.SelectContext(ctx, &models, searchQuery, name, limit, offset); err != nil {
-		return nil, 0, err
+		return nil, 0, &apperror.ProductError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to fetch products",
+			Err:     err,
+		}
 	}
 
 	products := make([]entity.Product, len(models))
 	for i, p := range models {
 		products[i] = model.ConvertProductToEntity(p)
 	}
-	return products, total, nil
+	return products, int(total), nil
 }
 
 func (r *productRepository) SelectProductsByCategory(
 	ctx context.Context, 
 	categoryID string, 
-	offset, limit int) ([]entity.Product, int, error) {
-	var products []entity.Product
+	offset, 
+	limit int,
+	) ([]entity.Product, int, error) {
+	var models []model.Product
+	var total int
+	countQuery := `
+		WITH RECURSIVE category_tree AS (
+			SELECT id FROM categories WHERE id = $1
+			UNION
+			SELECT c.id FROM categories c
+			INNER JOIN category_tree ct ON c.parent_id = ct.id
+		)
+		SELECT COUNT(*) FROM products WHERE category_id IN (SELECT id FROM category_tree);
+		`
+	if err := r.db.GetContext(ctx, &total, countQuery, categoryID); err != nil {
+		return nil, 0, &apperror.ProductError{
+			Code: apperror.NotFound,
+			Message: "failed to count products",
+			Err: err,
+		}
+	}
     query := `
         WITH RECURSIVE category_tree AS (
             SELECT id FROM categories WHERE id = $1
@@ -143,24 +171,17 @@ func (r *productRepository) SelectProductsByCategory(
         )
         SELECT * FROM products WHERE category_id IN (SELECT id FROM category_tree) LIMIT $2 OFFSET $3;
     `
-    if err := r.db.SelectContext(ctx, &products, query, categoryID, limit, offset); err != nil {
-        return nil, 0, err
+    if err := r.db.SelectContext(ctx, &models, query, categoryID, limit, offset); err != nil {
+        return nil, 0, &apperror.ProductError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to fetch products",
+			Err:     err,
+		}
     }
-
-    var total int
-    countQuery := `
-        WITH RECURSIVE category_tree AS (
-            SELECT id FROM categories WHERE id = $1
-            UNION
-            SELECT c.id FROM categories c
-            INNER JOIN category_tree ct ON c.parent_id = ct.id
-        )
-        SELECT COUNT(*) FROM products WHERE category_id IN (SELECT id FROM category_tree);
-    `
-    if err := r.db.GetContext(ctx, &total, countQuery, categoryID); err != nil {
-        return nil, 0, err
-    }
-
+	products := make([]entity.Product, len(models))
+	for i, p := range  models{
+		products[i] = model.ConvertProductToEntity(p)
+	}
     return products, total, nil
 	}
 
