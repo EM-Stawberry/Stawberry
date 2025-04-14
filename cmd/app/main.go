@@ -7,6 +7,7 @@ import (
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"go.uber.org/zap"
 
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
 	"github.com/zuzaaa-dev/stawberry/pkg/migrator"
@@ -22,6 +23,9 @@ import (
 
 // Global variables for application state
 var (
+	envLocal = "local"
+	envProd  = "prod"
+
 	router *gin.Engine
 )
 
@@ -47,6 +51,9 @@ func main() {
 func initializeApp() error {
 	// Load configuration
 	cfg := config.LoadConfig()
+	log := setupLogger(cfg.Environment)
+	log.Info("Config initialized")
+	log.Info("Logger initialized")
 
 	// Set Gin mode based on environment
 	if os.Getenv("GIN_MODE") == "release" {
@@ -78,4 +85,24 @@ func initializeApp() error {
 	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
 
 	return nil
+}
+
+func setupLogger(env string) *zap.Logger {
+	var log *zap.Logger
+	var err error
+
+	switch env {
+	case envLocal:
+		log, err = zap.NewDevelopment()
+		if err != nil {
+			panic(err)
+		}
+	case envProd:
+		log, err = zap.NewProduction()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return log
 }

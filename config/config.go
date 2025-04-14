@@ -19,6 +19,7 @@ type Config struct {
 	BucketName    string
 	URL           string
 	SigningRegion string
+	Environment   string
 }
 
 func LoadConfig() *Config {
@@ -43,6 +44,7 @@ func LoadConfig() *Config {
 		BucketName:    viper.GetString("BUCKET_NAME"),
 		URL:           viper.GetString("URL"),
 		SigningRegion: viper.GetString("SIGNING_REGION"),
+		Environment:   viper.GetString("ENVIRONMENT"),
 	}
 
 	return config
