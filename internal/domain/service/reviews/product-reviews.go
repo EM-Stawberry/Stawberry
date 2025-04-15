@@ -26,7 +26,8 @@ type ProductReviewService struct {
 
 func NewProductReviewService(prr ProductReviewRepository, l *zap.Logger) *ProductReviewService {
 	return &ProductReviewService{
-		prr: prr, logger: l,
+		prr:    prr,
+		logger: l,
 	}
 }
 
