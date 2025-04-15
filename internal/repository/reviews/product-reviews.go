@@ -26,7 +26,7 @@ func (r *productReviewRepository) AddReview(
 	ctx context.Context, productID int, userID int, rating int, review string,
 ) error {
 
-	const op = "productReviewHandler.GetReviewsByProductID()"
+	const op = "productReviewRepository.AddReview()"
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
@@ -53,7 +53,7 @@ func (r *productReviewRepository) GetProductByID(
 ) (
 	entity.Product, error,
 ) {
-	const op = "productReviewHandler.GetProductByID()"
+	const op = "productReviewRepository.GetProductByID()"
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
@@ -73,4 +73,31 @@ func (r *productReviewRepository) GetProductByID(
 	}
 
 	return product, nil
+}
+
+func (r *productReviewRepository) GetReviewsByProductID(
+	ctx context.Context, productID int,
+) (
+	[]entity.ProductReview, error,
+) {
+	const op = "productReviewRepository.GetReviewsByProductID()"
+	log := r.logger.With(zap.String("op", op))
+
+	query, args, err := squirrel.
+		Select("id", "product_id", "user_id", "rating", "review", "created_at", "updated_at").
+		From("product_reviews").
+		Where("product_id = ?", productID).ToSql()
+	if err != nil {
+		log.Error("Failed to build query", zap.Error(err))
+		return nil, fmt.Errorf("op: %s, err: %s", op, err)
+	}
+
+	var reviews []entity.ProductReview
+	err = r.db.SelectContext(ctx, &reviews, query, args...)
+	if err != nil {
+		log.Error("Failed to execute query", zap.Error(err))
+		return nil, fmt.Errorf("op: %s, err: %s", op, err)
+	}
+
+	return reviews, nil
 }

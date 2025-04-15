@@ -35,7 +35,7 @@ func (s *ProductReviewService) AddReview(
 ) (
 	int, error,
 ) {
-	const op = "productReviewHandler.AddReviews()"
+	const op = "productReviewService.AddReviews()"
 	log := s.logger.With(zap.String("op", op))
 
 	log.Info("Existence check")
@@ -61,7 +61,7 @@ func (s *ProductReviewService) GetReviewsByProductID(
 ) (
 	[]entity.ProductReview, error,
 ) {
-	const op = "productReviewHandler.GetReviewsByProductID()"
+	const op = "productReviewService.GetReviewsByProductID()"
 	log := s.logger.With(zap.String("op", op))
 
 	log.Info("Existence check")

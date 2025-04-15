@@ -65,7 +65,7 @@ func (h *productReviewHandler) AddReview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Review added successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "review added successfully"})
 }
 
 func (h *productReviewHandler) GetReviews(c *gin.Context) {
