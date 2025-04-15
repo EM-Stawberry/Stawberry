@@ -10,29 +10,30 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProductReviewsService interface {
-	AddReview(ctx context.Context, productID int, userID int, rating int, review string) error
-	GetReviewsByProductID(ctx context.Context, productID int) ([]entity.ProductReview, error)
+type SellerReviewsService interface {
+	AddReviews(ctx context.Context, sellerID int, userID int, rating int, review string) error
+	GetReviewsById(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
 }
 
-type productReviewHandler struct {
-	prs    ProductReviewsService
+type sellerReviewsHandler struct {
+	srs    SellerReviewsService
 	logger *zap.Logger
 }
 
-func NewProductReviewHandler(prs ProductReviewsService, l *zap.Logger) *productReviewHandler {
-	return &productReviewHandler{
-		prs: prs, logger: l,
+func NewSellerReviewsHandler(srs SellerReviewsService, l *zap.Logger) *sellerReviewsHandler {
+	return &sellerReviewsHandler{
+		srs:    srs,
+		logger: l,
 	}
 }
 
-func (h *productReviewHandler) AddReview(c *gin.Context) {
-	const op = "productReviewsHandler.AddReviews()"
+func (h *sellerReviewsHandler) AddReviews(c *gin.Context) {
+	const op = "sellerReviewsHandler.AddReviews()"
 	log := h.logger.With(zap.String("op", op))
 
-	productID, err := strconv.Atoi(c.Param("id"))
+	sellerID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid productID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid sellerID"})
 		log.Warn("Failed to parse productID", zap.Error(err))
 		return
 	}
@@ -46,7 +47,7 @@ func (h *productReviewHandler) AddReview(c *gin.Context) {
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user not authenticated"})
 		log.Warn("Failed to get userID from context", zap.Error(err))
 		return
 	}
@@ -58,7 +59,7 @@ func (h *productReviewHandler) AddReview(c *gin.Context) {
 		return
 	}
 
-	err = h.prs.AddReview(c.Request.Context(), productID, uid, addReview.Rating, addReview.Review)
+	err = h.srs.AddReviews(c.Request.Context(), sellerID, uid, addReview.Rating, addReview.Review)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
 		log.Warn("Failed to add review", zap.Error(err))
@@ -68,18 +69,18 @@ func (h *productReviewHandler) AddReview(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "review added successfully"})
 }
 
-func (h *productReviewHandler) GetReviews(c *gin.Context) {
-	const op = "productReviewsHandler.GetReviews()"
+func (h *sellerReviewsHandler) GetReviews(c *gin.Context) {
+	const op = "sellerReviewsHandler.GetReviews()"
 	log := h.logger.With(zap.String("op", op))
 
-	productID, err := strconv.Atoi(c.Param("id"))
+	sellerID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid productID"})
-		log.Warn("Failed to parse productID", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid sellerID"})
+		log.Warn("Failed to parse sellerID", zap.Error(err))
 		return
 	}
 
-	reviews, err := h.prs.GetReviewsByProductID(c.Request.Context(), productID)
+	reviews, err := h.srs.GetReviewsById(c.Request.Context(), sellerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
 		log.Warn("Failed to fetch reviews", zap.Error(err))

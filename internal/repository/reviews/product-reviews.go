@@ -10,23 +10,23 @@ import (
 	"go.uber.org/zap"
 )
 
-type productReviewRepository struct {
+type productReviewsRepository struct {
 	db     *sqlx.DB
 	logger *zap.Logger
 }
 
-func NewProductReviewRepository(db *sqlx.DB, l *zap.Logger) *productReviewRepository {
-	return &productReviewRepository{
+func NewProductReviewRepository(db *sqlx.DB, l *zap.Logger) *productReviewsRepository {
+	return &productReviewsRepository{
 		db:     db,
 		logger: l,
 	}
 }
 
-func (r *productReviewRepository) AddReview(
+func (r *productReviewsRepository) AddReview(
 	ctx context.Context, productID int, userID int, rating int, review string,
 ) error {
 
-	const op = "productReviewRepository.AddReview()"
+	const op = "productReviewsRepository.AddReview()"
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
@@ -48,12 +48,12 @@ func (r *productReviewRepository) AddReview(
 	return nil
 }
 
-func (r *productReviewRepository) GetProductByID(
+func (r *productReviewsRepository) GetProductByID(
 	ctx context.Context, productID int,
 ) (
 	entity.Product, error,
 ) {
-	const op = "productReviewRepository.GetProductByID()"
+	const op = "productReviewsRepository.GetProductByID()"
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
@@ -75,12 +75,12 @@ func (r *productReviewRepository) GetProductByID(
 	return product, nil
 }
 
-func (r *productReviewRepository) GetReviewsByProductID(
+func (r *productReviewsRepository) GetReviewsByProductID(
 	ctx context.Context, productID int,
 ) (
 	[]entity.ProductReview, error,
 ) {
-	const op = "productReviewRepository.GetReviewsByProductID()"
+	const op = "productReviewsRepository.GetReviewsByProductID()"
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
