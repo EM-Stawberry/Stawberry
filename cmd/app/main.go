@@ -62,7 +62,7 @@ func initializeApp() error {
 
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
-	userHandler := handler.NewUserHandler(cfg, userService, "api/v1")
+	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	s3 := objectstorage.ObjectStorageConn(cfg)
 

@@ -37,12 +37,7 @@ func SetupRouter(
 
 	base := router.Group(basePath)
 	auth := base.Group("/auth")
-	{
-		auth.POST("/reg", userH.Registration)
-		auth.POST("/login", userH.Login)
-		auth.POST("/logout", userH.Logout)
-		auth.POST("/refresh", userH.Refresh)
-	}
+	userH.RegisterRoutes(auth)
 
 	return router
 }
