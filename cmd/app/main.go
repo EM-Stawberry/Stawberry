@@ -22,38 +22,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Global variables for application state
 var (
 	router *gin.Engine
 )
 
 func main() {
-	// Initialize application
 	if err := initializeApp(); err != nil {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
-	// Get port from environment variable or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Start server
 	if err := app.StartServer(router, port); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
 
-// initializeApp initializes all application components
 func initializeApp() error {
-	// Load configuration
 	cfg := config.LoadConfig()
 	log := logger.SetupLogger(cfg.Environment)
 	log.Info("Config initialized")
 	log.Info("Logger initialized")
 
-	// Set Gin mode based on environment
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -61,15 +54,16 @@ func initializeApp() error {
 	// Настраиваем Gin на использование Zap логгера
 	middleware.SetupGinWithZap(log)
 
-	// Initialize database connection
 	db := repository.InitDB(cfg)
-	log.Info("Connection initialized")
+	log.Info("Database initialized")
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(10)
 
-	// Run migrations using Zap logger
 	migrator.RunMigrationsWithZap(db, "migrations", log)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+	migrator.RunMigrations(db, "migrations")
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
