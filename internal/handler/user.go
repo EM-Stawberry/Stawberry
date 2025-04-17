@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zuzaaa-dev/stawberry/config"
 	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
@@ -29,14 +30,14 @@ type userHandler struct {
 }
 
 func NewUserHandler(
+	cfg *config.Config,
 	userService UserService,
-	refreshLife time.Duration,
 	basePath string,
 	domain string,
 ) userHandler {
 	return userHandler{
 		userService: userService,
-		refreshLife: int(refreshLife.Seconds()),
+		refreshLife: int(cfg.Token.RefreshTokenDuration),
 		basePath:    basePath,
 		domain:      domain,
 	}

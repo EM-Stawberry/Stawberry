@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
@@ -74,7 +73,7 @@ func initializeApp() error {
 
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
-	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
+	userHandler := handler.NewUserHandler(cfg, userService, "api/v1", "")
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	s3 := objectstorage.ObjectStorageConn(cfg)
 
