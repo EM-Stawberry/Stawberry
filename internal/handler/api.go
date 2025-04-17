@@ -24,8 +24,9 @@ func SetupRouter(
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
+	healthH.RegisterRoutes(router)
+
 	base := router.Group(basePath)
-	healthH.RegisterRoutes(base)
 
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
