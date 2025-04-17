@@ -7,7 +7,6 @@ import (
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
-	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,12 +16,10 @@ func SetupRouter(
 	offerH offerHandler,
 	userH userHandler,
 	notificationH notificationHandler,
-	s3 *objectstorage.BucketBasics,
 	basePath string,
 ) *gin.Engine {
 	router := gin.New()
 
-	// Add default middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
