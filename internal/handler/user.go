@@ -32,14 +32,21 @@ type userHandler struct {
 func NewUserHandler(
 	cfg *config.Config,
 	userService UserService,
-	basePath string,
 ) userHandler {
 	return userHandler{
 		userService: userService,
 		refreshLife: int(cfg.Token.RefreshTokenDuration),
-		basePath:    basePath,
 		domain:      cfg.Server.Domain,
 	}
+}
+
+func (h *userHandler) RegisterRoutes(group *gin.RouterGroup) {
+	h.basePath = group.BasePath()
+
+	group.POST("/reg", h.Registration)
+	group.POST("/login", h.Login)
+	group.POST("/logout", h.Logout)
+	group.POST("/refresh", h.Refresh)
 }
 
 func (h *userHandler) Registration(c *gin.Context) {
