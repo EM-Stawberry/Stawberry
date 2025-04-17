@@ -27,8 +27,8 @@ type productHandler struct {
 	productService ProductService
 }
 
-func NewProductHandler(productService ProductService) productHandler {
-	return productHandler{productService: productService}
+func NewProductHandler(productService ProductService) *productHandler {
+	return &productHandler{productService: productService}
 }
 
 func (h *productHandler) PostProduct(c *gin.Context) {

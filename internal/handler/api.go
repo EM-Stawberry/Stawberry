@@ -26,10 +26,11 @@ import (
 // @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
 // @Router /health [get]
 func SetupRouter(
-	productH productHandler,
-	offerH offerHandler,
-	userH userHandler,
-	notificationH notificationHandler,
+	healthH *healthHandler,
+	productH *productHandler,
+	offerH *offerHandler,
+	userH *userHandler,
+	notificationH *notificationHandler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
 	basePath string,
@@ -56,6 +57,7 @@ func SetupRouter(
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	base := router.Group(basePath)
+	healthH.RegisterRoutes(base)
 
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)

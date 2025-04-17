@@ -56,6 +56,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	notificationService := notification.NewNotificationService(notificationRepository)
 	log.Info("Services initialized")
 
+	healthHandler := handler.NewHealthHandler()
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
@@ -64,6 +65,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	log.Info("Handlers initialized")
 
 	router := handler.SetupRouter(
+		healthHandler,
 		productHandler,
 		offerHandler,
 		userHandler,

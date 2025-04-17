@@ -32,8 +32,8 @@ type userHandler struct {
 func NewUserHandler(
 	cfg *config.Config,
 	userService UserService,
-) userHandler {
-	return userHandler{
+) *userHandler {
+	return &userHandler{
 		userService: userService,
 		refreshLife: int(cfg.Token.RefreshTokenDuration),
 		domain:      cfg.Server.Domain,
