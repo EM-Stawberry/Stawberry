@@ -15,7 +15,7 @@ type PostProductResp struct {
 	ID uint `json:"id"`
 }
 
-func (pp *PostProductReq) ConvertToSvc() product.Product {
+/* func (pp *PostProductReq) ConvertToSvc() product.Product {
 	return product.Product{
 		StoreID:     pp.StoreID,
 		Name:        pp.Name,
@@ -24,7 +24,7 @@ func (pp *PostProductReq) ConvertToSvc() product.Product {
 		Category:    pp.Category,
 		InStock:     pp.InStock,
 	}
-}
+} */
 
 type PatchProductReq struct {
 	StoreID     *uint    `json:"store_id,omitempty"`
