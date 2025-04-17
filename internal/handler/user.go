@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 	"net/http"
-	"time"
 
+	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
@@ -30,14 +30,14 @@ type userHandler struct {
 }
 
 func NewUserHandler(
+	cfg *config.Config,
 	userService UserService,
-	refreshLife time.Duration,
 	basePath string,
 	domain string,
 ) userHandler {
 	return userHandler{
 		userService: userService,
-		refreshLife: int(refreshLife.Seconds()),
+		refreshLife: int(cfg.Token.RefreshTokenDuration),
 		basePath:    basePath,
 		domain:      domain,
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
@@ -88,7 +87,7 @@ func initializeApp() error {
 
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
-	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
+	userHandler := handler.NewUserHandler(cfg, userService, "api/v1", "")
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	log.Info("Handlers initialized")
 
