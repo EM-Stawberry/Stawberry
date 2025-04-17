@@ -36,12 +36,7 @@ func main() {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	if err := app.StartServer(router, port); err != nil {
+	if err := app.StartServer(router, cfg.Server.Port); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
