@@ -56,8 +56,9 @@ func SetupRouter(
 	// Swagger UI endpoint
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	healthH.RegisterRoutes(router)
+
 	base := router.Group(basePath)
-	healthH.RegisterRoutes(base)
 
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
