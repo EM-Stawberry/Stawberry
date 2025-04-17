@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
@@ -12,10 +11,11 @@ import (
 )
 
 func SetupRouter(
-	productH productHandler,
-	offerH offerHandler,
-	userH userHandler,
-	notificationH notificationHandler,
+	healthH *healthHandler,
+	productH *productHandler,
+	offerH *offerHandler,
+	userH *userHandler,
+	notificationH *notificationHandler,
 	basePath string,
 ) *gin.Engine {
 	router := gin.New()
@@ -24,14 +24,8 @@ func SetupRouter(
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"time":   time.Now().Unix(),
-		})
-	})
-
 	base := router.Group(basePath)
+	healthH.RegisterRoutes(base)
 
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)

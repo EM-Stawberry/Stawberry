@@ -46,12 +46,13 @@ func initializeApp(cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	userService := user.NewUserService(userRepository)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
+	healthHandler := handler.NewHealthHandler()
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
-	router := handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, "api/v1")
+	router := handler.SetupRouter(healthHandler, productHandler, offerHandler, userHandler, notificationHandler, "api/v1")
 
 	return router
 }
