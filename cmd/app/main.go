@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
@@ -10,10 +9,10 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
+	"github.com/EM-Stawberry/Stawberry/pkg/server"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/EM-Stawberry/Stawberry/config"
-	"github.com/EM-Stawberry/Stawberry/internal/app"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
@@ -36,16 +35,12 @@ func main() {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
-	if err := app.StartServer(router, cfg.Server.Port); err != nil {
+	if err := server.StartServer(router, &cfg.Server); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
 
 func initializeApp(cfg *config.Config, db *sqlx.DB) error {
-
-	if os.Getenv("GIN_MODE") == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
