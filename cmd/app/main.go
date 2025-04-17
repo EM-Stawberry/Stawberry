@@ -8,7 +8,9 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
+	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/app"
@@ -23,7 +25,14 @@ var (
 )
 
 func main() {
-	if err := initializeApp(); err != nil {
+	cfg := config.LoadConfig()
+
+	db, close := database.InitDB(&cfg.DB)
+	defer close()
+
+	migrator.RunMigrations(db, "migrations")
+
+	if err := initializeApp(cfg, db); err != nil {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
@@ -37,17 +46,11 @@ func main() {
 	}
 }
 
-func initializeApp() error {
-	cfg := config.LoadConfig()
+func initializeApp(cfg *config.Config, db *sqlx.DB) error {
 
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
-
-	db := repository.InitDB(cfg)
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
-	migrator.RunMigrations(db, "migrations")
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
