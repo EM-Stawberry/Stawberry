@@ -20,10 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	router *gin.Engine
-)
-
 func main() {
 
 	cfg := config.LoadConfig()
@@ -37,18 +33,14 @@ func main() {
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
-	if err := initializeApp(cfg, db, log); err != nil {
-		log.Fatal("Failed to initialize application",
-			zap.Error(err),
-		)
-	}
+	router := initializeApp(cfg, db, log)
 
 	if err := server.StartServer(router, &cfg.Server); err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}
 }
 
-func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) error {
+func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
@@ -71,7 +63,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) error {
 
 	log.Info("Handlers initialized")
 
-	router = handler.SetupRouter(
+	router := handler.SetupRouter(
 		productHandler,
 		offerHandler,
 		userHandler,
@@ -82,5 +74,5 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) error {
 		log,
 	)
 
-	return nil
+	return router
 }

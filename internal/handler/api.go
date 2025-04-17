@@ -56,6 +56,7 @@ func SetupRouter(
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	base := router.Group(basePath)
+
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
 
