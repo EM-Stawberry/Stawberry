@@ -3,9 +3,9 @@ package handler
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zuzaaa-dev/stawberry/config"
 	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
@@ -29,17 +29,23 @@ type userHandler struct {
 }
 
 func NewUserHandler(
+	cfg *config.Config,
 	userService UserService,
-	refreshLife time.Duration,
-	basePath string,
-	domain string,
-) userHandler {
-	return userHandler{
+) *userHandler {
+	return &userHandler{
 		userService: userService,
-		refreshLife: int(refreshLife.Seconds()),
-		basePath:    basePath,
-		domain:      domain,
+		refreshLife: int(cfg.Token.RefreshTokenDuration),
+		domain:      cfg.Server.Domain,
 	}
+}
+
+func (h *userHandler) RegisterRoutes(group *gin.RouterGroup) {
+	h.basePath = group.BasePath()
+
+	group.POST("/reg", h.Registration)
+	group.POST("/login", h.Login)
+	group.POST("/logout", h.Logout)
+	group.POST("/refresh", h.Refresh)
 }
 
 func (h *userHandler) Registration(c *gin.Context) {
