@@ -19,10 +19,6 @@ import (
 	"github.com/zuzaaa-dev/stawberry/internal/handler"
 )
 
-var (
-	router *gin.Engine
-)
-
 func main() {
 	cfg := config.LoadConfig()
 
@@ -31,16 +27,14 @@ func main() {
 
 	migrator.RunMigrations(db, "migrations")
 
-	if err := initializeApp(cfg, db); err != nil {
-		log.Fatalf("Failed to initialize application: %v", err)
-	}
+	router := initializeApp(cfg, db)
 
 	if err := server.StartServer(router, &cfg.Server); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
 
-func initializeApp(cfg *config.Config, db *sqlx.DB) error {
+func initializeApp(cfg *config.Config, db *sqlx.DB) *gin.Engine {
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
@@ -57,7 +51,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB) error {
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
-	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, "api/v1")
+	router := handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, "api/v1")
 
-	return nil
+	return router
 }
