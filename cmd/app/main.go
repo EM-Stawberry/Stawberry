@@ -45,12 +45,7 @@ func main() {
 		)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	if err := app.StartServer(router, port); err != nil {
+	if err := app.StartServer(router, cfg.Server.Port); err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}
 }
