@@ -24,7 +24,6 @@ func SetupRouter(
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
@@ -33,6 +32,7 @@ func SetupRouter(
 	})
 
 	base := router.Group(basePath)
+
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
 
