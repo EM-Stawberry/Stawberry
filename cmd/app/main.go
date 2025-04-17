@@ -16,7 +16,6 @@ import (
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/offer"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
 	"github.com/zuzaaa-dev/stawberry/internal/handler"
-	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
 )
 
 var (
@@ -64,9 +63,8 @@ func initializeApp() error {
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
-	s3 := objectstorage.ObjectStorageConn(cfg)
 
-	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
+	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, "api/v1")
 
 	return nil
 }
