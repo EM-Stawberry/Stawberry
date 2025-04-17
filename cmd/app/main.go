@@ -18,7 +18,6 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
-	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 	"github.com/gin-gonic/gin"
 )
 
@@ -83,10 +82,8 @@ func initializeApp() error {
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
-	log.Info("Handlers initialized")
 
-	s3 := objectstorage.ObjectStorageConn(cfg)
-	log.Info("Storage initialized")
+	log.Info("Handlers initialized")
 
 	router = handler.SetupRouter(
 		productHandler,
@@ -95,8 +92,7 @@ func initializeApp() error {
 		notificationHandler,
 		userService,
 		tokenService,
-		s3,
-		"api",
+		"api/v1",
 		log,
 	)
 

@@ -12,7 +12,6 @@ import (
 
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
-	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -33,7 +32,6 @@ func SetupRouter(
 	notificationH notificationHandler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
-	s3 *objectstorage.BucketBasics,
 	basePath string,
 	logger *zap.Logger,
 ) *gin.Engine {
