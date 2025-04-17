@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
@@ -11,10 +10,10 @@ import (
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
 	"github.com/zuzaaa-dev/stawberry/pkg/database"
 	"github.com/zuzaaa-dev/stawberry/pkg/migrator"
+	"github.com/zuzaaa-dev/stawberry/pkg/server"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zuzaaa-dev/stawberry/config"
-	"github.com/zuzaaa-dev/stawberry/internal/app"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/offer"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
 	"github.com/zuzaaa-dev/stawberry/internal/handler"
@@ -36,16 +35,12 @@ func main() {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
-	if err := app.StartServer(router, cfg.Server.Port); err != nil {
+	if err := server.StartServer(router, &cfg.Server); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
 
 func initializeApp(cfg *config.Config, db *sqlx.DB) error {
-
-	if os.Getenv("GIN_MODE") == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)

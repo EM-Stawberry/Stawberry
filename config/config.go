@@ -26,8 +26,9 @@ func (dbc *DBConfig) GetDBConnString() string {
 }
 
 type ServerConfig struct {
-	Domain string
-	Port   string
+	Domain  string
+	Port    string
+	GinMode string
 }
 
 type TokenConfig struct {
@@ -80,8 +81,9 @@ func LoadConfig() *Config {
 			MaxIdleConns: viper.GetInt("DB_MAX_IDLE_CONNS"),
 		},
 		Server: ServerConfig{
-			Domain: viper.GetString("SERVER_DOMAIN"),
-			Port:   viper.GetString("SERVER_PORT"),
+			Domain:  viper.GetString("SERVER_DOMAIN"),
+			Port:    viper.GetString("SERVER_PORT"),
+			GinMode: viper.GetString("GIN_MODE"),
 		},
 		Token: TokenConfig{
 			Secret:               viper.GetString("TOKEN_SECRET"),
