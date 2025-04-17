@@ -14,6 +14,11 @@ var (
 	EnvProd = "prod"
 )
 
+type ServerConfig struct {
+	Domain     string
+	ServerPort string
+}
+
 type TokenConfig struct {
 	Secret               string
 	AccessTokenDuration  time.Duration
@@ -26,14 +31,14 @@ type Config struct {
 	DBPassword    string
 	DBName        string
 	DBPort        string
-	ServerPort    string
 	AccessKey     string
 	SecretKey     string
 	BucketName    string
 	URL           string
 	SigningRegion string
-	Token         TokenConfig
 	Environment   string
+	Server        ServerConfig
+	Token         TokenConfig
 }
 
 func LoadConfig() *Config {
@@ -52,13 +57,16 @@ func LoadConfig() *Config {
 		DBPassword:    viper.GetString("DB_PASSWORD"),
 		DBName:        viper.GetString("DB_NAME"),
 		DBPort:        viper.GetString("DB_PORT"),
-		ServerPort:    viper.GetString("SERVER_PORT"),
 		AccessKey:     viper.GetString("ACCESS_KEY"),
 		SecretKey:     viper.GetString("SECRET_KEY"),
 		BucketName:    viper.GetString("BUCKET_NAME"),
 		URL:           viper.GetString("URL"),
 		SigningRegion: viper.GetString("SIGNING_REGION"),
 		Environment:   viper.GetString("ENVIRONMENT"),
+		Server: ServerConfig{
+			Domain:     viper.GetString("SERVER_DOMAIN"),
+			ServerPort: viper.GetString("SERVER_PORT"),
+		},
 		Token: TokenConfig{
 			Secret:               viper.GetString("TOKEN_SECRET"),
 			AccessTokenDuration:  viper.GetDuration("TOKEN_ACCESS_DURATION"),

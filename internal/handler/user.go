@@ -33,13 +33,12 @@ func NewUserHandler(
 	cfg *config.Config,
 	userService UserService,
 	basePath string,
-	domain string,
 ) userHandler {
 	return userHandler{
 		userService: userService,
 		refreshLife: int(cfg.Token.RefreshTokenDuration),
 		basePath:    basePath,
-		domain:      domain,
+		domain:      cfg.Server.Domain,
 	}
 }
 
