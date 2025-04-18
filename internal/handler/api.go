@@ -7,13 +7,14 @@ import (
 
 	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
+	productHandler "github.com/zuzaaa-dev/stawberry/internal/handler/product"
 	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter(
-	productH productHandler,
+	productH productHandler.ProductHandler,
 	offerH offerHandler,
 	userH userHandler,
 	notificationH notificationHandler,
@@ -42,6 +43,18 @@ func SetupRouter(
 		auth.POST("/login", userH.Login)
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
+	}
+
+	shop := base.Group("/shop")
+
+	shopAdmin := shop.Group("/admin")
+	{
+		shopAdmin.POST("/products", productH.PostProduct)
+		shopAdmin.GET("/products/:id", productH.GetProduct)
+		shopAdmin.GET("/products", productH.GetProducts)
+		shopAdmin.GET("/products/:store_id", productH.GetStoreProducts)
+		shopAdmin.PATCH("/products/:id", productH.PatchProduct)
+		shopAdmin.DELETE("/products/:id", productH.DeleteProduct)
 	}
 
 	return router

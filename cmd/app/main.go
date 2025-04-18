@@ -7,6 +7,7 @@ import (
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"github.com/zuzaaa-dev/stawberry/internal/handler"
 
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
 	"github.com/zuzaaa-dev/stawberry/pkg/migrator"
@@ -15,8 +16,8 @@ import (
 	"github.com/zuzaaa-dev/stawberry/config"
 	"github.com/zuzaaa-dev/stawberry/internal/app"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/offer"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
-	"github.com/zuzaaa-dev/stawberry/internal/handler"
+	productService "github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
+	productHandler "github.com/zuzaaa-dev/stawberry/internal/handler/product"
 	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
 )
 
@@ -67,12 +68,12 @@ func initializeApp() error {
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
 
-	productService := product.NewProductService(productRepository)
+	productService := productService.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
 	userService := user.NewUserService(userRepository)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
-	productHandler := handler.NewProductHandler(productService)
+	productHandler := productHandler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
 	notificationHandler := handler.NewNotificationHandler(notificationService)
