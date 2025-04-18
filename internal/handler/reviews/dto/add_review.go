@@ -1,4 +1,4 @@
-package handler
+package dto
 
 var AddReviewDTO struct {
 	Rating int    `json:"rating" binding:"required,min=1,max=5"`
