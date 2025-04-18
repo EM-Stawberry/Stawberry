@@ -1,11 +1,20 @@
+.PHONY:golint
 golint:
 	golangci-lint run -c .golangci.yaml
-.PHONY:golint
 
+.PHONY:gofmt
 gofmt:
 	gofumpt -l -w .
 	goimports -w .
-.PHONY:gofmt
+
+.PHONY: test
+test:
+	go test -v -coverprofile=cov.out ./...
+	go tool cover -func=cov.out
+
+coverage:
+	go tool cover -html=cov.out
+
 
 # Frontend
 npm-install:

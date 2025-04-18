@@ -17,17 +17,17 @@ func SetupRouter(
 	offerH offerHandler,
 	userH userHandler,
 	notificationH notificationHandler,
+	userS middleware.UserGetter,
+	tokenS middleware.TokenValidator,
 	s3 *objectstorage.BucketBasics,
 	basePath string,
 ) *gin.Engine {
 	router := gin.New()
 
-	// Add default middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
@@ -42,6 +42,16 @@ func SetupRouter(
 		auth.POST("/login", userH.Login)
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
+	}
+
+	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
+	{
+		secured.GET("/auth_required", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"status": "ok",
+				"time":   time.Now().Unix(),
+			})
+		})
 	}
 
 	return router
@@ -103,7 +113,9 @@ func handleOfferError(c *gin.Context, err error) {
 
 func handleUserError(c *gin.Context, err error) {
 	var userError *apperror.UserError
+
 	if errors.As(err, &userError) {
+
 		status := http.StatusInternalServerError
 
 		switch userError.Code {
@@ -113,11 +125,33 @@ func handleUserError(c *gin.Context, err error) {
 			status = http.StatusConflict
 		case apperror.DatabaseError:
 			status = http.StatusInternalServerError
+		case apperror.Unauthorized:
+			status = http.StatusUnauthorized
 		}
 
 		c.JSON(status, gin.H{
 			"code":    userError.Code,
 			"message": userError.Message,
+		})
+		return
+	}
+
+	var tokenError *apperror.TokenError
+	if errors.As(err, &tokenError) {
+		status := http.StatusInternalServerError
+
+		switch tokenError.Code {
+		case apperror.InvalidToken:
+			status = http.StatusUnauthorized
+		case apperror.NotFound:
+			status = http.StatusUnauthorized
+		case apperror.InvalidFingerprint:
+			status = http.StatusUnauthorized
+		}
+
+		c.JSON(status, gin.H{
+			"code":    tokenError.Code,
+			"message": tokenError.Message,
 		})
 		return
 	}
