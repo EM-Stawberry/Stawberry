@@ -9,6 +9,7 @@ import (
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
 
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
+	"github.com/zuzaaa-dev/stawberry/pkg/logger"
 	"github.com/zuzaaa-dev/stawberry/pkg/migrator"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,9 @@ func main() {
 func initializeApp() error {
 	// Load configuration
 	cfg := config.LoadConfig()
+	log := logger.SetupLogger(cfg.Environment)
+	log.Info("Config initialized")
+	log.Info("Logger initialized")
 
 	// Set Gin mode based on environment
 	if os.Getenv("GIN_MODE") == "release" {
@@ -55,6 +59,7 @@ func initializeApp() error {
 
 	// Initialize database connection
 	db := repository.InitDB(cfg)
+	log.Info("Connection initialized")
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(10)
@@ -66,17 +71,22 @@ func initializeApp() error {
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
+	log.Info("Repositories initialized")
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
 	userService := user.NewUserService(userRepository)
 	notificationService := notification.NewNotificationService(notificationRepository)
+	log.Info("Services initialized")
 
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
 	notificationHandler := handler.NewNotificationHandler(notificationService)
+	log.Info("Handlers initialized")
+
 	s3 := objectstorage.ObjectStorageConn(cfg)
+	log.Info("Storage initialized")
 
 	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
 
