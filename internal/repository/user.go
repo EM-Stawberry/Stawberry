@@ -9,6 +9,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
@@ -29,16 +30,15 @@ func (r *userRepository) InsertUser(
 ) (uint, error) {
 	userModel := model.ConvertUserFromSvc(user)
 
-	query := `INSERT INTO users (name, email, phone_number, password_hash, is_store)
-					VALUES ($1, $2, $3, $4, $5) RETURNING id`
+	stmt := sq.Insert("users").
+		Columns("name", "email", "phone_number", "password_hash", "is_store").
+		Values(user.Name, user.Email, user.Phone, user.Password, user.IsStore).
+		Suffix("RETURNING id").
+		PlaceholderFormat(sq.Dollar)
 
-	err := r.db.QueryRowxContext(ctx, query,
-		user.Name,
-		user.Email,
-		user.Phone,
-		user.Password,
-		user.IsStore,
-	).Scan(&userModel.ID)
+	query, args := stmt.MustSql()
+
+	err := r.db.QueryRowxContext(ctx, query, args...).Scan(&userModel.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr); pgErr.Code == pgerrcode.UniqueViolation {
@@ -65,9 +65,14 @@ func (r *userRepository) GetUser(
 ) (entity.User, error) {
 	var userModel model.User
 
-	query := `SELECT id, name, email, phone_number, password_hash, is_store
-				FROM users WHERE email=$1`
-	err := r.db.QueryRowxContext(ctx, query, email).StructScan(&userModel)
+	stmt := sq.Select("id", "name", "email", "phone_number", "password_hash", "is_store").
+		From("users").
+		Where(sq.Eq{"email": email}).
+		PlaceholderFormat(sq.Dollar)
+
+	query, args := stmt.MustSql()
+
+	err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&userModel)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.User{}, apperror.ErrUserNotFound
@@ -89,9 +94,14 @@ func (r *userRepository) GetUserByID(
 ) (entity.User, error) {
 	var userModel model.User
 
-	query := `SELECT id, name, email, phone_number, password_hash, is_store
-				FROM users WHERE id=$1`
-	err := r.db.QueryRowxContext(ctx, query, id).StructScan(&userModel)
+	stmt := sq.Select("id", "name", "email", "phone_number", "password_hash", "is_store").
+		From("users").
+		Where(sq.Eq{"id": id}).
+		PlaceholderFormat(sq.Dollar)
+
+	query, args := stmt.MustSql()
+
+	err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&userModel)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.User{}, apperror.ErrUserNotFound
