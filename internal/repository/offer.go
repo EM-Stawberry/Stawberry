@@ -3,9 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
