@@ -8,6 +8,7 @@ toolchain go1.23.2
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/Masterminds/squirrel v1.5.4
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang/mock v1.6.0
@@ -101,6 +102,8 @@ require (
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 )
 
 require (
