@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/zuzaaa-dev/stawberry/internal/handler/reviews/dto"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +39,7 @@ func (h *sellerReviewsHandler) AddReviews(c *gin.Context) {
 		return
 	}
 
-	var addReview = AddReviewDTO
+	var addReview = dto.AddReviewDTO
 	if err := c.ShouldBindJSON(&addReview); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
 		log.Warn("Failed to bind JSON", zap.Error(err))
