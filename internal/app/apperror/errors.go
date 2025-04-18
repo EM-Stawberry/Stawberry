@@ -73,7 +73,7 @@ func (e *UserError) Error() string {
 var (
 	ErrUserNotFound = &UserError{
 		Code:    NotFound,
-		Message: "product not found",
+		Message: "user not found",
 	}
 	ErrIncorrectPassword = &UserError{
 		Code:    Unauthorized,
