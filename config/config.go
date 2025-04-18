@@ -7,6 +7,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	EnvDev  = "dev"
+	EnvTest = "test"
+	EnvProd = "prod"
+)
+
 type Config struct {
 	DBHost        string
 	DBUser        string
