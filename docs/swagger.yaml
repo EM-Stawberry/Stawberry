@@ -13,7 +13,7 @@ definitions:
       status:
         type: string
     required:
-    - status
+      - status
     type: object
   dto.PatchOfferStatusResp:
     properties:
@@ -25,66 +25,66 @@ info:
   contact: {}
   description: Это API для управления сделаками по продуктам.
   title: Stawberry API
-  version: "1.0"
+  version: '1.0'
 paths:
   /health:
     get:
       description: Возвращает статус сервера и текущее время
       produces:
-      - application/json
+        - application/json
       responses:
-        "200":
+        '200':
           description: Успешный ответ с данными
           schema:
             additionalProperties: true
             type: object
       summary: Получить статус сервера
       tags:
-      - health
+        - health
   /offers/{offerID}:
     patch:
       consumes:
-      - application/json
+        - application/json
       parameters:
-      - description: Offer ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Offer status update request
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.PatchOfferStatusReq'
+        - description: Offer ID
+          in: path
+          name: id
+          required: true
+          type: integer
+        - description: Offer status update request
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.PatchOfferStatusReq'
       produces:
-      - application/json
+        - application/json
       responses:
-        "200":
+        '200':
           description: OK
           schema:
             $ref: '#/definitions/dto.PatchOfferStatusResp'
-        "400":
+        '400':
           description: Bad Request
           schema:
             $ref: '#/definitions/apperror.Error'
-        "401":
+        '401':
           description: Unauthorized
           schema:
             $ref: '#/definitions/apperror.Error'
-        "404":
+        '404':
           description: Not Found
           schema:
             $ref: '#/definitions/apperror.Error'
-        "409":
+        '409':
           description: Conflict
           schema:
             $ref: '#/definitions/apperror.Error'
-        "500":
+        '500':
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apperror.Error'
       summary: Update offer status
       tags:
-      - offer
-swagger: "2.0"
+        - offer
+swagger: '2.0'

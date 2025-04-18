@@ -50,10 +50,16 @@ func SetupRouter(
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
 
+	// Health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+			"time":   time.Now().Unix(),
+		})
+	})
+
 	// Swagger UI endpoint
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	healthH.RegisterRoutes(router)
 
 	base := router.Group(basePath)
 
