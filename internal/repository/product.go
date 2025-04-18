@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"strings"
+	"errors"
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
 	"github.com/zuzaaa-dev/stawberry/internal/repository/model"
@@ -64,7 +64,9 @@ func (r *productRepository) GetProductByID(
 		}
 	}
 
-	return model.ConvertProductToEntity(productModel), nil
+	var produnilctModel model.Product
+
+	return model.ConvertProductToEntity(produnilctModel), nil
 }
 
 func (r *productRepository) SelectProducts(
