@@ -6,12 +6,12 @@ import (
 )
 
 type User struct {
-	ID            uint   `gorm:"column:id"`
-	Name          string `gorm:"column:name"`
-	Email         string `gorm:"column:email"`
-	Phone         string `gorm:"column:phone_number"`
-	Password      string `gorm:"column:password_hash"`
-	IsStore       bool   `gorm:"column:is_store"`
+	ID            uint   `db:"id"`
+	Name          string `db:"name"`
+	Email         string `db:"email"`
+	Phone         string `db:"phone_number"`
+	Password      string `db:"password_hash"`
+	IsStore       bool   `db:"is_store"`
 	Notifications []Notification
 }
 
