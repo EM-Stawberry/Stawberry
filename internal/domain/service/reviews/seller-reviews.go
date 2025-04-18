@@ -21,8 +21,7 @@ type sellerReviewService struct {
 
 func NewSellerReviewService(srr SellerReviewRepository, l *zap.Logger) *sellerReviewService {
 	return &sellerReviewService{
-		srs:    srr,
-		logger: l,
+		srs: srr, logger: l,
 	}
 }
 
@@ -52,11 +51,7 @@ func (s *sellerReviewService) AddReview(
 	return sellerID, nil
 }
 
-func (s *sellerReviewService) GetReviewsBySellerID(
-	ctx context.Context, sellerID int,
-) (
-	[]entity.SellerReview, error,
-) {
+func (s *sellerReviewService) GetReviewsBySellerID(ctx context.Context, sellerID int) ([]entity.SellerReview, error) {
 	const op = "sellerReviewService.GetReviewsBySellerID()"
 	log := s.logger.With(zap.String("op", op))
 
