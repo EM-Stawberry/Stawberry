@@ -58,6 +58,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
+	log.Info("Repositories initialized")
 	tokenRepository := repository.NewTokenRepository(db)
 	log.Info("Repositories initialized")
 
@@ -77,6 +78,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()
+
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
