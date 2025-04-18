@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	entity "github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -84,20 +84,6 @@ func (m *MockRepository) InsertUser(ctx context.Context, user User) (uint, error
 func (mr *MockRepositoryMockRecorder) InsertUser(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUser", reflect.TypeOf((*MockRepository)(nil).InsertUser), ctx, user)
-}
-
-// UpdateUser mocks base method.
-func (m *MockRepository) UpdateUser(ctx context.Context, user User) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", ctx, user)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockRepositoryMockRecorder) UpdateUser(ctx, user any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockRepository)(nil).UpdateUser), ctx, user)
 }
 
 // MockTokenService is a mock of TokenService interface.

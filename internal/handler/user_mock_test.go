@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	user "github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	entity "github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	user "github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -117,18 +117,4 @@ func (m *MockUserService) Refresh(ctx context.Context, refreshToken, fingerprint
 func (mr *MockUserServiceMockRecorder) Refresh(ctx, refreshToken, fingerprint any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockUserService)(nil).Refresh), ctx, refreshToken, fingerprint)
-}
-
-// UpdateUser mocks base method.
-func (m *MockUserService) UpdateUser(ctx context.Context, id uint, updateUser user.UpdateUser) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", ctx, id, updateUser)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockUserServiceMockRecorder) UpdateUser(ctx, id, updateUser any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUserService)(nil).UpdateUser), ctx, id, updateUser)
 }

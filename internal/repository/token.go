@@ -8,6 +8,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
@@ -26,11 +27,13 @@ func (r *tokenRepository) InsertToken(
 	ctx context.Context,
 	token entity.RefreshToken,
 ) error {
+	stmt := sq.Insert("refresh_tokens").
+		Columns("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
+		Values(token.UUID, token.CreatedAt, token.ExpiresAt, token.RevokedAt, token.Fingerprint, token.UserID)
 
-	query := `INSERT into refresh_tokens (uuid, created_at, expires_at, revoked_at, fingerprint, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6)`
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
 
-	_, err := r.db.ExecContext(ctx, query, token.UUID, token.CreatedAt, token.ExpiresAt, token.RevokedAt, token.Fingerprint, token.UserID)
+	_, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -56,10 +59,13 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 	ctx context.Context,
 	userID uint,
 ) ([]entity.RefreshToken, error) {
-	query := `SELECT uuid, created_at, expires_at, revoked_at, fingerprint, user_id
-		FROM refresh_tokens WHERE user_id = $1`
+	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
+		From("refresh_tokens").
+		Where(sq.Eq{"user_id": userID})
 
-	rows, err := r.db.QueryxContext(ctx, query, userID)
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		return nil, &apperror.TokenError{
 			Code:    apperror.DatabaseError,
@@ -91,11 +97,14 @@ func (r *tokenRepository) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
+	stmt := sq.Update("refresh_tokens").
+		Set("revoked_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Eq{"revoked_at": nil})
 
-	query := `UPDATE refresh_tokens
-						SET revoked_at=NOW()
-						WHERE user_id=$1 and revoked_at is NULL`
-	res, err := r.db.ExecContext(ctx, query, userID)
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	res, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		return &apperror.TokenError{
@@ -128,9 +137,13 @@ func (r *tokenRepository) GetByUUID(
 ) (entity.RefreshToken, error) {
 	var tokenModel model.RefreshToken
 
-	query := `SELECT uuid, created_at, expires_at, revoked_at, fingerprint, user_id
-		FROM refresh_tokens WHERE uuid = $1`
-	err := r.db.QueryRowxContext(ctx, query, uuid).StructScan(&tokenModel)
+	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
+		From("refresh_tokens").
+		Where(sq.Eq{"uuid": uuid})
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&tokenModel)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.RefreshToken{}, apperror.ErrTokenNotFound
@@ -152,14 +165,17 @@ func (r *tokenRepository) Update(
 ) (entity.RefreshToken, error) {
 	refreshModel := model.ConvertTokenFromEntity(refresh)
 
-	query := `UPDATE refresh_tokens
-		SET created_at = $1, expires_at = $2, revoked_at = $3, fingerprint = $4, user_id = $5
-		WHERE uuid = $6
-		RETURNING uuid, created_at, expires_at, revoked_at, fingerprint, user_id`
+	stmt := sq.Update("refresh_tokens").
+		Set("created_at", refresh.CreatedAt).
+		Set("expires_at", refresh.ExpiresAt).
+		Set("revoked_at", refresh.RevokedAt).
+		Set("fingerprint", refresh.Fingerprint).
+		Set("user_id", refresh.UserID).
+		Where(sq.Eq{"uuid": refresh.UUID})
 
-	res, err := r.db.ExecContext(ctx, query,
-		refresh.CreatedAt, refresh.ExpiresAt, refresh.RevokedAt,
-		refresh.Fingerprint, refresh.UserID, refresh.UUID)
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	res, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		return entity.RefreshToken{}, &apperror.TokenError{
