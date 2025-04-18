@@ -29,7 +29,7 @@ type productHandler struct {
 	productService ProductService
 }
 
-func NewProductHandler(productService ProductService) productHandler {
+/* func NewProductHandler(productService ProductService) productHandler {
 	return productHandler{productService: productService}
 }
 
@@ -53,7 +53,7 @@ func (h *productHandler) PostProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
-}
+} */
 
 func (h *productHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")

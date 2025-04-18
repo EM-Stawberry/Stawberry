@@ -29,7 +29,7 @@ func (r *productRepository) InsertProduct(
 	product product.Product,
 ) (uint, error) {
 	productModel := model.ConvertProductFromSvc(product)
-	if err := r.db.WithContext(ctx).Create(productModel).Error; err != nil {
+	/* if err := r.db.WithContext(ctx).Create(productModel).Error; err != nil {
 		if isDuplicateError(err) {
 			return 0, &apperror.ProductError{
 				Code:    apperror.DuplicateError,
@@ -43,7 +43,7 @@ func (r *productRepository) InsertProduct(
 			Err:     err,
 		}
 	}
-
+ */
 	return productModel.ID, nil
 }
 
@@ -190,7 +190,7 @@ func (r *productRepository) SelectStoreProducts(
 	id string, offset, limit int,
 ) ([]entity.Product, int, error) {
 	var total int64
-	if err := r.db.WithContext(ctx).
+	/* if err := r.db.WithContext(ctx).
 		Model(&model.Product{}).
 		Where("store_id = ?", id).
 		Count(&total).Error; err != nil {
@@ -199,10 +199,10 @@ func (r *productRepository) SelectStoreProducts(
 			Message: "failed to count store products",
 			Err:     err,
 		}
-	}
+	} */
 
 	var products []entity.Product
-	if err := r.db.WithContext(ctx).
+	/* if err := r.db.WithContext(ctx).
 		Where("store_id = ?", id).
 		Offset(offset).Limit(limit).
 		Find(&products).Error; err != nil {
@@ -211,7 +211,7 @@ func (r *productRepository) SelectStoreProducts(
 			Message: "failed to fetch store products",
 			Err:     err,
 		}
-	}
+	} */
 
 	return products, int(total), nil
 }
@@ -221,7 +221,7 @@ func (r *productRepository) UpdateProduct(
 	id string,
 	update product.UpdateProduct,
 ) error {
-	updateModel := model.ConvertUpdateProductFromSvc(update)
+	/* updateModel := model.ConvertUpdateProductFromSvc(update)
 	tx := r.db.WithContext(ctx).Model(&model.Product{}).Where("id = ?", id).Updates(updateModel)
 	if tx.Error != nil {
 		if isDuplicateError(tx.Error) {
@@ -240,7 +240,7 @@ func (r *productRepository) UpdateProduct(
 
 	if tx.RowsAffected == 0 {
 		return apperror.ErrProductNotFound
-	}
+	} */
 
 	return nil
 }

@@ -34,14 +34,9 @@ func ConvertProductFromSvc(p product.Product) Product {
 func ConvertProductToEntity(p Product) entity.Product {
 	return entity.Product{
 		ID:          p.ID,
-		StoreID:     p.StoreID,
 		Name:        p.Name,
 		Description: p.Description,
-		Price:       p.Price,
-		Category:    p.Category,
-		InStock:     p.InStock,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		CategoryID:  p.CategoryID,
 	}
 }
 
