@@ -1,4 +1,4 @@
-module github.com/zuzaaa-dev/stawberry
+module github.com/EM-Stawberry/Stawberry
 
 go 1.22
 
