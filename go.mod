@@ -28,6 +28,7 @@ require (
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
+	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/tools v0.32.0 // indirect
