@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"go.uber.org/zap"
 )
 
