@@ -7,9 +7,9 @@ import (
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
-	"go.uber.org/zap"
 
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
+	"github.com/zuzaaa-dev/stawberry/pkg/logger"
 	"github.com/zuzaaa-dev/stawberry/pkg/migrator"
 
 	"github.com/gin-gonic/gin"
@@ -23,9 +23,6 @@ import (
 
 // Global variables for application state
 var (
-	envLocal = "local"
-	envProd  = "prod"
-
 	router *gin.Engine
 )
 
@@ -51,7 +48,8 @@ func main() {
 func initializeApp() error {
 	// Load configuration
 	cfg := config.LoadConfig()
-	log := setupLogger(cfg.Environment)
+
+	log := logger.SetupLogger(cfg.Environment)
 	log.Info("Config initialized")
 	log.Info("Logger initialized")
 
@@ -62,6 +60,7 @@ func initializeApp() error {
 
 	// Initialize database connection
 	db := repository.InitDB(cfg)
+	log.Info("Connection initialized")
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(10)
@@ -73,39 +72,24 @@ func initializeApp() error {
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
+	log.Info("Repositories initialized")
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
 	userService := user.NewUserService(userRepository)
 	notificationService := notification.NewNotificationService(notificationRepository)
+	log.Info("Services initialized")
 
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
 	notificationHandler := handler.NewNotificationHandler(notificationService)
+	log.Info("Handlers initialized")
+
 	s3 := objectstorage.ObjectStorageConn(cfg)
+	log.Info("Storage initialized")
 
 	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
 
 	return nil
-}
-
-func setupLogger(env string) *zap.Logger {
-	var log *zap.Logger
-	var err error
-
-	switch env {
-	case envLocal:
-		log, err = zap.NewDevelopment()
-		if err != nil {
-			panic(err)
-		}
-	case envProd:
-		log, err = zap.NewProduction()
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	return log
 }
