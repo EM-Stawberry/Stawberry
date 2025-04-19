@@ -1,3 +1,9 @@
+// @title Stawberry API
+// @version 1.0
+// @description Это API для управления сделаками по продуктам.
+// @host localhost:8080
+// @BasePath /
+
 package handler
 
 import (
@@ -5,6 +11,9 @@ import (
 	"net/http"
 	"time"
 
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/zuzaaa-dev/stawberry/docs"
 	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
 	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
@@ -12,6 +21,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @Summary Получить статус сервера
+// @Description Возвращает статус сервера и текущее время
+// @Tags health
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
+// @Router /health [get]
 func SetupRouter(
 	productH productHandler,
 	offerH offerHandler,
@@ -34,6 +49,9 @@ func SetupRouter(
 			"time":   time.Now().Unix(),
 		})
 	})
+
+	// Swagger UI endpoint
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	base := router.Group(basePath)
 	auth := base.Group("/auth")

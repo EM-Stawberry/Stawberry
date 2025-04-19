@@ -3,13 +3,13 @@ package repository
 import (
 	"log"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/zuzaaa-dev/stawberry/config"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-func InitDB(cfg *config.Config) *gorm.DB {
-	db, err := gorm.Open(postgres.Open(cfg.GetDBConnString()), &gorm.Config{})
+func InitDB(cfg *config.Config) *sqlx.DB {
+	db, err := sqlx.Connect("pgx", cfg.GetDBConnString())
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
