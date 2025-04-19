@@ -14,6 +14,8 @@ import (
 
 var signingMethod = jwt.SigningMethodHS256
 
+//go:generate mockgen -source=$GOFILE -destination=token_mock_test.go -package=token Repository
+
 type Repository interface {
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
 	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
@@ -77,7 +79,7 @@ func (ts *tokenService) ValidateToken(
 // parse извлекает токен JWT и извлекает claims.
 func (ts *tokenService) parse(token string) (entity.AccessToken, error) {
 	claim := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] != signingMethod.Alg() {
 			appError := apperror.ErrInvalidToken
 			appError.Err = fmt.Errorf("invalid signing method")
@@ -154,6 +156,7 @@ func (ts *tokenService) Update(
 func generateJWT(userID uint, secret string, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
+		"iat": time.Now().Unix(),
 		"exp": time.Now().Add(duration).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

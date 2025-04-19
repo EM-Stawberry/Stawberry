@@ -2,6 +2,9 @@
 
 .env
 
+# Test coverage
+*.out
+
 #Frontend
 
 # Node.js

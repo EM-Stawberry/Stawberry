@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
@@ -73,11 +74,13 @@ func initializeApp() error {
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
+	tokenRepository := repository.NewTokenRepository(db)
 	log.Info("Repositories initialized")
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	userService := user.NewUserService(userRepository)
+	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
+	userService := user.NewUserService(userRepository, tokenService)
 	notificationService := notification.NewNotificationService(notificationRepository)
 	log.Info("Services initialized")
 
@@ -90,7 +93,7 @@ func initializeApp() error {
 	s3 := objectstorage.ObjectStorageConn(cfg)
 	log.Info("Storage initialized")
 
-	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
+	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, userService, tokenService, s3, "api/v1")
 
 	return nil
 }

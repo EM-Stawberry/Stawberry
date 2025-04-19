@@ -11,13 +11,14 @@ import (
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=user Repository, TokenService
+
 const maxUsers = 5
 
 type Repository interface {
 	InsertUser(ctx context.Context, user User) (uint, error)
 	GetUser(ctx context.Context, email string) (entity.User, error)
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
-	UpdateUser(ctx context.Context, user User) error
 }
 
 type TokenService interface {
@@ -34,8 +35,8 @@ type userService struct {
 	tokenService   TokenService
 }
 
-func NewUserService(userRepo Repository) *userService {
-	return &userService{userRepository: userRepo}
+func NewUserService(userRepo Repository, tokenService TokenService) *userService {
+	return &userService{userRepository: userRepo, tokenService: tokenService}
 }
 
 // CreateUser создает пользователя, хэшируя его пароль, используя HashArgon2id
@@ -127,11 +128,11 @@ func (us *userService) Refresh(
 	}
 
 	if !refresh.IsValid() {
-		return "", "", errors.New("invalid refresh token")
+		return "", "", apperror.ErrInvalidToken
 	}
 
 	if refresh.Fingerprint != fingerprint {
-		return "", "", errors.New("invalid fingerprint")
+		return "", "", apperror.ErrInvalidFingerprint
 	}
 
 	now := time.Now()
@@ -175,7 +176,7 @@ func (us *userService) Logout(
 	}
 
 	if refresh.Fingerprint != fingerprint {
-		return errors.New("invalid fingerprint")
+		return apperror.ErrInvalidFingerprint
 	}
 
 	now := time.Now()
@@ -191,8 +192,4 @@ func (us *userService) Logout(
 
 func (us *userService) GetUserByID(ctx context.Context, id uint) (entity.User, error) {
 	return us.userRepository.GetUserByID(ctx, id)
-}
-
-func (us *userService) UpdateUser(ctx context.Context, id uint, updateUser UpdateUser) error {
-	panic("implement me")
 }

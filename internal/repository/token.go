@@ -2,9 +2,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
+	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,6 +27,29 @@ func (r *tokenRepository) InsertToken(
 	ctx context.Context,
 	token entity.RefreshToken,
 ) error {
+	stmt := sq.Insert("refresh_tokens").
+		Columns("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
+		Values(token.UUID, token.CreatedAt, token.ExpiresAt, token.RevokedAt, token.Fingerprint, token.UserID)
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	_, err := r.db.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr); pgErr.Code == pgerrcode.UniqueViolation {
+			return &apperror.TokenError{
+				Code:    apperror.DuplicateError,
+				Message: "token with this uuid already exists",
+				Err:     err,
+			}
+		}
+		return &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to create token",
+			Err:     err,
+		}
+	}
 
 	return nil
 }
@@ -30,11 +59,34 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 	ctx context.Context,
 	userID uint,
 ) ([]entity.RefreshToken, error) {
-	var tokensModel []model.RefreshToken
+	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
+		From("refresh_tokens").
+		Where(sq.Eq{"user_id": userID})
 
-	tokens := make([]entity.RefreshToken, 0, len(tokensModel))
-	for _, token := range tokensModel {
-		tokens = append(tokens, model.ConvertTokenToEntity(token))
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		return nil, &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to fetch user tokens",
+			Err:     err,
+		}
+	}
+
+	defer rows.Close()
+
+	tokens := make([]entity.RefreshToken, 0)
+	for rows.Next() {
+		var tokenModel model.RefreshToken
+		if err := rows.StructScan(&tokenModel); err != nil {
+			return nil, &apperror.TokenError{
+				Code:    apperror.DatabaseError,
+				Message: "failed to fetch user tokens",
+				Err:     err,
+			}
+		}
+		tokens = append(tokens, model.ConvertTokenToEntity(tokenModel))
 	}
 
 	return tokens, nil
@@ -45,6 +97,35 @@ func (r *tokenRepository) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
+	stmt := sq.Update("refresh_tokens").
+		Set("revoked_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Eq{"revoked_at": nil})
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	res, err := r.db.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		return &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to revoke user tokens",
+			Err:     err,
+		}
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to get rows affected",
+			Err:     err,
+		}
+	}
+
+	if rowsAffected == 0 {
+		return apperror.ErrTokenNotFound
+	}
 
 	return nil
 }
@@ -56,6 +137,24 @@ func (r *tokenRepository) GetByUUID(
 ) (entity.RefreshToken, error) {
 	var tokenModel model.RefreshToken
 
+	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
+		From("refresh_tokens").
+		Where(sq.Eq{"uuid": uuid})
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&tokenModel)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.RefreshToken{}, apperror.ErrTokenNotFound
+		}
+		return entity.RefreshToken{}, &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to fetch token by uuid",
+			Err:     err,
+		}
+	}
+
 	return model.ConvertTokenToEntity(tokenModel), nil
 }
 
@@ -65,6 +164,39 @@ func (r *tokenRepository) Update(
 	refresh entity.RefreshToken,
 ) (entity.RefreshToken, error) {
 	refreshModel := model.ConvertTokenFromEntity(refresh)
+
+	stmt := sq.Update("refresh_tokens").
+		Set("created_at", refresh.CreatedAt).
+		Set("expires_at", refresh.ExpiresAt).
+		Set("revoked_at", refresh.RevokedAt).
+		Set("fingerprint", refresh.Fingerprint).
+		Set("user_id", refresh.UserID).
+		Where(sq.Eq{"uuid": refresh.UUID})
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	res, err := r.db.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		return entity.RefreshToken{}, &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to update refresh token",
+			Err:     err,
+		}
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return entity.RefreshToken{}, &apperror.TokenError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to get rows affected",
+			Err:     err,
+		}
+	}
+
+	if rowsAffected == 0 {
+		return entity.RefreshToken{}, apperror.ErrTokenNotFound
+	}
 
 	return model.ConvertTokenToEntity(refreshModel), nil
 }
