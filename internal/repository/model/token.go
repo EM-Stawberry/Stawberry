@@ -3,8 +3,8 @@ package model
 import (
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/google/uuid"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 )
 
 type RefreshToken struct {

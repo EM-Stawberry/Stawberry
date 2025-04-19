@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"go.uber.org/zap"
 )
 

@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/zuzaaa-dev/stawberry/config"
+	"github.com/EM-Stawberry/Stawberry/config"
 	"go.uber.org/zap"
 )
 

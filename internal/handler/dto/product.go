@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
+import "github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 
 type PostProductReq struct {
 	StoreID     uint    `json:"store_id"`
