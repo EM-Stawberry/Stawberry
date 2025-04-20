@@ -16,7 +16,7 @@ var (
 type ProductReviewRepository interface {
 	AddReview(ctx context.Context, productID int, userID int, rating int, review string) error
 	GetReviewsByProductID(ctx context.Context, productID int) ([]entity.ProductReview, error)
-	GetProductByID(ctx context.Context, productID int) error
+	GetProductByID(ctx context.Context, productID int) (entity.Product, error)
 }
 
 type ProductReviewService struct {
@@ -40,7 +40,7 @@ func (s *ProductReviewService) AddReview(
 	log := s.logger.With(zap.String("op", op))
 
 	log.Info("Existence check")
-	err := s.prr.GetProductByID(ctx, productID)
+	_, err := s.prr.GetProductByID(ctx, productID)
 	if err != nil {
 		log.Warn("Product not found", zap.Int("productID", productID), zap.Error(err))
 		return 0, fmt.Errorf("op: %s, err: %s", op, ErrProductNotFound)
@@ -66,7 +66,7 @@ func (s *ProductReviewService) GetReviewsByProductID(
 	log := s.logger.With(zap.String("op", op))
 
 	log.Info("Existence check")
-	err := s.prr.GetProductByID(ctx, productID)
+	_, err := s.prr.GetProductByID(ctx, productID)
 	if err != nil {
 		log.Warn("Product not found", zap.Int("productID", productID), zap.Error(err))
 		return nil, fmt.Errorf("op: %s, err: %s", op, ErrProductNotFound)

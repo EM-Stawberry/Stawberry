@@ -1,4 +1,4 @@
-package handler
+package reviews
 
 import (
 	"context"
@@ -12,23 +12,37 @@ import (
 )
 
 type SellerReviewsService interface {
-	AddReviews(ctx context.Context, sellerID int, userID int, rating int, review string) error
+	AddReview(ctx context.Context, sellerID int, userID int, rating int, review string) (int, error)
 	GetReviewsById(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
 }
 
-type sellerReviewsHandler struct {
+type SellerReviewsHandler struct {
 	srs    SellerReviewsService
 	logger *zap.Logger
 }
 
-func NewSellerReviewsHandler(srs SellerReviewsService, l *zap.Logger) *sellerReviewsHandler {
-	return &sellerReviewsHandler{
+func NewSellerReviewsHandler(srs SellerReviewsService, l *zap.Logger) *SellerReviewsHandler {
+	return &SellerReviewsHandler{
 		srs:    srs,
 		logger: l,
 	}
 }
 
-func (h *sellerReviewsHandler) AddReviews(c *gin.Context) {
+// AddReviews godoc
+// @Summary Добавление отзыва о продавце
+// @Description Добавляет новый отзыв о продавце
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "Seller ID"
+// @Param review body dto.AddReviewDTO true "Данные отзыва"
+// @Security BearerAuth
+// @Success 201 {object} map[string]string "Отзыв успешно добавлен"
+// @Failure 400 {object} map[string]string "Некорректный ввод"
+// @Failure 401 {object} map[string]string "Неавторизованный доступ"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/sellers/{id}/reviews [post]
+func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
 	const op = "sellerReviewsHandler.AddReviews()"
 	log := h.logger.With(zap.String("op", op))
 
@@ -39,7 +53,7 @@ func (h *sellerReviewsHandler) AddReviews(c *gin.Context) {
 		return
 	}
 
-	var addReview = dto.AddReviewDTO
+	var addReview dto.AddReviewDTO
 	if err := c.ShouldBindJSON(&addReview); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
 		log.Warn("Failed to bind JSON", zap.Error(err))
@@ -60,17 +74,28 @@ func (h *sellerReviewsHandler) AddReviews(c *gin.Context) {
 		return
 	}
 
-	err = h.srs.AddReviews(c.Request.Context(), sellerID, uid, addReview.Rating, addReview.Review)
+	id, err := h.srs.AddReview(c.Request.Context(), sellerID, uid, addReview.Rating, addReview.Review)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
-		log.Warn("Failed to add review", zap.Error(err))
+		log.Warn("Failed to add review", zap.Int("id", id), zap.Error(err))
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "review added successfully"})
 }
 
-func (h *sellerReviewsHandler) GetReviews(c *gin.Context) {
+// GetReviews godoc
+// @Summary Получение списка отзывов о продавце
+// @Description Получает все отзывы о продавце по его ID
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "Seller ID"
+// @Success 200 {array} entity.SellerReview "Список отзывов"
+// @Failure 400 {object} map[string]string "Некорректный ID продавца"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/sellers/{id}/reviews [get]
+func (h *SellerReviewsHandler) GetReviews(c *gin.Context) {
 	const op = "sellerReviewsHandler.GetReviews()"
 	log := h.logger.With(zap.String("op", op))
 

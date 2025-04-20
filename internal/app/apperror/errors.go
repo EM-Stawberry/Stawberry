@@ -59,3 +59,22 @@ var (
 
 	ErrNotificationNotFound = New(NotFound, "notification not found", nil)
 )
+
+// ReviewError представляет ошибку, связанную с отзывами
+type ReviewError struct {
+	Code    string
+	Message string
+}
+
+// Error реализует интерфейс error
+func (e *ReviewError) Error() string {
+	return e.Message
+}
+
+// Константы для кодов ошибок отзывов
+const (
+	ReviewNotFound      = "review_not_found"
+	ReviewDuplicate     = "review_duplicate"
+	ReviewDatabaseError = "review_database_error"
+	ReviewUnauthorized  = "review_unauthorized"
+)

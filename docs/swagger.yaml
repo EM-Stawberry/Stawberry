@@ -27,6 +27,172 @@ info:
   title: Stawberry API
   version: '1.0'
 paths:
+  /api/products/{id}/reviews:
+    get:
+      consumes:
+      - application/json
+      description: Получает все отзывы о продукте по его ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список отзывов
+          schema:
+            items:
+              $ref: '#/definitions/entity.ProductReview'
+            type: array
+        "400":
+          description: Некорректный ID продукта
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получение списка отзывов о продукте
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Добавляет новый отзыв о продукте
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные отзыва
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddReviewDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Отзыв успешно добавлен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный ввод
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Добавление отзыва о продукте
+      tags:
+      - reviews
+  /api/sellers/{id}/reviews:
+    get:
+      consumes:
+      - application/json
+      description: Получает все отзывы о продавце по его ID
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список отзывов
+          schema:
+            items:
+              $ref: '#/definitions/entity.SellerReview'
+            type: array
+        "400":
+          description: Некорректный ID продавца
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получение списка отзывов о продавце
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Добавляет новый отзыв о продавце
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные отзыва
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddReviewDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Отзыв успешно добавлен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный ввод
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Добавление отзыва о продавце
+      tags:
+      - reviews
   /health:
     get:
       description: Возвращает статус сервера и текущее время
@@ -88,3 +254,10 @@ paths:
       tags:
         - offer
 swagger: '2.0'
+securityDefinitions:
+  BearerAuth:
+    description: 'Bearer token for authentication. Format: "Bearer <token>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

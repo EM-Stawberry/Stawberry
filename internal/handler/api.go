@@ -1,8 +1,7 @@
-// @title Stawberry API
-// @version 1.0
-// @description Это API для управления сделаками по продуктам.
-// @host localhost:8080
-// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Bearer token for authentication. Format: "Bearer <token>"
 
 package handler
 
@@ -14,6 +13,7 @@ import (
 	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -33,6 +33,8 @@ func SetupRouter(
 	offerH *OfferHandler,
 	userH *UserHandler,
 	notificationH *NotificationHandler,
+	productReviewH *reviews.ProductReviewsHandler,
+	sellerReviewH *reviews.SellerReviewsHandler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
 	basePath string,
@@ -50,6 +52,7 @@ func SetupRouter(
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
 
+	// Эндпоинт для проверки здоровья сервиса
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
@@ -57,22 +60,27 @@ func SetupRouter(
 		})
 	})
 
-	// Swagger UI endpoint
+	// Swagger UI эндпоинт
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	base := router.Group(basePath)
-
 	auth := base.Group("/auth")
-	userH.RegisterRoutes(auth)
+	{
+		auth.POST("/reg", userH.Registration)
+		auth.POST("/login", userH.Login)
+		auth.POST("/logout", userH.Logout)
+		auth.POST("/refresh", userH.Refresh)
+	}
 
-	// Заглушки для нереализованных хендлеров.
-	// Не забудьте убрать их и добавить вызов .RegisterRoutes для каждого хендлера
-	_ = productH
-	_ = offerH
-	_ = notificationH
+	public := base.Group("/")
+	{
+		public.GET("/products/:id/reviews", productReviewH.GetReviews)
+		public.GET("/sellers/:id/reviews", sellerReviewH.GetReviews)
+	}
 
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
+		// Тестовый эндпоинт для проверки аутентификации
 		secured.GET("/auth_required", func(c *gin.Context) {
 			userID, ok := helpers.UserIDContext(c)
 			var status string
@@ -96,7 +104,40 @@ func SetupRouter(
 		})
 
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+
+		// Эндпоинты для добавления отзывов
+		secured.POST("/products/:id/reviews", productReviewH.AddReview)
+		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
 
 	return router
+}
+
+func handleReviewError(c *gin.Context, err error) {
+	var reviewErr *apperror.ReviewError
+	if errors.As(err, &reviewErr) {
+		status := http.StatusInternalServerError
+
+		switch reviewErr.Code {
+		case apperror.NotFound:
+			status = http.StatusNotFound
+		case apperror.DuplicateError:
+			status = http.StatusConflict
+		case apperror.DatabaseError:
+			status = http.StatusInternalServerError
+		case apperror.Unauthorized:
+			status = http.StatusUnauthorized
+		}
+
+		c.JSON(status, gin.H{
+			"code":    reviewErr.Code,
+			"message": reviewErr.Message,
+		})
+		return
+	}
+
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"code":    apperror.InternalError,
+		"message": "An unexpected error occurred",
+	})
 }

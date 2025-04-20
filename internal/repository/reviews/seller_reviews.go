@@ -1,4 +1,4 @@
-package repository
+package reviews
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func NewSellerReviewRepository(db *sqlx.DB, l *zap.Logger) *sellerReviewsReposit
 
 func (r *sellerReviewsRepository) AddReview(
 	ctx context.Context, sellerID int, userID int, rating int, review string,
-) error {
+) (int, error) {
 	const op = "sellerReviewsRepository.AddReview()"
 	log := r.logger.With(zap.String("op", op))
 
@@ -34,16 +34,16 @@ func (r *sellerReviewsRepository) AddReview(
 		Values(sellerID, userID, rating, review).ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
-		return fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
 	}
 
 	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		log.Error("Failed to execute query", zap.Error(err))
-		return fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
 	}
 
-	return nil
+	return sellerID, nil
 }
 
 func (r *sellerReviewsRepository) GetReviewsBySellerID(
