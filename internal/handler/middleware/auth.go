@@ -64,6 +64,7 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 		}
 
 		c.Set("user", user)
+		c.Set("userID", int(user.ID))
 		c.Next()
 	}
 }

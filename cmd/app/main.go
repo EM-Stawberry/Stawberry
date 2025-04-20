@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/reviews"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
@@ -19,6 +20,8 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
+	hdlr "github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	repo "github.com/EM-Stawberry/Stawberry/internal/repository/reviews"
 	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 	"github.com/gin-gonic/gin"
 )
@@ -78,30 +81,39 @@ func initializeApp() error {
 	notificationRepository := repository.NewNotificationRepository(db)
 	log.Info("Repositories initialized")
 	tokenRepository := repository.NewTokenRepository(db)
+	productReviewsRepository := repo.NewProductReviewRepository(db, log)
+	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
 	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
 	userService := user.NewUserService(userRepository, tokenService)
 	notificationService := notification.NewNotificationService(notificationRepository)
+	productReviewsService := reviews.NewProductReviewService(productReviewsRepository, log)
+	sellerReviewsService := reviews.NewSellerReviewService(sellerReviewsRepository, log)
 	log.Info("Services initialized")
 
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
 	notificationHandler := handler.NewNotificationHandler(notificationService)
+	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
+	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
 	log.Info("Handlers initialized")
 
 	s3 := objectstorage.ObjectStorageConn(cfg)
 	log.Info("Storage initialized")
 
 	router = handler.SetupRouter(
+
 		productHandler,
 		offerHandler,
 		userHandler,
-		notificationHandler, userService, tokenService,
+		notificationHandler,
+		productReviewsHandler, sellerReviewsHandler,
+		userService, tokenService,
 		s3,
-		"api/v1",
+		"api",
 		log,
 	)
 
