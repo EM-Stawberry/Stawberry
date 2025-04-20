@@ -11,7 +11,7 @@ import (
 type SellerReviewRepository interface {
 	AddReview(ctx context.Context, sellerID int, userID int, rating int, review string) (int, error)
 	GetReviewsBySellerID(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
-	GetSellerByID(ctx context.Context, sellerID int) error
+	GetSellerByID(ctx context.Context, sellerID int) (entity.SellerReview, error)
 }
 
 type sellerReviewService struct {
@@ -35,7 +35,7 @@ func (s *sellerReviewService) AddReview(
 	log := s.logger.With(zap.String("op", op))
 
 	log.Info("Existence check")
-	err := s.srs.GetSellerByID(ctx, sellerID)
+	_, err := s.srs.GetSellerByID(ctx, sellerID)
 	if err != nil {
 		log.Warn("Seller not found", zap.Int("sellerID", sellerID), zap.Error(err))
 		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
@@ -52,7 +52,7 @@ func (s *sellerReviewService) AddReview(
 	return sellerID, nil
 }
 
-func (s *sellerReviewService) GetReviewsBySellerID(
+func (s *sellerReviewService) GetReviewsById(
 	ctx context.Context, sellerID int,
 ) (
 	[]entity.SellerReview, error,
@@ -61,14 +61,14 @@ func (s *sellerReviewService) GetReviewsBySellerID(
 	log := s.logger.With(zap.String("op", op))
 
 	log.Info("Existence check")
-	err := s.srs.GetSellerByID(ctx, sellerID)
+	_, err := s.srs.GetSellerByID(ctx, sellerID)
 	if err != nil {
 		log.Warn("Seller not found", zap.Int("sellerID", sellerID), zap.Error(err))
 		return nil, fmt.Errorf("op: %s, err: %s", op, err.Error())
 	}
 
 	log.Info("Receiving reviews")
-	reviews, err := s.GetReviewsBySellerID(ctx, sellerID)
+	reviews, err := s.GetReviewsById(ctx, sellerID)
 	if err != nil {
 		log.Warn("Failed to get reviews", zap.Error(err))
 		return nil, fmt.Errorf("op: %s, err: %s", op, err.Error())
