@@ -19,7 +19,7 @@ type ProductService interface {
 	CreateProduct(ctx context.Context, product product.Product) (uint, error)
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByName(ctx context.Context, name string, offset, limit int) (entity.Product,int, error)
+	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product,int, error)
 	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
 	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
@@ -29,10 +29,11 @@ type productHandler struct {
 	productService ProductService
 }
 
-/* func NewProductHandler(productService ProductService) productHandler {
+ func NewProductHandler(productService ProductService) productHandler {
 	return productHandler{productService: productService}
 }
 
+/*
 func (h *productHandler) PostProduct(c *gin.Context) {
 	var postProductReq dto.PostProductReq
 
