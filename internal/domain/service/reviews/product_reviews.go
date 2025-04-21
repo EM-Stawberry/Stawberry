@@ -43,14 +43,14 @@ func (s *ProductReviewService) AddReview(
 	_, err := s.prr.GetProductByID(ctx, productID)
 	if err != nil {
 		log.Warn("Product not found", zap.Int("productID", productID), zap.Error(err))
-		return 0, fmt.Errorf("op: %s, err: %s", op, ErrProductNotFound)
+		return 0, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	log.Info("Adding a review")
 	err = s.prr.AddReview(ctx, productID, userID, rating, review)
 	if err != nil {
 		log.Warn("Failed to add review", zap.Error(err))
-		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	log.Info("Review added successfully")
