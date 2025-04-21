@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"errors"
+	"fmt"
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
 	"github.com/zuzaaa-dev/stawberry/internal/repository/model"
@@ -64,9 +65,7 @@ func (r *productRepository) GetProductByID(
 		}
 	}
 
-	var produnilctModel model.Product
-
-	return model.ConvertProductToEntity(produnilctModel), nil
+	return model.ConvertProductToEntity(productModel), nil
 }
 
 func (r *productRepository) SelectProducts(
@@ -186,6 +185,93 @@ func (r *productRepository) SelectProductsByCategoryID(
 	}
     return products, total, nil
 	}
+
+func (r *productRepository) SelectProductsByCategoryAndAttributes(
+	ctx context.Context,
+	categoryID int,
+	filters map[string]interface{},
+	limit, offset int,
+) ([]entity.Product, int, error) {
+	var products []entity.Product
+
+
+	var params []interface{}
+	queryCategoryID := "p.category_id = $1"
+
+	params = append(params, categoryID)
+
+	paramIdx := 2
+
+	var joinAttributes bool
+	var attrConditions []string
+
+	for attr, val := range filters {
+		joinAttributes = true
+		attrConditions = append(attrConditions, fmt.Sprintf("pa.attributes ->> `%s` = $%d", attr, paramIdx))
+		params = append(params, val)
+		paramIdx++
+	}
+
+	var query string
+	if joinAttributes {
+		query = fmt.Sprintf(`
+			SELECT p.id, p.name, p.description
+			FROM products p
+			JOIN product_attributes pa ON p.id = pa.product_id
+			WHERE %s AND %s
+			LIMIT $%d OFFSET $%d
+		`,
+			queryCategoryID,
+			strings.Join(attrConditions, " AND "),
+			paramIdx, paramIdx+1,
+		)
+	} else {
+		query = fmt.Sprintf(`
+			SELECT p.id, p.name, p.description
+			FROM products p
+			WHERE %s
+			LIMIT $%d OFFSET $%d
+		`,
+			queryCategoryID,
+			paramIdx, paramIdx+1,
+		)
+	}
+
+	params = append(params, limit, offset)
+
+	err := r.db.SelectContext(ctx, &products, query, params...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var totalCount int
+	var countQuery string
+	if joinAttributes {
+		countQuery = fmt.Sprintf(`
+			SELECT COUNT(*)
+			FROM products p
+			JOIN product_attributes pa ON p.id = pa.product_id
+			WHERE %s AND %s
+		`,
+			queryCategoryID,
+			strings.Join(attrConditions, " AND "),
+		)
+	} else {
+		countQuery = fmt.Sprintf(`
+			SELECT COUNT(*)
+			FROM products p
+			WHERE %s
+		`, queryCategoryID)
+	}
+
+	err = r.db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx]...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return products, totalCount, nil
+}
+
 
 func (r *productRepository) SelectStoreProducts(
 	ctx context.Context,

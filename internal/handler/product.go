@@ -19,8 +19,9 @@ type ProductService interface {
 	CreateProduct(ctx context.Context, product product.Product) (uint, error)
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product,int, error)
+	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int,) ([]entity.Product, int, error)
 	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 }
@@ -187,6 +188,41 @@ func (h *productHandler) SearchProductsByCategoryID(c *gin.Context) {
 		},
 	})
 }
+
+func (h *productHandler) GetFilteredProducts(c *gin.Context) {
+	categoryIDStr := c.Query("category_id")
+	if categoryIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category_id is required"})
+		return
+	}
+	categoryID, err := strconv.Atoi(categoryIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category_id"})
+		return
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	filters := make(map[string]interface{})
+	for key, values := range c.Request.URL.Query() {
+		if key == "category_id" || key == "limit" || key == "offset" {
+			continue
+		}
+		if len(values) > 0 {
+			filters[key] = values[0]
+		}
+	}
+
+	products, total, err := h.productService.SelectProductsByCategoryAndAttributes(c.Request.Context(), categoryID, filters, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch products"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"total":    total,
+		"products": products,
+	})
+}
+
 
 func (h *productHandler) GetStoreProducts(c *gin.Context) {
 	id := c.Param("id")

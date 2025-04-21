@@ -12,6 +12,7 @@ type Repository interface {
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int,) ([]entity.Product, int, error)
 	SelectStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 }
@@ -62,6 +63,15 @@ func (ps *productService) SelectProductsByCategoryID(
 	limit int,
 ) ([]entity.Product, int, error) {
 	return ps.productRepository.SelectProductsByCategoryID(ctx,categoryID, offset, limit)
+}
+
+func (ps *productService) SelectProductsByCategoryAndAttributes(
+	ctx context.Context,
+	categoryID int,
+	filters map[string]interface{},
+	limit, offset int,
+) ([]entity.Product, int, error) {
+	return ps.productRepository.SelectProductsByCategoryAndAttributes(ctx, categoryID, filters, limit, offset)
 }
 
 func (ps *productService) GetStoreProducts(
