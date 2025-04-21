@@ -2,8 +2,11 @@ package reviews
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"go.uber.org/zap"
 )
@@ -37,15 +40,18 @@ func (s *sellerReviewService) AddReview(
 	log.Info("Existence check")
 	_, err := s.srs.GetSellerByID(ctx, sellerID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, apperror.NewReviewError(apperror.NotFound, "seller not found")
+		}
 		log.Warn("Seller not found", zap.Int("sellerID", sellerID), zap.Error(err))
-		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	log.Info("Adding a review")
-	sellerID, err = s.AddReview(ctx, sellerID, userID, rating, review)
+	sellerID, err = s.srs.AddReview(ctx, sellerID, userID, rating, review)
 	if err != nil {
 		log.Warn("Failed to add review", zap.Error(err))
-		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	log.Info("Review added successfully")
@@ -63,17 +69,19 @@ func (s *sellerReviewService) GetReviewsById(
 	log.Info("Existence check")
 	_, err := s.srs.GetSellerByID(ctx, sellerID)
 	if err != nil {
-		log.Warn("Seller not found", zap.Int("sellerID", sellerID), zap.Error(err))
-		return nil, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		var reviewErr *apperror.ReviewError
+		if errors.As(err, &reviewErr) {
+			return nil, err
+		}
+		log.Error("Failed to execute query", zap.Error(err))
+		return nil, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
-	log.Info("Receiving reviews")
-	reviews, err := s.GetReviewsById(ctx, sellerID)
+	reviews, err := s.srs.GetReviewsBySellerID(ctx, sellerID)
 	if err != nil {
-		log.Warn("Failed to get reviews", zap.Error(err))
-		return nil, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		log.Error("Failed to fetch reviews", zap.Error(err))
+		return nil, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
-	log.Info("Reviews received successfully")
 	return reviews, nil
 }

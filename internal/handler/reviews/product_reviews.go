@@ -2,9 +2,11 @@ package reviews
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews/dto"
 	"github.com/gin-gonic/gin"
@@ -108,7 +110,18 @@ func (h *ProductReviewsHandler) GetReviews(c *gin.Context) {
 
 	reviews, err := h.prs.GetReviewsByProductID(c.Request.Context(), productID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
+		var reviewErr *apperror.ReviewError
+		if errors.As(err, &reviewErr) {
+			switch reviewErr.Code {
+			case apperror.NotFound:
+				c.JSON(http.StatusNotFound, gin.H{"error": reviewErr.Message})
+				return
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
+		}
 		log.Warn("Failed to fetch reviews", zap.Error(err))
 		return
 	}

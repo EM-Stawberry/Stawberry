@@ -69,14 +69,14 @@ func (s *ProductReviewService) GetReviewsByProductID(
 	_, err := s.prr.GetProductByID(ctx, productID)
 	if err != nil {
 		log.Warn("Product not found", zap.Int("productID", productID), zap.Error(err))
-		return nil, fmt.Errorf("op: %s, err: %s", op, ErrProductNotFound)
+		return nil, err
 	}
 
 	log.Info("Receiving reviews")
 	reviews, err := s.prr.GetReviewsByProductID(ctx, productID)
 	if err != nil {
 		log.Warn("Failed to get reviews", zap.Error(err))
-		return nil, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return nil, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	log.Info("Reviews received successfully")
