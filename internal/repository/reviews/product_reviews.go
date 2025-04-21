@@ -30,19 +30,20 @@ func (r *productReviewsRepository) AddReview(
 	const op = "productReviewsRepository.AddReview()"
 	log := r.logger.With(zap.String("op", op))
 
-	query, args, err := squirrel.
-		Insert("product_reviews").
+	query, args, err := squirrel.Insert("product_reviews").
 		Columns("product_id", "user_id", "rating", "review").
-		Values(productID, userID, rating, review).ToSql()
+		Values(productID, userID, rating, review).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
-		return fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		log.Error("Failed to execute query", zap.Error(err))
-		return fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	return nil

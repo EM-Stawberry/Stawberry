@@ -78,7 +78,18 @@ func (h *ProductReviewsHandler) AddReview(c *gin.Context) {
 
 	id, err := h.prs.AddReview(c.Request.Context(), productID, uid, addReview.Rating, addReview.Review)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
+		var reviewErr *apperror.ReviewError
+		if errors.As(err, &reviewErr) {
+			switch reviewErr.Code {
+			case apperror.NotFound:
+				c.JSON(http.StatusNotFound, gin.H{"error": reviewErr.Message})
+				return
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
+		}
 		log.Warn("Failed to add review", zap.Int("id: ", id), zap.Error(err))
 		return
 	}
