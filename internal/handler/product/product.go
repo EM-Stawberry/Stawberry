@@ -43,6 +43,9 @@ func (h *ProductHandler) PostProduct(c *gin.Context) {
 		Name:        postProductReq.Name,
 		Description: postProductReq.Description,
 		CategoryID:  postProductReq.CategoryID,
+		ShopPointID: postProductReq.ShopID,
+		Price:       postProductReq.Price,
+		Quantity:    postProductReq.Quantity,
 	}
 
 	id, err := h.productService.CreateProduct(context.TODO(), product)
@@ -64,12 +67,13 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 			"message": "Invalid product ID",
 			"details": err.Error(),
 		})
+		return
 	}
 
 	product, err := h.productService.GetProductByID(context.TODO(), (uint)(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to create product",
+			"message": "Failed to get product",
 			"details": err.Error(),
 		})
 		return
@@ -149,6 +153,7 @@ func (h *ProductHandler) GetStoreProducts(c *gin.Context) {
 			"message": "Invalid product ID",
 			"details": err.Error(),
 		})
+		return
 	}
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -177,6 +182,7 @@ func (h *ProductHandler) GetStoreProducts(c *gin.Context) {
 			"message": "Failed to get products",
 			"details": err.Error(),
 		})
+		return
 	}
 
 	responce := make([]*GetProductResp, 0, len(products))
@@ -213,6 +219,7 @@ func (h *ProductHandler) PatchProduct(c *gin.Context) {
 			"message": "Invalid product ID",
 			"details": err.Error(),
 		})
+		return
 	}
 
 	var updateReq PatchProductReq
@@ -228,6 +235,9 @@ func (h *ProductHandler) PatchProduct(c *gin.Context) {
 		Name:        updateReq.Name,
 		Description: updateReq.Description,
 		CategoryID:  updateReq.CategoryID,
+		ShopPointID: updateReq.ShopPointID,
+		Price:       updateReq.Price,
+		Quantity:    updateReq.Quantity,
 	}
 
 	err = h.productService.UpdateProduct(context.TODO(), (uint)(id), update)

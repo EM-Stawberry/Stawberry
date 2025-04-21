@@ -6,6 +6,7 @@ type PostProductReq struct {
 	CategoryID  uint    `json:"category_id"`
 	ShopID      uint    `json:"shop_id"`
 	Price       float64 `json:"price"`
+	Quantity    uint    `json:"quantity"`
 }
 
 type PostProductResp struct {

@@ -47,14 +47,12 @@ func SetupRouter(
 
 	shop := base.Group("/shop")
 
-	shopAdmin := shop.Group("/admin")
 	{
-		shopAdmin.POST("/products", productH.PostProduct)
-		shopAdmin.GET("/products/:id", productH.GetProduct)
-		shopAdmin.GET("/products", productH.GetProducts)
-		shopAdmin.GET("/products/:store_id", productH.GetStoreProducts)
-		shopAdmin.PATCH("/products/:id", productH.PatchProduct)
-		shopAdmin.DELETE("/products/:id", productH.DeleteProduct)
+		shop.POST("/products", productH.PostProduct)
+		shop.GET("/products/:id", productH.GetProduct)
+		shop.GET("/products", productH.GetStoreProducts)
+		shop.PATCH("/products/:id", productH.PatchProduct)
+		shop.DELETE("/products/:id", productH.DeleteProduct)
 	}
 
 	return router

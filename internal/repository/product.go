@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -29,11 +28,27 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 
 	SPInventoryModel := model.ShopPointInventory{
 		ShopPointID: product.ShopPointID,
-		ProductID:   product.ID,
 		Price:       product.Price,
 		Quantity:    product.Quantity,
 	}
 
+	//Проверяем существование продукта
+	var id uint
+
+	err := sq.Select("id").
+		From("products").
+		Where(sq.Eq{"name": productModel.Name, "description": productModel.Description, "category_id": productModel.CategoryID}).
+		RunWith(pr.db).
+		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &id)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		return 0, fmt.Errorf("failed to check if product exists: %w", err)
+	}
+
+	if id != 0 {
+		return 0, fmt.Errorf("product already exists")
+	}
+
+	//Если продукта нет, то создаем
 	//Начинаем транзакцию
 	tx, err := pr.db.Beginx()
 	if err != nil {
@@ -50,20 +65,26 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 	//Добавляем инфу в таблицу products
 	sql, args, err := sq.Insert("products").
 		Columns("name", "description", "category_id").
-		Values(productModel.Name, productModel.Description, productModel.CategoryID).PlaceholderFormat(sq.Dollar).ToSql()
+		Values(productModel.Name, productModel.Description, productModel.CategoryID).PlaceholderFormat(sq.Dollar).
+		Suffix("RETURNING id").ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
-	res, err := tx.ExecContext(ctx, sql, args...)
+	err = tx.QueryRowxContext(ctx, sql, args...).Scan(&productModel.ID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert product: %w", err)
 	}
 
-	//Добавляем инфу в таблицу shopPointInventory
+	SPInventoryModel.ProductID = productModel.ID
+
+	//Добавляем инфу в таблицу shop_point_inventory
 	sql, args, err = sq.Insert("shop_point_inventory").
 		Columns("shop_point_id", "product_id", "price", "quantity").
-		Values(SPInventoryModel.ShopPointID, SPInventoryModel.ProductID, SPInventoryModel.Price, SPInventoryModel.Quantity).
+		Values(SPInventoryModel.ShopPointID,
+			SPInventoryModel.ProductID,
+			SPInventoryModel.Price,
+			SPInventoryModel.Quantity).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("failed to build insert product query: %w", err)
@@ -81,12 +102,7 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("failed to get last insert id: %w", err)
-	}
-
-	return uint(id), nil
+	return productModel.ID, nil
 }
 
 func (pr *productRepository) GetProductByID(ctx context.Context, id uint) (*product.Product, error) {
@@ -94,8 +110,8 @@ func (pr *productRepository) GetProductByID(ctx context.Context, id uint) (*prod
 	var productModel model.Product
 	productModel.ID = id
 
-	sql, args, err := sq.Select("products").
-		Columns("name", "description", "category_id").
+	sql, args, err := sq.Select("name", "description", "category_id").
+		From("products").
 		Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build insert product query: %w", err)
@@ -120,15 +136,15 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 
 	products := make([]*product.Product, 0, limit)
 
-	sql, args, err := sq.Select("products").
-		Columns("id", "name", "description", "category_id").
+	sql, args, err := sq.Select("id", "name", "description", "category_id").
+		From("products").
 		Offset(uint64(offset)).Limit(uint64(limit)).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
-	rows, err := pr.db.QueryContext(ctx, sql, args...)
+	rows, err := pr.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to select products: %w", err)
 	}
@@ -136,7 +152,7 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 
 	for rows.Next() {
 		var productModel model.Product
-		err = rows.Scan(&productModel)
+		err = rows.StructScan(&productModel)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan product: %w", err)
 		}
@@ -158,8 +174,8 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, offset, limit int) ([]*product.Product, int, error) {
 	products := make([]*product.Product, 0, limit)
 
-	sql, args, err := sq.Select("products").
-		Columns("id", "name", "description", "category_id").
+	sql, args, err := sq.Select("id", "name", "description", "category_id").
+		From("products").
 		InnerJoin("shop_inventory ON products.id = shop_inventory.product_id").
 		Where(sq.Eq{"shop_inventory.shop_id": id}).
 		Offset(uint64(offset)).Limit(uint64(limit)).
@@ -168,7 +184,7 @@ func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, o
 		return nil, 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
-	rows, err := pr.db.QueryContext(ctx, sql, args...)
+	rows, err := pr.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to select products: %w", err)
 	}
@@ -176,7 +192,7 @@ func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, o
 
 	for rows.Next() {
 		var productModel model.Product
-		err = rows.Scan(&productModel)
+		err = rows.StructScan(&productModel)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan product: %w", err)
 		}
@@ -195,20 +211,22 @@ func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, o
 	return products, len(products), nil
 }
 
-// ДОДЕЛАТЬ
 func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update *product.UpdateProduct) error {
 
-	var exists bool
 	//Проверяем что продукт есть в бд
-	err := sq.Select("products").
-		Columns("id").
+	var existingId uint
+
+	err := sq.Select("id").
+		From("products").
 		InnerJoin("shop_point_inventory ON products.id = shop_point_inventory.product_id").
-		Where(sq.Eq{"id": id, "shop_point_inventory.shop_point_id": update.ShopPointID}).PlaceholderFormat(sq.Dollar).ScanContext(ctx, &exists)
-	if err != nil {
+		Where(sq.Eq{"id": id, "shop_point_inventory.shop_point_id": *update.ShopPointID}).
+		RunWith(pr.db).
+		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &existingId)
+	if err != nil && err.Error() != "sql: no rows in result set" {
 		return fmt.Errorf("failed to check if product exists: %w", err)
 	}
 
-	if !exists {
+	if existingId == 0 {
 		return fmt.Errorf("product with id %d not found", id)
 	}
 
@@ -279,11 +297,40 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 
 func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 
-	sql, args, err := sq.Delete("products").
+	//Проверяем что продукт есть в бд
+	var existingId uint
+
+	err := sq.Select("id").
+		From("products").
+		InnerJoin("shop_point_inventory ON products.id = shop_point_inventory.product_id").
+		Where(sq.Eq{"id": id}).
+		RunWith(pr.db).
+		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &existingId)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		return fmt.Errorf("failed to check if product exists: %w", err)
+	}
+
+	if existingId == 0 {
+		return fmt.Errorf("product with id %d not found", id)
+	}
+
+	sql, args, err := sq.Delete("shop_point_inventory").
+		Where(sq.Eq{"product_id": id}).
+		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build delete product query: %w", err)
+	}
+
+	_, err = pr.db.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete product: %w", err)
+	}
+
+	sql, args, err = sq.Delete("products").
 		Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {
-		return fmt.Errorf("failed to build update product query: %w", err)
+		return fmt.Errorf("failed to build delete product query: %w", err)
 	}
 
 	_, err = pr.db.ExecContext(ctx, sql, args...)
@@ -292,9 +339,4 @@ func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 	}
 
 	return nil
-}
-
-func isDuplicateError(err error) bool {
-	return strings.Contains(err.Error(), "duplicate") ||
-		strings.Contains(err.Error(), "unique violation")
 }
