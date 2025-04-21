@@ -2,12 +2,14 @@ package reviews
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews/dto"
 	"github.com/gin-gonic/gin"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/reviews/dto"
 	"go.uber.org/zap"
 )
 
@@ -40,6 +42,7 @@ func NewSellerReviewsHandler(srs SellerReviewsService, l *zap.Logger) *SellerRev
 // @Success 201 {object} map[string]string "Отзыв успешно добавлен"
 // @Failure 400 {object} map[string]string "Некорректный ввод"
 // @Failure 401 {object} map[string]string "Неавторизованный доступ"
+// @Failure 404 {object} map[string]string "Продавец не найден"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/sellers/{id}/reviews [post]
 func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
@@ -62,7 +65,7 @@ func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
 
 	userID, ok := c.Get("userID")
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not authenticated"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
 		log.Warn("Failed to get userID from context", zap.Error(err))
 		return
 	}
@@ -76,6 +79,11 @@ func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
 
 	id, err := h.srs.AddReview(c.Request.Context(), sellerID, uid, addReview.Rating, addReview.Review)
 	if err != nil {
+		var reviewErr *apperror.ReviewError
+		if errors.As(err, &reviewErr) {
+			c.JSON(http.StatusNotFound, gin.H{"error": reviewErr.Message})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add review"})
 		log.Warn("Failed to add review", zap.Int("id", id), zap.Error(err))
 		return
@@ -93,6 +101,7 @@ func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
 // @Param id path int true "Seller ID"
 // @Success 200 {array} entity.SellerReview "Список отзывов"
 // @Failure 400 {object} map[string]string "Некорректный ID продавца"
+// @Failure 404 {object} map[string]string "Продавец не найден"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/sellers/{id}/reviews [get]
 func (h *SellerReviewsHandler) GetReviews(c *gin.Context) {
@@ -108,6 +117,18 @@ func (h *SellerReviewsHandler) GetReviews(c *gin.Context) {
 
 	reviews, err := h.srs.GetReviewsById(c.Request.Context(), sellerID)
 	if err != nil {
+		var reviewErr *apperror.ReviewError
+		if errors.As(err, &reviewErr) {
+			c.JSON(http.StatusNotFound, gin.H{"error": reviewErr.Message})
+			return
+		}
+
+		if err.Error() == "sql: no rows in result set" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "seller not found"})
+			log.Warn("Seller not found", zap.Int("sellerID", sellerID))
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch reviews"})
 		log.Warn("Failed to fetch reviews", zap.Error(err))
 		return

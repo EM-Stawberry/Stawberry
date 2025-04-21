@@ -2,11 +2,13 @@ package reviews
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +27,6 @@ func NewProductReviewRepository(db *sqlx.DB, l *zap.Logger) *productReviewsRepos
 func (r *productReviewsRepository) AddReview(
 	ctx context.Context, productID int, userID int, rating int, review string,
 ) error {
-
 	const op = "productReviewsRepository.AddReview()"
 	log := r.logger.With(zap.String("op", op))
 
@@ -38,8 +39,7 @@ func (r *productReviewsRepository) AddReview(
 		return fmt.Errorf("op: %s, err: %s", op, err.Error())
 	}
 
-	var reviews []entity.ProductReview
-	err = r.db.SelectContext(ctx, &reviews, query, args...)
+	_, err = r.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		log.Error("Failed to execute query", zap.Error(err))
 		return fmt.Errorf("op: %s, err: %s", op, err.Error())
@@ -57,19 +57,24 @@ func (r *productReviewsRepository) GetProductByID(
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
-		Select("id", "product_id", "user_id", "rating", "review", "created_at").
+		Select("id", "name", "description", "category_id as categoryid").
 		From("products").
-		Where("id = ?", productID).ToSql()
+		Where("id = $1", productID).
+		Limit(1).
+		ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
-		return entity.Product{}, fmt.Errorf("op: %s, err: %s", op, err)
+		return entity.Product{}, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	var product entity.Product
 	err = r.db.GetContext(ctx, &product, query, args...)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.Product{}, apperror.NewReviewError(apperror.NotFound, "product not found")
+		}
 		log.Error("Failed to execute query", zap.Error(err))
-		return entity.Product{}, fmt.Errorf("op: %s, err: %s", op, err)
+		return entity.Product{}, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	return product, nil
@@ -84,9 +89,10 @@ func (r *productReviewsRepository) GetReviewsByProductID(
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
-		Select("id", "product_id", "user_id", "rating", "review", "created_at", "updated_at").
+		Select("id", "product_id as productid", "user_id as userid", "rating", "review", "created_at").
 		From("product_reviews").
-		Where("product_id = ?", productID).ToSql()
+		Where("product_id = $1", productID).
+		ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
 		return nil, fmt.Errorf("op: %s, err: %s", op, err)
