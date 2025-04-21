@@ -77,11 +77,13 @@ func (s *sellerReviewService) GetReviewsById(
 		return nil, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
+	log.Info("Getting reviews")
 	reviews, err := s.srs.GetReviewsBySellerID(ctx, sellerID)
 	if err != nil {
 		log.Error("Failed to fetch reviews", zap.Error(err))
 		return nil, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
+	log.Info("Reviews gets successfully")
 	return reviews, nil
 }
