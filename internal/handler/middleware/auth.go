@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 
 	"github.com/gin-gonic/gin"
 )
@@ -64,6 +64,7 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 		}
 
 		c.Set("user", user)
+		c.Set("userID", int(user.ID))
 		c.Next()
 	}
 }

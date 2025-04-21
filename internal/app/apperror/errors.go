@@ -5,13 +5,14 @@ import (
 )
 
 const (
-	NotFound       = "NOT_FOUND"
-	DatabaseError  = "DATABASE_ERROR"
-	InternalError  = "INTERNAL_ERROR"
-	DuplicateError = "DUPLICATE_ERROR"
-	BadRequest     = "BAD_REQUEST"
-	Unauthorized   = "UNAUTHORIZED"
-	InvalidToken   = "INVALID_TOKEN"
+	NotFound           = "NOT_FOUND"
+	DatabaseError      = "DATABASE_ERROR"
+	InternalError      = "INTERNAL_ERROR"
+	DuplicateError     = "DUPLICATE_ERROR"
+	BadRequest         = "BAD_REQUEST"
+	Unauthorized       = "UNAUTHORIZED"
+	InvalidToken       = "INVALID_TOKEN"
+	InvalidFingerprint = "INVALID_FINGERPRINT"
 )
 
 type ProductError struct {
@@ -70,15 +71,15 @@ func (e *UserError) Error() string {
 }
 
 var (
-	ErrUserNotFound = &ProductError{
+	ErrUserNotFound = &UserError{
 		Code:    NotFound,
-		Message: "product not found",
+		Message: "user not found",
 	}
-	ErrIncorrectPassword = &ProductError{
+	ErrIncorrectPassword = &UserError{
 		Code:    Unauthorized,
 		Message: "incorrect password",
 	}
-	ErrFailedToGeneratePassword = &ProductError{
+	ErrFailedToGeneratePassword = &UserError{
 		Code:    InternalError,
 		Message: "failed to generate password",
 	}
@@ -106,6 +107,10 @@ var (
 		Code:    NotFound,
 		Message: "token not found",
 	}
+	ErrInvalidFingerprint = &TokenError{
+		Code:    InvalidFingerprint,
+		Message: "fingerprints don't match",
+	}
 )
 
 type NotificationError struct {
@@ -127,3 +132,30 @@ var (
 		Message: "notification not found",
 	}
 )
+
+// ReviewError представляет ошибку, связанную с отзывами
+type ReviewError struct {
+	Code    string
+	Message string
+}
+
+// Error реализует интерфейс error
+func (e *ReviewError) Error() string {
+	return e.Message
+}
+
+// Константы для кодов ошибок отзывов
+const (
+	ReviewNotFound      = "review_not_found"
+	ReviewDuplicate     = "review_duplicate"
+	ReviewDatabaseError = "review_database_error"
+	ReviewUnauthorized  = "review_unauthorized"
+)
+
+// NewReviewError создает новую ошибку отзыва
+func NewReviewError(code string, message string) *ReviewError {
+	return &ReviewError{
+		Code:    code,
+		Message: message,
+	}
+}

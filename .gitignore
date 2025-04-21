@@ -2,6 +2,9 @@
 
 .env
 
+# Test coverage
+*.out
+
 #Frontend
 
 # Node.js
@@ -26,3 +29,4 @@ yarn-debug.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+tmp/

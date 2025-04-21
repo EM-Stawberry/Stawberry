@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 )
 
 type notificationRepository struct {

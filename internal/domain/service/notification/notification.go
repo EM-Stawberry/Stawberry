@@ -1,6 +1,6 @@
 package notification
 
-import "github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+import "github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 
 type Repository interface {
 	SelectUserNotifications(id string, offset, limit int) ([]entity.Notification, int, error)

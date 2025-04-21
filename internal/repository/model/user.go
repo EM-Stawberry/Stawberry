@@ -1,17 +1,17 @@
 package model
 
 import (
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 )
 
 type User struct {
-	ID            uint   `gorm:"column:id"`
-	Name          string `gorm:"column:name"`
-	Email         string `gorm:"column:email"`
-	Phone         string `gorm:"column:phone"`
-	Password      string `gorm:"column:password"`
-	IsStore       bool   `gorm:"column:is_store"`
+	ID            uint   `db:"id"`
+	Name          string `db:"name"`
+	Email         string `db:"email"`
+	Phone         string `db:"phone_number"`
+	Password      string `db:"password_hash"`
+	IsStore       bool   `db:"is_store"`
 	Notifications []Notification
 }
 
