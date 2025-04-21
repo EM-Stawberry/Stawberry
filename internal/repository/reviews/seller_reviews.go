@@ -2,11 +2,13 @@ package reviews
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 	"go.uber.org/zap"
 )
 
@@ -28,22 +30,24 @@ func (r *sellerReviewsRepository) AddReview(
 	const op = "sellerReviewsRepository.AddReview()"
 	log := r.logger.With(zap.String("op", op))
 
+	var id int
 	query, args, err := squirrel.
 		Insert("seller_reviews").
 		Columns("seller_id", "user_id", "rating", "review").
-		Values(sellerID, userID, rating, review).ToSql()
+		Values(sellerID, userID, rating, review).
+		Suffix("RETURNING id").ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
 		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
 	}
 
-	_, err = r.db.ExecContext(ctx, query, args...)
+	err = r.db.QueryRowContext(ctx, query, args...).Scan(&id)
 	if err != nil {
 		log.Error("Failed to execute query", zap.Error(err))
 		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
 	}
 
-	return sellerID, nil
+	return id, nil
 }
 
 func (r *sellerReviewsRepository) GetReviewsBySellerID(
@@ -57,7 +61,7 @@ func (r *sellerReviewsRepository) GetReviewsBySellerID(
 	query, args, err := squirrel.
 		Select("id", "seller_id", "user_id", "rating", "review", "created_at").
 		From("seller_reviews").
-		Where("seller_id = ?", sellerID).ToSql()
+		Where("seller_id = $1", sellerID).ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
 		return nil, fmt.Errorf("op: %s, err: %s", op, err)
@@ -82,20 +86,25 @@ func (r *sellerReviewsRepository) GetSellerByID(
 	log := r.logger.With(zap.String("op", op))
 
 	query, args, err := squirrel.
-		Select("id", "name", "description").
-		From("sellers").
-		Where("id = ?", sellerID).ToSql()
+		Select("id", "seller_id", "user_id", "rating", "review", "created_at").
+		From("seller_reviews").
+		Where("seller_id = $1", sellerID).
+		Limit(1).
+		ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
-		return entity.SellerReview{}, fmt.Errorf("op: %s, err: %s", op, err)
+		return entity.SellerReview{}, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
-	var seller entity.SellerReview
-	err = r.db.GetContext(ctx, &seller, query, args...)
+	var review entity.SellerReview
+	err = r.db.GetContext(ctx, &review, query, args...)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.SellerReview{}, apperror.NewReviewError(apperror.NotFound, "seller not found")
+		}
 		log.Error("Failed to execute query", zap.Error(err))
-		return entity.SellerReview{}, fmt.Errorf("op: %s, err: %s", op, err)
+		return entity.SellerReview{}, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
-	return seller, nil
+	return review, nil
 }

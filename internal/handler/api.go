@@ -112,32 +112,3 @@ func SetupRouter(
 
 	return router
 }
-
-func handleReviewError(c *gin.Context, err error) {
-	var reviewErr *apperror.ReviewError
-	if errors.As(err, &reviewErr) {
-		status := http.StatusInternalServerError
-
-		switch reviewErr.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		case apperror.Unauthorized:
-			status = http.StatusUnauthorized
-		}
-
-		c.JSON(status, gin.H{
-			"code":    reviewErr.Code,
-			"message": reviewErr.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}

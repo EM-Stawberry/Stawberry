@@ -14,6 +14,7 @@ type Product struct {
 	Description string
 	Price       float64
 	Category    string
+	CategoryID  int
 	InStock     bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -37,6 +38,7 @@ func ConvertProductFromSvc(p product.Product) Product {
 		Description: p.Description,
 		Price:       p.Price,
 		Category:    p.Category,
+		CategoryID:  p.CategoryID,
 		InStock:     p.InStock,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
@@ -45,13 +47,10 @@ func ConvertProductFromSvc(p product.Product) Product {
 
 func ConvertProductToEntity(p Product) entity.Product {
 	return entity.Product{
-		ID:          p.ID,
-		StoreID:     p.StoreID,
+		ID:          int(p.ID),
 		Name:        p.Name,
 		Description: p.Description,
-		Price:       p.Price,
-		Category:    p.Category,
-		InStock:     p.InStock,
+		CategoryID:  p.CategoryID,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
 	}

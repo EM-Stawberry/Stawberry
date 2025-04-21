@@ -78,3 +78,11 @@ const (
 	ReviewDatabaseError = "review_database_error"
 	ReviewUnauthorized  = "review_unauthorized"
 )
+
+// NewReviewError создает новую ошибку отзыва
+func NewReviewError(code string, message string) *ReviewError {
+	return &ReviewError{
+		Code:    code,
+		Message: message,
+	}
+}
