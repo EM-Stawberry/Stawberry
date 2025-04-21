@@ -31,20 +31,21 @@ func (r *sellerReviewsRepository) AddReview(
 	log := r.logger.With(zap.String("op", op))
 
 	var id int
-	query, args, err := squirrel.
-		Insert("seller_reviews").
+	query, args, err := squirrel.Insert("seller_reviews").
 		Columns("seller_id", "user_id", "rating", "review").
 		Values(sellerID, userID, rating, review).
-		Suffix("RETURNING id").ToSql()
+		PlaceholderFormat(squirrel.Dollar).
+		Suffix("RETURNING id").
+		ToSql()
 	if err != nil {
 		log.Error("Failed to build query", zap.Error(err))
-		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	err = r.db.QueryRowContext(ctx, query, args...).Scan(&id)
 	if err != nil {
 		log.Error("Failed to execute query", zap.Error(err))
-		return 0, fmt.Errorf("op: %s, err: %s", op, err.Error())
+		return 0, fmt.Errorf("op: %s, err: %w", op, err)
 	}
 
 	return id, nil
