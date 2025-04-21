@@ -17,19 +17,19 @@ type SellerReviewRepository interface {
 	GetSellerByID(ctx context.Context, sellerID int) (entity.SellerReview, error)
 }
 
-type sellerReviewService struct {
+type SellerReviewService struct {
 	srs    SellerReviewRepository
 	logger *zap.Logger
 }
 
-func NewSellerReviewService(srr SellerReviewRepository, l *zap.Logger) *sellerReviewService {
-	return &sellerReviewService{
+func NewSellerReviewService(srr SellerReviewRepository, l *zap.Logger) *SellerReviewService {
+	return &SellerReviewService{
 		srs:    srr,
 		logger: l,
 	}
 }
 
-func (s *sellerReviewService) AddReview(
+func (s *SellerReviewService) AddReview(
 	ctx context.Context, sellerID int, userID int, rating int, review string,
 ) (
 	int, error,
@@ -58,7 +58,7 @@ func (s *sellerReviewService) AddReview(
 	return sellerID, nil
 }
 
-func (s *sellerReviewService) GetReviewsById(
+func (s *SellerReviewService) GetReviewsById(
 	ctx context.Context, sellerID int,
 ) (
 	[]entity.SellerReview, error,
