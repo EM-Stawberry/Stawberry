@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 
@@ -58,60 +56,6 @@ func SetupRouter(
 	return router
 }
 
-func handleProductError(c *gin.Context, err error) {
-	var productErr *apperror.ProductError
-	if errors.As(err, &productErr) {
-		status := http.StatusInternalServerError
-
-		switch productErr.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    productErr.Code,
-			"message": productErr.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}
-
-func handleOfferError(c *gin.Context, err error) {
-	var offerError *apperror.OfferError
-	if errors.As(err, &offerError) {
-		status := http.StatusInternalServerError
-
-		switch offerError.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    offerError.Code,
-			"message": offerError.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}
-
 func handleUserError(c *gin.Context, err error) {
 	var userError *apperror.UserError
 
@@ -130,12 +74,6 @@ func handleUserError(c *gin.Context, err error) {
 			status = http.StatusUnauthorized
 		}
 
-		c.JSON(status, gin.H{
-			"code":    userError.Code,
-			"message": userError.Message,
-		})
-		return
-	}
 
 	var tokenError *apperror.TokenError
 	if errors.As(err, &tokenError) {
@@ -153,34 +91,6 @@ func handleUserError(c *gin.Context, err error) {
 		c.JSON(status, gin.H{
 			"code":    tokenError.Code,
 			"message": tokenError.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}
-
-func handleNotificationError(c *gin.Context, err error) {
-	var notificationErr *apperror.NotificationError
-	if errors.As(err, &notificationErr) {
-		status := http.StatusInternalServerError
-
-		// продумать логику ошибок
-		switch notificationErr.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    notificationErr.Code,
-			"message": notificationErr.Message,
 		})
 		return
 	}

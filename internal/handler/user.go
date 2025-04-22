@@ -60,7 +60,7 @@ func (h *userHandler) Registration(c *gin.Context) {
 		regUserDTO.Fingerprint,
 	)
 	if err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 	response := dto.RegistrationUserResp{
@@ -92,7 +92,7 @@ func (h *userHandler) Login(c *gin.Context) {
 	)
 
 	if err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -136,7 +136,7 @@ func (h *userHandler) Refresh(c *gin.Context) {
 		refreshDTO.Fingerprint,
 	)
 	if err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (h *userHandler) Logout(c *gin.Context) {
 		logoutDTO.RefreshToken,
 		logoutDTO.Fingerprint,
 	); err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 
