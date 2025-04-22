@@ -60,7 +60,7 @@ func initializeApp() error {
 	db.SetMaxIdleConns(10)
 
 	// Run migrations
-	migrator.RunMigrations(db, "migrations")
+	migrator.RunMigrations(db, "../../migrations")
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)

@@ -58,7 +58,7 @@ func (h *productHandler) PostProduct(c *gin.Context) {
 } */
 
 func (h *productHandler) GetProduct(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Query("id")
 
 	product, err := h.productService.GetProductByID(context.Background(), id)
 	if err != nil {
@@ -201,7 +201,7 @@ func (h *productHandler) GetFilteredProducts(c *gin.Context) {
 		return
 	}
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	filters := make(map[string]interface{})
 	for key, values := range c.Request.URL.Query() {
 		if key == "category_id" || key == "limit" || key == "offset" {
@@ -211,15 +211,21 @@ func (h *productHandler) GetFilteredProducts(c *gin.Context) {
 			filters[key] = values[0]
 		}
 	}
+	offset := (page - 1) * limit
 
 	products, total, err := h.productService.SelectProductsByCategoryAndAttributes(c.Request.Context(), categoryID, filters, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch products"})
+		handleProductError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"total":    total,
-		"products": products,
+		"data": products,
+		"meta": gin.H{
+			"current_page": page,
+			"per_page":     limit,
+			"total_items":  total,
+			"total_pages":  total,
+		},
 	})
 }
 

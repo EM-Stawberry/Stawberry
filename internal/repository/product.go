@@ -192,7 +192,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	filters map[string]interface{},
 	limit, offset int,
 ) ([]entity.Product, int, error) {
-	var products []entity.Product
+	var models []model.Product
 
 
 	var params []interface{}
@@ -207,7 +207,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 
 	for attr, val := range filters {
 		joinAttributes = true
-		attrConditions = append(attrConditions, fmt.Sprintf("pa.attributes ->> `%s` = $%d", attr, paramIdx))
+		attrConditions = append(attrConditions, fmt.Sprintf("pa.attributes ->> '%s' = $%d", attr, paramIdx))
 		params = append(params, val)
 		paramIdx++
 	}
@@ -215,7 +215,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	var query string
 	if joinAttributes {
 		query = fmt.Sprintf(`
-			SELECT p.id, p.name, p.description
+			SELECT p.id, p.name, p.description, p.category_id
 			FROM products p
 			JOIN product_attributes pa ON p.id = pa.product_id
 			WHERE %s AND %s
@@ -227,7 +227,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 		)
 	} else {
 		query = fmt.Sprintf(`
-			SELECT p.id, p.name, p.description
+			SELECT p.id, p.name, p.description, p.category_id
 			FROM products p
 			WHERE %s
 			LIMIT $%d OFFSET $%d
@@ -239,9 +239,14 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 
 	params = append(params, limit, offset)
 
-	err := r.db.SelectContext(ctx, &products, query, params...)
+	err := r.db.SelectContext(ctx, &models, query, params...)
 	if err != nil {
-		return nil, 0, err
+		fmt.Println(err.Error())
+		return nil, 0, &apperror.ProductError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to fetch products in repo",
+			Err:     err,
+		}
 	}
 
 	var totalCount int
@@ -264,9 +269,18 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 		`, queryCategoryID)
 	}
 
-	err = r.db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx]...)
+	err = r.db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx-1]...)
 	if err != nil {
-		return nil, 0, err
+		fmt.Println(err.Error())
+		return nil, 0, &apperror.ProductError{
+			Code:    apperror.DatabaseError,
+			Message: "failed to count products in repo",
+			Err:     err,
+		}
+	}
+	products := make([]entity.Product, len(models))
+	for i, p := range  models{
+		products[i] = model.ConvertProductToEntity(p)
 	}
 
 	return products, totalCount, nil
