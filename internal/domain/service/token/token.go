@@ -81,9 +81,7 @@ func (ts *tokenService) parse(token string) (entity.AccessToken, error) {
 	claim := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] != signingMethod.Alg() {
-			appError := apperror.ErrInvalidToken
-			appError.Err = fmt.Errorf("invalid signing method")
-			return nil, appError
+			return nil, fmt.Errorf("%w: invalid signing method", apperror.ErrInvalidToken)
 		}
 		return []byte(ts.jwtSecret), nil
 	})

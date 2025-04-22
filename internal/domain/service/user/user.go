@@ -48,9 +48,9 @@ func (us *userService) CreateUser(
 ) (string, string, error) {
 	hash, err := security.HashArgon2id(user.Password)
 	if err != nil {
-		appError := apperror.ErrFailedToGeneratePassword
-		appError.Err = fmt.Errorf("failed to generate password %w, password = %s", err, user.Password)
-		return "", "", appError
+		err := apperror.ErrFailedToGeneratePassword
+		err.WrappedErr = fmt.Errorf("failed to generate password %w", err)
+		return "", "", err
 	}
 	user.Password = hash
 
