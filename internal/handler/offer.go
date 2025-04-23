@@ -123,10 +123,16 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 
 func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	// TODO: zap debug coverage
+	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*10)
+	defer ctxCancel()
 
 	id, err := strconv.Atoi(c.Param("offerID"))
 	if err != nil {
 		c.Error(apperror.New(apperror.BadRequest, "offerID must be numeric", err))
+		return
+	}
+	if id <= 0 {
+		c.Error(apperror.New(apperror.BadRequest, "offerID must be positive", nil))
 		return
 	}
 
@@ -136,14 +142,24 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 		return
 	}
 
-	tmp, ok := c.Get("users")
+	validStatuses := map[string]struct{}{
+		"accepted":  {},
+		"declined":  {},
+		"cancelled": {}, // should be coming from a buyer
+	}
+	if _, ok := validStatuses[req.Status]; !ok {
+		c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
+		return
+	}
+
+	tmp, ok := c.Get("user")
 	if !ok {
-		c.Error(apperror.New(apperror.InternalError, "bad key",
+		c.Error(apperror.New(apperror.InternalError, "user context not found",
 			fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
 		return
 	}
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), tmp.(entity.User).ID, req.Status)
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), tmp.(entity.User).ID, req.Status)
 	if err != nil {
 		c.Error(err)
 		return
@@ -159,7 +175,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	// }
 	// h.notifyRepo.Create(&notification)
 
-	c.JSON(http.StatusCreated, updatedOffer)
+	c.JSON(http.StatusOK, updatedOffer)
 }
 
 func (h *offerHandler) DeleteOffer(c *gin.Context) {
