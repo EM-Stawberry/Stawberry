@@ -88,6 +88,8 @@ func SetupRouter(
 				"time":    time.Now().Unix(),
 			})
 		})
+
+		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
 	}
 
 	return router

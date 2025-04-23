@@ -53,8 +53,11 @@ func errorStatus(code string) int {
 		return http.StatusBadRequest
 	case apperror.Unauthorized, apperror.InvalidToken:
 		return http.StatusUnauthorized
+	case apperror.Conflict:
+		return http.StatusConflict
 	case apperror.InternalError:
 		fallthrough
+
 	default:
 		return http.StatusInternalServerError
 	}
