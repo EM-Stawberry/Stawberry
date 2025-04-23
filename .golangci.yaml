@@ -14,5 +14,5 @@ linters:
     - lll # reports long lines
     - rowserrcheck # checks whether Rows.Err of rows is checked successfully
     - gosimple # Detects overly complex code that can be simplified
-    # - revive # Enable after old code is removed
-    # - gosec # Security linter. Enable later.
+    - revive # Enable after old code is removed
+    - gosec # Security linter. Enable later.
