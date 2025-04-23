@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"fmt"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"math"
 	"net/http"
 	"strconv"
@@ -120,20 +122,27 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 }
 
 func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
+	// TODO: zap debug coverage
+
 	id, err := strconv.Atoi(c.Param("offerID"))
-	// TODO: zap logging
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Non-numeric offer id: " + err.Error()})
+		c.Error(apperror.New(apperror.BadRequest, "offerID must be numeric", err))
 		return
 	}
 
 	var req dto.PatchOfferStatusReq
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		c.Error(apperror.New(apperror.BadRequest, "status field not provided", err))
 		return
 	}
 
-	tmp, _ := c.Get("user")
+	tmp, ok := c.Get("users")
+	if !ok {
+		c.Error(apperror.New(apperror.InternalError, "bad key",
+			fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
+		return
+	}
+
 	updatedOffer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), tmp.(entity.User).ID, req.Status)
 	if err != nil {
 		c.Error(err)
