@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/Masterminds/squirrel"
+	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/jmoiron/sqlx"
@@ -72,12 +73,26 @@ func (r *offerRepository) UpdateOfferStatus(
 
 		err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
 		if err != nil {
-			return offer, apperror.New(apperror.InternalError, "scan into uint failed", err)
+			return offer, apperror.New(apperror.InternalError, "error scanning into uint", err)
 		}
 
 		if userID != requiredID {
 			return offer, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
 		}
+	}
+
+	updateOfferStatusQuery, args := squirrel.Update("offers").
+		Set("status", status).
+		Set("updated_at", time.Now()).
+		Where(squirrel.Eq{"id": offerID}).
+		Suffix("returning id, offer_price, status, created_at, " +
+			"updated_at, user_id, product_id, shop_id").
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	err := r.db.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
+	if err != nil {
+		return offer, apperror.New(apperror.InternalError, "error scanning into struct", err)
 	}
 
 	return offer, nil
