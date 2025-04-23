@@ -69,6 +69,8 @@ func SetupRouter(
 				"time":   time.Now().Unix(),
 			})
 		})
+
+		secured.PATCH("offers/:offerID/status-update", offerH.PatchOfferStatus)
 	}
 
 	return router
