@@ -61,7 +61,7 @@ func (r *offerRepository) UpdateOfferStatus(
 	var offer entity.Offer
 	var requiredID uint
 
-	// Make user the user IS the owner of the shop the offer belongs to
+	// Make sure the user IS the owner of the shop the offer belongs to
 	{
 		validateShopOwnerIDQuery, args := squirrel.Select("users.id").
 			From("users").
