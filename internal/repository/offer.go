@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/Masterminds/squirrel"
 	"time"
@@ -73,6 +75,9 @@ func (r *offerRepository) UpdateOfferStatus(
 
 		err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return offer, apperror.ErrUserNotFound
+			}
 			return offer, apperror.New(apperror.InternalError, "error scanning into uint", err)
 		}
 
@@ -92,18 +97,18 @@ func (r *offerRepository) UpdateOfferStatus(
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return offer, apperror.New(apperror.InternalError, "failed to begin transaction", err)
+		return offer, apperror.New(apperror.DatabaseError, "failed to begin transaction", err)
 	}
 	defer tx.Rollback()
 
 	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
 	if err != nil {
-		return offer, apperror.New(apperror.InternalError, "error scanning into struct", err)
+		return offer, apperror.New(apperror.DatabaseError, "error scanning into struct", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return offer, apperror.New(apperror.InternalError, "failed to commit transaction", err)
+		return offer, apperror.New(apperror.DatabaseError, "failed to commit transaction", err)
 	}
 
 	return offer, nil
