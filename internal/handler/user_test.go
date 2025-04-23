@@ -11,6 +11,7 @@ import (
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -25,6 +26,8 @@ func TestUserHandler_Registration(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/register", h.Registration)
 
 	tests := []struct {
@@ -132,6 +135,8 @@ func TestUserHandler_Login(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/login", h.Login)
 
 	tests := []struct {
@@ -205,6 +210,8 @@ func TestUserHandler_Login_InvalidJSON(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/login", h.Login)
 
 	jsonData := []byte(`{"invalid json"`)
@@ -225,6 +232,8 @@ func TestUserHandler_Refresh(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/refresh", h.Refresh)
 
 	tests := []struct {
@@ -337,6 +346,8 @@ func TestUserHandler_Refresh_EmptyToken(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/refresh", h.Refresh)
 
 	tests := []struct {
@@ -419,6 +430,8 @@ func TestUserHandler_Refresh_InvalidJSON(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/refresh", h.Refresh)
 
 	jsonData := []byte(`{"invalid json"`)
@@ -439,6 +452,8 @@ func TestUserHandler_Logout(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/logout", h.Logout)
 
 	tests := []struct {
@@ -499,6 +514,8 @@ func TestUserHandler_Logout_EmptyToken(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/logout", h.Logout)
 
 	tests := []struct {
@@ -570,6 +587,8 @@ func TestUserHandler_Logout_InvalidJSON(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
+
 	router.POST("/logout", h.Logout)
 
 	jsonData := []byte(`{"invalid json"`)

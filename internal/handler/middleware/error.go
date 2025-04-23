@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"errors"
-	"log" 
+	"log"
 	"net/http"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"

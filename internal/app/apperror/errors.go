@@ -51,7 +51,7 @@ var (
 	ErrUserNotFound             = New(NotFound, "user not found", nil)
 	ErrIncorrectPassword        = New(Unauthorized, "incorrect password", nil)
 	ErrFailedToGeneratePassword = New(InternalError, "failed to generate password", nil)
-	ErrInvalidFingerprint       = New(InvalidFingerprint, "invalid fingerprint", nil)
+	ErrInvalidFingerprint       = New(InvalidFingerprint, "fingerprints don't match", nil)
 
 	ErrInvalidToken  = New(InvalidToken, "invalid token", nil)
 	ErrTokenNotFound = New(NotFound, "token not found", nil)
