@@ -18,7 +18,7 @@ type OfferService interface {
 	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
 	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
-	UpdateOfferStatus(ctx context.Context, offerID uint, status string) (entity.Offer, error)
+	UpdateOfferStatus(ctx context.Context, offerID uint, userID uint, status string) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
 
@@ -120,24 +120,27 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 }
 
 func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("offerID"))
+	// TODO: zap logging
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid nondigit offer id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Non-numeric offer id: " + err.Error()})
 		return
 	}
 
-	// предположу что статус будет лежать в теле запроса
 	var req dto.PatchOfferStatusReq
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err = c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
 		return
 	}
 
-	offer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), req.Status)
+	tmp, _ := c.Get("user")
+	updatedOffer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), tmp.(entity.User).ID, req.Status)
 	if err != nil {
 		c.Error(err)
 		return
 	}
+
+	// TODO: notify the user about offer status change
 
 	// Create notification for store
 	// notification := models.Notification{
@@ -147,7 +150,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	// }
 	// h.notifyRepo.Create(&notification)
 
-	c.JSON(http.StatusCreated, offer)
+	c.JSON(http.StatusCreated, updatedOffer)
 }
 
 func (h *offerHandler) DeleteOffer(c *gin.Context) {
