@@ -49,6 +49,7 @@ func (r *offerRepository) SelectUserOffers(
 func (r *offerRepository) UpdateOfferStatus(
 	ctx context.Context,
 	offerID uint,
+	userID uint,
 	status string,
 ) (entity.Offer, error) {
 
