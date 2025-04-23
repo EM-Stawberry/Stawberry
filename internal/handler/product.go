@@ -218,13 +218,16 @@ func (h *productHandler) GetFilteredProducts(c *gin.Context) {
 		handleProductError(c, err)
 		return
 	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
 	c.JSON(http.StatusOK, gin.H{
 		"data": products,
 		"meta": gin.H{
 			"current_page": page,
 			"per_page":     limit,
 			"total_items":  total,
-			"total_pages":  total,
+			"total_pages":  totalPages,
 		},
 	})
 }

@@ -196,7 +196,6 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 
 
 	var params []interface{}
-	queryCategoryID := "p.category_id = $1"
 
 	params = append(params, categoryID)
 
@@ -215,24 +214,34 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	var query string
 	if joinAttributes {
 		query = fmt.Sprintf(`
+		WITH RECURSIVE category_tree AS (
+			SELECT id FROM categories WHERE id = $1
+			UNION
+			SELECT c.id FROM categories c
+			INNER JOIN category_tree ct ON c.parent_id = ct.id
+		)
 			SELECT p.id, p.name, p.description, p.category_id
 			FROM products p
 			JOIN product_attributes pa ON p.id = pa.product_id
-			WHERE %s AND %s
+			WHERE category_id IN (SELECT id FROM category_tree) AND %s
 			LIMIT $%d OFFSET $%d
 		`,
-			queryCategoryID,
 			strings.Join(attrConditions, " AND "),
 			paramIdx, paramIdx+1,
 		)
 	} else {
 		query = fmt.Sprintf(`
+		WITH RECURSIVE category_tree AS (
+			SELECT id FROM categories WHERE id = $1
+			UNION
+			SELECT c.id FROM categories c
+			INNER JOIN category_tree ct ON c.parent_id = ct.id
+		)
 			SELECT p.id, p.name, p.description, p.category_id
 			FROM products p
-			WHERE %s
+			WHERE category_id IN (SELECT id FROM category_tree)
 			LIMIT $%d OFFSET $%d
 		`,
-			queryCategoryID,
 			paramIdx, paramIdx+1,
 		)
 	}
@@ -253,25 +262,35 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	var countQuery string
 	if joinAttributes {
 		countQuery = fmt.Sprintf(`
+		WITH RECURSIVE category_tree AS (
+			SELECT id FROM categories WHERE id = $1
+			UNION
+			SELECT c.id FROM categories c
+			INNER JOIN category_tree ct ON c.parent_id = ct.id
+		)
 			SELECT COUNT(*)
 			FROM products p
 			JOIN product_attributes pa ON p.id = pa.product_id
-			WHERE %s AND %s
+			WHERE category_id IN (SELECT id FROM category_tree) AND %s
 		`,
-			queryCategoryID,
 			strings.Join(attrConditions, " AND "),
 		)
 	} else {
-		countQuery = fmt.Sprintf(`
+		countQuery =`
+		WITH RECURSIVE category_tree AS (
+			SELECT id FROM categories WHERE id = $1
+			UNION
+			SELECT c.id FROM categories c
+			INNER JOIN category_tree ct ON c.parent_id = ct.id
+		)
 			SELECT COUNT(*)
 			FROM products p
-			WHERE %s
-		`, queryCategoryID)
+			WHERE category_id IN (SELECT id FROM category_tree)
+		`
 	}
 
 	err = r.db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx-1]...)
 	if err != nil {
-		fmt.Println(err.Error())
 		return nil, 0, &apperror.ProductError{
 			Code:    apperror.DatabaseError,
 			Message: "failed to count products in repo",
