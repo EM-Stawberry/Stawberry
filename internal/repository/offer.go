@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/Masterminds/squirrel"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/jmoiron/sqlx"
@@ -53,7 +55,30 @@ func (r *offerRepository) UpdateOfferStatus(
 	status string,
 ) (entity.Offer, error) {
 
+	// TODO: zap debug coverage
+
 	var offer entity.Offer
+	var requiredID uint
+
+	// Make user the user IS the owner of the shop the offer belongs to
+	{
+		validateShopOwnerIDQuery, args := squirrel.Select("users.id").
+			From("users").
+			InnerJoin("shops on users.id = shops.user_id").
+			InnerJoin("offers on shops.id = offers.shop_id").
+			Where(squirrel.Eq{"offers.id": offerID}).
+			PlaceholderFormat(squirrel.Dollar).
+			MustSql()
+
+		err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
+		if err != nil {
+			return offer, apperror.New(apperror.InternalError, "scan into uint failed", err)
+		}
+
+		if userID != requiredID {
+			return offer, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
+		}
+	}
 
 	return offer, nil
 }
