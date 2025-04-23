@@ -42,17 +42,9 @@ func (r *userRepository) InsertUser(
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr); pgErr.Code == pgerrcode.UniqueViolation {
-			return 0, &apperror.UserError{
-				Code:    apperror.DuplicateError,
-				Message: "user with this email already exists",
-				Err:     err,
-			}
+			return 0, apperror.New(apperror.DuplicateError, "user with this email already exists", err)
 		}
-		return 0, &apperror.UserError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to create user",
-			Err:     err,
-		}
+		return 0, apperror.New(apperror.DuplicateError, "failed to create user", err)
 	}
 
 	return userModel.ID, nil
@@ -77,11 +69,7 @@ func (r *userRepository) GetUser(
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.User{}, apperror.ErrUserNotFound
 		}
-		return entity.User{}, &apperror.UserError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch user by email",
-			Err:     err,
-		}
+		return entity.User{}, apperror.New(apperror.DatabaseError, "failed to fetch user by email", err)
 	}
 
 	return model.ConvertUserToEntity(userModel), nil
@@ -106,11 +94,7 @@ func (r *userRepository) GetUserByID(
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.User{}, apperror.ErrUserNotFound
 		}
-		return entity.User{}, &apperror.UserError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch user by ID",
-			Err:     err,
-		}
+		return entity.User{}, apperror.New(apperror.DatabaseError, "failed to fetch user by ID", err)
 	}
 
 	return model.ConvertUserToEntity(userModel), nil

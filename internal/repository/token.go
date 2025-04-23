@@ -38,17 +38,9 @@ func (r *tokenRepository) InsertToken(
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr); pgErr.Code == pgerrcode.UniqueViolation {
-			return &apperror.TokenError{
-				Code:    apperror.DuplicateError,
-				Message: "token with this uuid already exists",
-				Err:     err,
-			}
+			return apperror.New(apperror.DuplicateError, "token with this uuid already exists", err)
 		}
-		return &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to create token",
-			Err:     err,
-		}
+		return apperror.New(apperror.DatabaseError, "failed to create token", err)
 	}
 
 	return nil
@@ -67,11 +59,7 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 
 	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
-		return nil, &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch user tokens",
-			Err:     err,
-		}
+		return nil, apperror.New(apperror.DatabaseError, "failed to fetch user tokens", err)
 	}
 
 	defer rows.Close()
@@ -80,11 +68,7 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 	for rows.Next() {
 		var tokenModel model.RefreshToken
 		if err := rows.StructScan(&tokenModel); err != nil {
-			return nil, &apperror.TokenError{
-				Code:    apperror.DatabaseError,
-				Message: "failed to fetch user tokens",
-				Err:     err,
-			}
+			return nil, apperror.New(apperror.DatabaseError, "failed to fetch user tokens", err)
 		}
 		tokens = append(tokens, model.ConvertTokenToEntity(tokenModel))
 	}
@@ -107,20 +91,12 @@ func (r *tokenRepository) RevokeActivesByUserID(
 	res, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
-		return &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to revoke user tokens",
-			Err:     err,
-		}
+		return apperror.New(apperror.DatabaseError, "failed to revoke user tokens", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to get rows affected",
-			Err:     err,
-		}
+		return apperror.New(apperror.DatabaseError, "failed to get rows affected", err)
 	}
 
 	if rowsAffected == 0 {
@@ -148,11 +124,7 @@ func (r *tokenRepository) GetByUUID(
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.RefreshToken{}, apperror.ErrTokenNotFound
 		}
-		return entity.RefreshToken{}, &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch token by uuid",
-			Err:     err,
-		}
+		return entity.RefreshToken{}, apperror.New(apperror.DatabaseError, "failed to fetch token by uuid", err)
 	}
 
 	return model.ConvertTokenToEntity(tokenModel), nil
@@ -178,20 +150,12 @@ func (r *tokenRepository) Update(
 	res, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
-		return entity.RefreshToken{}, &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to update refresh token",
-			Err:     err,
-		}
+		return entity.RefreshToken{}, apperror.New(apperror.DatabaseError, "failed to update refresh token", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return entity.RefreshToken{}, &apperror.TokenError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to get rows affected",
-			Err:     err,
-		}
+		return entity.RefreshToken{}, apperror.New(apperror.DatabaseError, "failed to get rows affected", err)
 	}
 
 	if rowsAffected == 0 {
