@@ -90,9 +90,20 @@ func (r *offerRepository) UpdateOfferStatus(
 		PlaceholderFormat(squirrel.Dollar).
 		MustSql()
 
-	err := r.db.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return offer, apperror.New(apperror.InternalError, "failed to begin transaction", err)
+	}
+	defer tx.Rollback()
+
+	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
 	if err != nil {
 		return offer, apperror.New(apperror.InternalError, "error scanning into struct", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return offer, apperror.New(apperror.InternalError, "failed to commit transaction", err)
 	}
 
 	return offer, nil
