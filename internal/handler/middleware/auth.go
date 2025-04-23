@@ -53,7 +53,7 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 			return
 		}
 
-		user, err := userGetter.GetUserByID(context.Background(), access.UserID)
+		user, err := userGetter.GetUserByID(c.Request.Context(), access.UserID)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    apperror.Unauthorized,
