@@ -76,7 +76,7 @@ func (r *offerRepository) UpdateOfferStatus(
 		err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return offer, apperror.ErrUserNotFound
+				return offer, apperror.ErrOfferNotFound
 			}
 			return offer, apperror.New(apperror.InternalError, "error scanning into uint", err)
 		}
