@@ -7,6 +7,7 @@ import (
 
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
 	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
 
 	"github.com/zuzaaa-dev/stawberry/internal/repository"
 	"github.com/zuzaaa-dev/stawberry/pkg/logger"
@@ -57,6 +58,9 @@ func initializeApp() error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// Настраиваем Gin на использование Zap логгера
+	middleware.SetupGinWithZap(log)
+
 	// Initialize database connection
 	db := repository.InitDB(cfg)
 	log.Info("Connection initialized")
@@ -64,8 +68,8 @@ func initializeApp() error {
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(10)
 
-	// Run migrations
-	migrator.RunMigrations(db, "migrations")
+	// Run migrations using Zap logger
+	migrator.RunMigrationsWithZap(db, "migrations", log)
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
@@ -88,7 +92,15 @@ func initializeApp() error {
 	s3 := objectstorage.ObjectStorageConn(cfg)
 	log.Info("Storage initialized")
 
-	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, s3, "api/v1")
+	router = handler.SetupRouter(
+		productHandler,
+		offerHandler,
+		userHandler,
+		notificationHandler,
+		s3,
+		"api",
+		log,
+	)
 
 	return nil
 }

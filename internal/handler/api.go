@@ -10,6 +10,7 @@ import (
 	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func SetupRouter(
@@ -19,12 +20,13 @@ func SetupRouter(
 	notificationH notificationHandler,
 	s3 *objectstorage.BucketBasics,
 	basePath string,
+	logger *zap.Logger,
 ) *gin.Engine {
 	router := gin.New()
 
-	// Add default middleware
-	router.Use(gin.Logger())
-	router.Use(gin.Recovery())
+	// Add custom middleware using zap
+	router.Use(middleware.ZapLogger(logger))
+	router.Use(middleware.ZapRecovery(logger))
 	router.Use(middleware.CORS())
 
 	// Health check endpoint
