@@ -13,7 +13,7 @@ type Repository interface {
 	SelectUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
 	UpdateOfferStatus(ctx context.Context, offerID uint, status string) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
-	isUserShopOwner(ctx context.Context, offerID uint, userID uint) (bool, error)
+	IsUserShopOwner(ctx context.Context, offerID uint, userID uint) (bool, error)
 }
 
 type offerService struct {
@@ -53,7 +53,7 @@ func (os *offerService) UpdateOfferStatus(
 	userID uint,
 	status string,
 ) (entity.Offer, error) {
-	isOwner, err := os.offerRepository.isUserShopOwner(ctx, offerID, userID)
+	isOwner, err := os.offerRepository.IsUserShopOwner(ctx, offerID, userID)
 	if err != nil {
 		return entity.Offer{}, err
 	}
