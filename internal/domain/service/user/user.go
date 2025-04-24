@@ -28,6 +28,7 @@ type TokenService interface {
 	RevokeActivesByUserID(ctx context.Context, userID uint) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
+	CleanUpExpiredByUserID(ctx context.Context, userID uint) error
 }
 
 type userService struct {
@@ -104,6 +105,11 @@ func (us *userService) Authenticate(
 		}
 	}
 
+	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)
+	if err != nil {
+		return "", "", err
+	}
+
 	accessToken, refreshToken, err := us.tokenService.GenerateTokens(ctx, fingerprint, user.ID)
 	if err != nil {
 		return "", "", err
@@ -149,6 +155,11 @@ func (us *userService) Refresh(
 	}
 
 	access, refresh, err := us.tokenService.GenerateTokens(ctx, fingerprint, user.ID)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)
 	if err != nil {
 		return "", "", err
 	}

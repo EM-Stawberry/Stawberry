@@ -22,6 +22,7 @@ type Repository interface {
 	RevokeActivesByUserID(ctx context.Context, userID uint) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
+	CleanExpired(ctx context.Context, userID uint, retain int) error
 }
 
 type tokenService struct {
@@ -134,6 +135,18 @@ func (ts *tokenService) RevokeActivesByUserID(
 	userID uint,
 ) error {
 	return ts.tokenRepository.RevokeActivesByUserID(ctx, userID)
+}
+
+// retainExpired определяет количество отозванных и устаревших токенов, которые
+// сохраняются в базе при вызове CleanUpExpiredByUserID
+const retainExpired = 5
+
+// CleanExpiredByUserID удаляет все устаревшие и отозванные токены обновления для определённого пользователя
+func (ts *tokenService) CleanUpExpiredByUserID(
+	ctx context.Context,
+	userID uint,
+) error {
+	return ts.tokenRepository.CleanExpired(ctx, userID, retainExpired)
 }
 
 func (ts *tokenService) GetByUUID(

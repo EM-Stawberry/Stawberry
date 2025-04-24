@@ -110,6 +110,20 @@ func (m *MockTokenService) EXPECT() *MockTokenServiceMockRecorder {
 	return m.recorder
 }
 
+// CleanUpExpiredByUserID mocks base method.
+func (m *MockTokenService) CleanUpExpiredByUserID(ctx context.Context, userID uint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanUpExpiredByUserID", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanUpExpiredByUserID indicates an expected call of CleanUpExpiredByUserID.
+func (mr *MockTokenServiceMockRecorder) CleanUpExpiredByUserID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpExpiredByUserID", reflect.TypeOf((*MockTokenService)(nil).CleanUpExpiredByUserID), ctx, userID)
+}
+
 // GenerateTokens mocks base method.
 func (m *MockTokenService) GenerateTokens(ctx context.Context, fingerprint string, userID uint) (string, entity.RefreshToken, error) {
 	m.ctrl.T.Helper()

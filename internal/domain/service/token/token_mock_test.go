@@ -41,6 +41,20 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CleanExpired mocks base method.
+func (m *MockRepository) CleanExpired(ctx context.Context, userID uint, retain int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanExpired", ctx, userID, retain)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanExpired indicates an expected call of CleanExpired.
+func (mr *MockRepositoryMockRecorder) CleanExpired(ctx, userID, retain any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanExpired", reflect.TypeOf((*MockRepository)(nil).CleanExpired), ctx, userID, retain)
+}
+
 // GetActivesTokenByUserID mocks base method.
 func (m *MockRepository) GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error) {
 	m.ctrl.T.Helper()

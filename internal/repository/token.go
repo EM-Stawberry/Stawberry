@@ -164,3 +164,24 @@ func (r *tokenRepository) Update(
 
 	return model.ConvertTokenToEntity(refreshModel), nil
 }
+
+// CleanExpired удаляет все отозванные и устаревшие токены пользователя за исключением
+// пяти самых последних
+func (r *tokenRepository) CleanExpired(ctx context.Context, userID uint, retain int) error {
+	stmt := sq.Delete("refresh_tokens").
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Or{
+			sq.Lt{"expires_at": sq.Expr("now()")},
+			sq.LtOrEq{"revoked_at": sq.Expr("now()")},
+		}).
+		OrderBy("created_at ASC").
+		Offset(uint64(retain))
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	_, err := r.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return apperror.New(apperror.DatabaseError, "failed to clean expired tokens", err)
+	}
+	return nil
+}

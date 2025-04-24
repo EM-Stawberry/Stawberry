@@ -102,6 +102,7 @@ func TestUserService_Authenticate(t *testing.T) {
 	t.Run("successful authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
 		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
@@ -138,6 +139,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		maxTokens := make([]entity.RefreshToken, maxUsers)
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
 		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return(maxTokens, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
@@ -178,6 +180,7 @@ func TestUserService_Authenticate(t *testing.T) {
 	t.Run("error generating tokens during authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
 		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).
 			Return("", entity.RefreshToken{}, errors.New("token generation error"))
 
@@ -193,6 +196,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).
 			Return("access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).
 			Return(errors.New("insert error"))
 
@@ -201,6 +205,20 @@ func TestUserService_Authenticate(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, accessToken)
 		assert.Empty(t, refreshToken)
+	})
+
+	t.Run("error cleaning up expired tokens during authentication", func(t *testing.T) {
+		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
+		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).
+			Return(errors.New("cleanup error"))
+
+		accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
+
+		assert.Error(t, err)
+		assert.Empty(t, accessToken)
+		assert.Empty(t, refreshToken)
+		assert.Contains(t, err.Error(), "cleanup error")
 	})
 }
 
@@ -229,6 +247,7 @@ func TestUserService_Refresh(t *testing.T) {
 		mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
 		mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).Return("new-access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, userID).Return(nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
 		accessToken, newRefreshToken, err := userService.Refresh(ctx, refreshTokenStr, fingerprint)
@@ -317,6 +336,7 @@ func TestUserService_Refresh(t *testing.T) {
 		mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).
 			Return("new-access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, userID).Return(nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).
 			Return(errors.New("insert error"))
 
@@ -325,6 +345,23 @@ func TestUserService_Refresh(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, accessToken)
 		assert.Empty(t, newRefreshToken)
+	})
+
+	t.Run("error cleaning up expired tokens during refresh", func(t *testing.T) {
+		mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(validRefreshToken, nil)
+		mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
+		mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
+		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).
+			Return("new-access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, userID).
+			Return(errors.New("cleanup error"))
+
+		accessToken, newRefreshToken, err := userService.Refresh(ctx, refreshTokenStr, fingerprint)
+
+		assert.Error(t, err)
+		assert.Empty(t, accessToken)
+		assert.Empty(t, newRefreshToken)
+		assert.Contains(t, err.Error(), "cleanup error")
 	})
 }
 
