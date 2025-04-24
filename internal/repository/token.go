@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -96,7 +95,6 @@ func (r *tokenRepository) RevokeActivesByUserID(
 		Where(sq.Expr("uuid in (?)", substmt))
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-	fmt.Println(query)
 
 	_, err := r.db.ExecContext(ctx, query, args...)
 
