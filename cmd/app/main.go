@@ -6,6 +6,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"go.uber.org/zap"
 
 	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
@@ -36,6 +37,7 @@ func main() {
 
 	cfg := config.LoadConfig()
 	log := logger.SetupLogger(cfg.Environment)
+	middleware.SetupGinWithZap(log)
 	log.Info("Logger initialized")
 
 	db, closer := database.InitDB(&cfg.DB)
