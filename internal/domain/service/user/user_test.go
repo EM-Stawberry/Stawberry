@@ -101,7 +101,7 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	t.Run("successful authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
@@ -135,38 +135,8 @@ func TestUserService_Authenticate(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid password")
 	})
 
-	t.Run("max active tokens reached", func(t *testing.T) {
-		maxTokens := make([]entity.RefreshToken, maxUsers)
-		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return(maxTokens, nil)
-		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
-		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
-		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
-		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
-
-		accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
-
-		assert.NoError(t, err)
-		assert.NotEmpty(t, accessToken)
-		assert.NotEmpty(t, refreshToken)
-	})
-
-	t.Run("error getting active tokens", func(t *testing.T) {
-		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).
-			Return(nil, errors.New("database error"))
-
-		accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
-
-		assert.Error(t, err)
-		assert.Empty(t, accessToken)
-		assert.Empty(t, refreshToken)
-	})
-
 	t.Run("error revoking active tokens", func(t *testing.T) {
-		maxTokens := make([]entity.RefreshToken, maxUsers)
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return(maxTokens, nil)
 		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).
 			Return(errors.New("revoke error"))
 
@@ -179,8 +149,8 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	t.Run("error generating tokens during authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
+		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).
 			Return("", entity.RefreshToken{}, errors.New("token generation error"))
 
@@ -193,9 +163,9 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	t.Run("error inserting token during authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).
 			Return("access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).
 			Return(errors.New("insert error"))
@@ -209,7 +179,7 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	t.Run("error cleaning up expired tokens during authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).
 			Return(errors.New("cleanup error"))
 

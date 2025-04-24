@@ -24,7 +24,6 @@ type Repository interface {
 type TokenService interface {
 	GenerateTokens(ctx context.Context, fingerprint string, userID uint) (string, entity.RefreshToken, error)
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
-	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
 	RevokeActivesByUserID(ctx context.Context, userID uint) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
@@ -93,16 +92,8 @@ func (us *userService) Authenticate(
 		return "", "", errors.New("invalid password")
 	}
 
-	// проверяет количество токенов у пользователя
-	userActiveTokens, err := us.tokenService.GetActivesTokenByUserID(ctx, user.ID)
-	if err != nil {
+	if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {
 		return "", "", err
-	}
-
-	if len(userActiveTokens) >= maxUsers {
-		if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {
-			return "", "", err
-		}
 	}
 
 	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)

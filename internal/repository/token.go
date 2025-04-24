@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -76,31 +77,31 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 	return tokens, nil
 }
 
-// RevokeActivesByUserID помечает все активные refresh токены пользователя как отозванные.
+// RevokeActivesByUserID помечает все активные refresh токены пользователя за исключением retain самых новых как отозванные.
 func (r *tokenRepository) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
+	retain int,
 ) error {
+	substmt := sq.Select("uuid").
+		From("refresh_tokens").
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Gt{"expires_at": "now()"}).
+		Where(sq.Eq{"revoked_at": nil}).
+		OrderBy("created_at DESC").
+		Offset(uint64(retain))
+
 	stmt := sq.Update("refresh_tokens").
 		Set("revoked_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"user_id": userID}).
-		Where(sq.Eq{"revoked_at": nil})
+		Where(sq.Expr("uuid in (?)", substmt))
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+	fmt.Println(query)
 
-	res, err := r.db.ExecContext(ctx, query, args...)
+	_, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		return apperror.New(apperror.DatabaseError, "failed to revoke user tokens", err)
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return apperror.New(apperror.DatabaseError, "failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return apperror.ErrTokenNotFound
 	}
 
 	return nil
@@ -168,14 +169,18 @@ func (r *tokenRepository) Update(
 // CleanExpired удаляет все отозванные и устаревшие токены пользователя за исключением
 // пяти самых последних
 func (r *tokenRepository) CleanExpired(ctx context.Context, userID uint, retain int) error {
-	stmt := sq.Delete("refresh_tokens").
+	substmt := sq.Select("uuid").
+		From("refresh_tokens").
 		Where(sq.Eq{"user_id": userID}).
 		Where(sq.Or{
-			sq.Lt{"expires_at": sq.Expr("now()")},
-			sq.LtOrEq{"revoked_at": sq.Expr("now()")},
+			sq.LtOrEq{"expires_at": "now()"},
+			sq.LtOrEq{"revoked_at": "now()"},
 		}).
-		OrderBy("created_at ASC").
+		OrderBy("created_at DESC").
 		Offset(uint64(retain))
+
+	stmt := sq.Delete("refresh_tokens").
+		Where(sq.Expr("uuid IN (?)", substmt))
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
 

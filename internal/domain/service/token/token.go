@@ -19,7 +19,7 @@ var signingMethod = jwt.SigningMethodHS256
 type Repository interface {
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
 	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
-	RevokeActivesByUserID(ctx context.Context, userID uint) error
+	RevokeActivesByUserID(ctx context.Context, userID uint, retain int) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
 	CleanExpired(ctx context.Context, userID uint, retain int) error
@@ -129,12 +129,15 @@ func (ts *tokenService) GetActivesTokenByUserID(
 	return ts.tokenRepository.GetActivesTokenByUserID(ctx, userID)
 }
 
+// retainActive определяет количество последних активных сессий, которые сохраняются при зачистке
+const retainActive = 5
+
 // RevokeActivesByUserID аннулирует все активные токены обновления для определенного пользователя.
 func (ts *tokenService) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
-	return ts.tokenRepository.RevokeActivesByUserID(ctx, userID)
+	return ts.tokenRepository.RevokeActivesByUserID(ctx, userID, retainActive)
 }
 
 // retainExpired определяет количество отозванных и устаревших токенов, которые

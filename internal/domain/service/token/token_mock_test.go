@@ -100,17 +100,17 @@ func (mr *MockRepositoryMockRecorder) InsertToken(ctx, token any) *gomock.Call {
 }
 
 // RevokeActivesByUserID mocks base method.
-func (m *MockRepository) RevokeActivesByUserID(ctx context.Context, userID uint) error {
+func (m *MockRepository) RevokeActivesByUserID(ctx context.Context, userID uint, retain int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevokeActivesByUserID", ctx, userID)
+	ret := m.ctrl.Call(m, "RevokeActivesByUserID", ctx, userID, retain)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RevokeActivesByUserID indicates an expected call of RevokeActivesByUserID.
-func (mr *MockRepositoryMockRecorder) RevokeActivesByUserID(ctx, userID any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) RevokeActivesByUserID(ctx, userID, retain any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeActivesByUserID", reflect.TypeOf((*MockRepository)(nil).RevokeActivesByUserID), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeActivesByUserID", reflect.TypeOf((*MockRepository)(nil).RevokeActivesByUserID), ctx, userID, retain)
 }
 
 // Update mocks base method.

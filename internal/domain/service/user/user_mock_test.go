@@ -140,21 +140,6 @@ func (mr *MockTokenServiceMockRecorder) GenerateTokens(ctx, fingerprint, userID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateTokens", reflect.TypeOf((*MockTokenService)(nil).GenerateTokens), ctx, fingerprint, userID)
 }
 
-// GetActivesTokenByUserID mocks base method.
-func (m *MockTokenService) GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetActivesTokenByUserID", ctx, userID)
-	ret0, _ := ret[0].([]entity.RefreshToken)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetActivesTokenByUserID indicates an expected call of GetActivesTokenByUserID.
-func (mr *MockTokenServiceMockRecorder) GetActivesTokenByUserID(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActivesTokenByUserID", reflect.TypeOf((*MockTokenService)(nil).GetActivesTokenByUserID), ctx, userID)
-}
-
 // GetByUUID mocks base method.
 func (m *MockTokenService) GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error) {
 	m.ctrl.T.Helper()
