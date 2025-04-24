@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 
@@ -46,9 +47,19 @@ func SetupRouter(
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
 		secured.GET("/auth_required", func(c *gin.Context) {
+			userID, ok := helpers.GetUserID(c)
+			var status string
+			if ok {
+				status = "UserID found"
+			} else {
+				status = "UserID not found"
+			}
+			isStore, ok := helpers.GetUserIsStore(c)
 			c.JSON(http.StatusOK, gin.H{
-				"status": "ok",
-				"time":   time.Now().Unix(),
+				"userID":  userID,
+				"status":  status,
+				"isStore": isStore,
+				"time":    time.Now().Unix(),
 			})
 		})
 	}
