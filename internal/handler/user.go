@@ -46,11 +46,7 @@ func NewUserHandler(
 func (h *userHandler) Registration(c *gin.Context) {
 	var regUserDTO dto.RegistrationUserReq
 	if err := c.ShouldBindJSON(&regUserDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid user data",
-			"details": err.Error(),
-		})
+		c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
 		return
 	}
 
@@ -76,11 +72,7 @@ func (h *userHandler) Registration(c *gin.Context) {
 func (h *userHandler) Login(c *gin.Context) {
 	var loginUserDTO dto.LoginUserReq
 	if err := c.ShouldBindJSON(&loginUserDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid user data",
-			"details": err.Error(),
-		})
+		c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
 		return
 	}
 
@@ -109,22 +101,14 @@ func (h *userHandler) Login(c *gin.Context) {
 func (h *userHandler) Refresh(c *gin.Context) {
 	var refreshDTO dto.RefreshReq
 	if err := c.ShouldBindJSON(&refreshDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid refresh data",
-			"details": err.Error(),
-		})
+		c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 		return
 	}
 
 	if refreshDTO.RefreshToken == "" {
 		refresh, err := c.Cookie("refresh_token")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    apperror.BadRequest,
-				"message": "Invalid refresh data",
-				"details": err.Error(),
-			})
+			c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 			return
 		}
 		refreshDTO.RefreshToken = refresh
@@ -153,22 +137,14 @@ func (h *userHandler) Refresh(c *gin.Context) {
 func (h *userHandler) Logout(c *gin.Context) {
 	var logoutDTO dto.LogoutReq
 	if err := c.ShouldBindJSON(&logoutDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid refresh data",
-			"details": err.Error(),
-		})
+		c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 		return
 	}
 
 	if logoutDTO.RefreshToken == "" {
 		refresh, err := c.Cookie("refresh_token")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    apperror.BadRequest,
-				"message": "Invalid refresh data",
-				"details": err.Error(),
-			})
+			c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 			return
 		}
 		logoutDTO.RefreshToken = refresh
