@@ -61,30 +61,6 @@ func (r *offerRepository) UpdateOfferStatus(
 	// TODO: zap debug coverage
 
 	var offer entity.Offer
-	var requiredID uint
-
-	// Make sure the user IS the owner of the shop the offer belongs to
-	{
-		validateShopOwnerIDQuery, args := squirrel.Select("users.id").
-			From("users").
-			InnerJoin("shops on users.id = shops.user_id").
-			InnerJoin("offers on shops.id = offers.shop_id").
-			Where(squirrel.Eq{"offers.id": offerID}).
-			PlaceholderFormat(squirrel.Dollar).
-			MustSql()
-
-		err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return offer, apperror.ErrOfferNotFound
-			}
-			return offer, apperror.New(apperror.InternalError, "error scanning into uint", err)
-		}
-
-		if userID != requiredID {
-			return offer, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
-		}
-	}
 
 	updateOfferStatusQuery, args := squirrel.Update("offers").
 		Set("status", status).
@@ -112,6 +88,31 @@ func (r *offerRepository) UpdateOfferStatus(
 	}
 
 	return offer, nil
+}
+
+func (r *offerRepository) IsUserShopOwner(ctx context.Context, offerID, userID uint) (bool, error) {
+	var requiredID uint
+
+	validateShopOwnerIDQuery, args := squirrel.Select("users.id").
+		From("users").
+		InnerJoin("shops on users.id = shops.user_id").
+		InnerJoin("offers on shops.id = offers.shop_id").
+		Where(squirrel.Eq{"offers.id": offerID}).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, apperror.ErrOfferNotFound
+		}
+		return false, apperror.New(apperror.InternalError, "error scanning into uint", err)
+	}
+
+	if userID != requiredID {
+		return false, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
+	}
+	return true, nil
 }
 
 func (r *offerRepository) DeleteOffer(
