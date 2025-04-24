@@ -29,3 +29,4 @@ SimpleEncoder
 ├── Переопределяет метод EncodeEntry
 └── Управляет форматированием каждого элемента лога
 ```
+<img width="804" alt="Снимок экрана 2025-04-24 в 04 08 31" src="https://github.com/user-attachments/assets/c7783d22-320c-4bb7-8d25-3f4aeb99f9e9" />
