@@ -51,6 +51,7 @@ Logger System
 ## Примеры логов
 
 ### Логи маршрутов Gin при запуске
+
 ```
 2025-05-20 00:18:39.508	DEBUG	[GIN] Route: GET /api/sellers/:id/reviews            → GetReviews-fm	component=gin
 2025-05-20 00:18:39.508	DEBUG	[GIN] Route: GET /api/auth_required                  → func2	component=gin
@@ -58,6 +59,7 @@ Logger System
 ```
 
 ### Логи сервисов без JSON-полей (в режиме разработки)
+
 ```
 2025-05-20 00:19:03.054	INFO	reviews/product_reviews.go:68	Existence check
 2025-05-20 00:19:03.056	INFO	reviews/product_reviews.go:75	Receiving reviews
@@ -65,6 +67,7 @@ Logger System
 ```
 
 ### Логи HTTP-запросов
+
 ```
 2025-05-20 00:19:03.057	INFO	GET 200 3.140958ms /api/products/2/reviews
 ```
