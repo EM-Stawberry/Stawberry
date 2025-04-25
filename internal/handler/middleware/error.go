@@ -19,10 +19,14 @@ func Errors() gin.HandlerFunc {
 			var appErr apperror.AppError
 			if errors.As(err, &appErr) {
 				statusCode := errorStatus(appErr.Code())
-				c.AbortWithStatusJSON(statusCode, gin.H{
+				resp := gin.H{
 					"code":    appErr.Code(),
 					"message": appErr.Message(),
-				})
+				}
+				if appErr.Code() == apperror.BadRequest {
+					resp["details"] = appErr.Error()
+				}
+				c.AbortWithStatusJSON(statusCode, resp)
 				return
 			}
 

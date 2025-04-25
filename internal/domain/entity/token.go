@@ -7,19 +7,18 @@ import (
 )
 
 type AccessToken struct {
-	UserID    uint      `json:"user_id"`
-	IssuedAt  time.Time `json:"issued_at"`
-	ExpiresAt time.Time `json:"expires_at"`
-	// role в теории, если понадобится
+	UserID    uint
+	IssuedAt  time.Time
+	ExpiresAt time.Time
 }
 
 type RefreshToken struct {
-	UUID        uuid.UUID  `json:"uuid"`
-	CreatedAt   time.Time  `json:"created_at"`
-	ExpiresAt   time.Time  `json:"expires_at"`
-	RevokedAt   *time.Time `json:"revoked_at"`
-	Fingerprint string     `json:"fingerprint"`
-	UserID      uint       `json:"user_id"`
+	UUID        uuid.UUID
+	CreatedAt   time.Time
+	ExpiresAt   time.Time
+	RevokedAt   *time.Time
+	Fingerprint string
+	UserID      uint
 }
 
 func (rt RefreshToken) IsValid() bool {

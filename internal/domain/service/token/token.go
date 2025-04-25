@@ -2,39 +2,41 @@ package token
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/google/uuid"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
-	"github.com/golang-jwt/jwt"
 )
-
-var signingMethod = jwt.SigningMethodHS256
 
 //go:generate mockgen -source=$GOFILE -destination=token_mock_test.go -package=token Repository
 
 type Repository interface {
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
 	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
-	RevokeActivesByUserID(ctx context.Context, userID uint) error
+	RevokeActivesByUserID(ctx context.Context, userID uint, retain int) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
+	CleanExpired(ctx context.Context, userID uint, retain int) error
+}
+
+type JWTManager interface {
+	Generate(userID uint, duration time.Duration) (string, error)
+	Parse(token string) (entity.AccessToken, error)
 }
 
 type tokenService struct {
 	tokenRepository Repository
-	jwtSecret       string
+	jwtManager      JWTManager
 	refreshLife     time.Duration
 	accessLife      time.Duration
 }
 
-func NewTokenService(tokenRepo Repository, secret string, refreshLife, accessLife time.Duration) *tokenService {
+func NewTokenService(tokenRepo Repository, jwtManager JWTManager, refreshLife, accessLife time.Duration) *tokenService {
 	return &tokenService{
 		tokenRepository: tokenRepo,
-		jwtSecret:       secret,
+		jwtManager:      jwtManager,
 		refreshLife:     refreshLife,
 		accessLife:      accessLife,
 	}
@@ -46,7 +48,7 @@ func (ts *tokenService) GenerateTokens(
 	fingerprint string,
 	userID uint,
 ) (string, entity.RefreshToken, error) {
-	accessToken, err := generateJWT(userID, ts.jwtSecret, ts.accessLife)
+	accessToken, err := ts.jwtManager.Generate(userID, ts.accessLife)
 	if err != nil {
 		return "", entity.RefreshToken{}, err
 	}
@@ -64,7 +66,7 @@ func (ts *tokenService) ValidateToken(
 	ctx context.Context,
 	token string,
 ) (entity.AccessToken, error) {
-	accessToken, err := ts.parse(token)
+	accessToken, err := ts.jwtManager.Parse(token)
 	if err != nil {
 		return entity.AccessToken{}, err
 	}
@@ -74,43 +76,6 @@ func (ts *tokenService) ValidateToken(
 	}
 
 	return accessToken, nil
-}
-
-// parse извлекает токен JWT и извлекает claims.
-func (ts *tokenService) parse(token string) (entity.AccessToken, error) {
-	claim := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
-		if token.Header["alg"] != signingMethod.Alg() {
-			return nil, fmt.Errorf("%w: invalid signing method", apperror.ErrInvalidToken)
-		}
-		return []byte(ts.jwtSecret), nil
-	})
-	if err != nil {
-		return entity.AccessToken{}, apperror.ErrInvalidToken
-	}
-	userID, ok := claim["sub"].(float64)
-	if !ok {
-		return entity.AccessToken{}, apperror.ErrInvalidToken
-	}
-
-	unixExpiresAt, ok := claim["exp"].(float64)
-	if !ok {
-		return entity.AccessToken{}, apperror.ErrInvalidToken
-	}
-	expiresAt := time.Unix(int64(unixExpiresAt), 0)
-
-	unixIssuedAt, ok := claim["iat"].(float64)
-	if !ok {
-		return entity.AccessToken{}, apperror.ErrInvalidToken
-	}
-
-	issuedAt := time.Unix(int64(unixIssuedAt), 0)
-
-	return entity.AccessToken{
-		UserID:    uint(userID),
-		IssuedAt:  issuedAt,
-		ExpiresAt: expiresAt,
-	}, nil
 }
 
 func (ts *tokenService) InsertToken(
@@ -128,12 +93,27 @@ func (ts *tokenService) GetActivesTokenByUserID(
 	return ts.tokenRepository.GetActivesTokenByUserID(ctx, userID)
 }
 
+// retainActive определяет количество последних активных сессий, которые сохраняются при зачистке
+const retainActive = 5
+
 // RevokeActivesByUserID аннулирует все активные токены обновления для определенного пользователя.
 func (ts *tokenService) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
-	return ts.tokenRepository.RevokeActivesByUserID(ctx, userID)
+	return ts.tokenRepository.RevokeActivesByUserID(ctx, userID, retainActive)
+}
+
+// retainExpired определяет количество отозванных и устаревших токенов, которые
+// сохраняются в базе при вызове CleanUpExpiredByUserID
+const retainExpired = 5
+
+// CleanExpiredByUserID удаляет все устаревшие и отозванные токены обновления для определённого пользователя
+func (ts *tokenService) CleanUpExpiredByUserID(
+	ctx context.Context,
+	userID uint,
+) error {
+	return ts.tokenRepository.CleanExpired(ctx, userID, retainExpired)
 }
 
 func (ts *tokenService) GetByUUID(
@@ -148,17 +128,6 @@ func (ts *tokenService) Update(
 	refresh entity.RefreshToken,
 ) (entity.RefreshToken, error) {
 	return ts.tokenRepository.Update(ctx, refresh)
-}
-
-// generateJWT создает новый токен доступа JWT с указанным userID и сроком действия.
-func generateJWT(userID uint, secret string, duration time.Duration) (string, error) {
-	claims := jwt.MapClaims{
-		"sub": userID,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(duration).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
 }
 
 // generateRefresh создает новый refresh токен обновления с указанным

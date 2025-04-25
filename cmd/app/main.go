@@ -9,8 +9,10 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 
+	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
+	"github.com/EM-Stawberry/Stawberry/pkg/security"
 
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/app"
@@ -69,10 +71,18 @@ func initializeApp() error {
 	notificationRepository := repository.NewNotificationRepository(db)
 	tokenRepository := repository.NewTokenRepository(db)
 
+	passwordManager := security.NewArgon2idPasswordManager()
+	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
+
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
-	userService := user.NewUserService(userRepository, tokenService)
+	tokenService := token.NewTokenService(
+		tokenRepository,
+		jwtManager,
+		cfg.Token.RefreshTokenDuration,
+		cfg.Token.AccessTokenDuration,
+	)
+	userService := user.NewUserService(userRepository, tokenService, passwordManager)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
 	productHandler := handler.NewProductHandler(productService)
