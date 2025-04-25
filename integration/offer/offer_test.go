@@ -71,7 +71,6 @@ func GetDB() (*sqlx.DB, *postgres.PostgresContainer, CleanupFunc, error) {
 		return nil, nil, nil, err
 	}
 
-	//migrator.RunMigrations(db, "migrations")
 	goose.SetDialect("postgres")
 
 	os.Chdir("..")
@@ -84,7 +83,7 @@ func GetDB() (*sqlx.DB, *postgres.PostgresContainer, CleanupFunc, error) {
 		return nil, nil, nil, err
 	}
 
-	_, err = sqlx.LoadFile(db, `.\internal\handler\testdata\offer\sql\populate_test_db.sql`)
+	_, err = sqlx.LoadFile(db, `.\integration\testdata\offer\sql\populate_test_db.sql`)
 	if err != nil {
 		slog.Error(err.Error())
 		return nil, nil, nil, err
@@ -141,6 +140,7 @@ func mockAuthIncorrectShopOwnerMiddleware() gin.HandlerFunc {
 var _ = Describe("offer patch status handler", Ordered, func() {
 	db, container, cleanup, _ := GetDB()
 	_ = cleanup
+	_ = container
 
 	container.Snapshot(context.Background())
 
