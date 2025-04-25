@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"encoding/json"
+	"strconv"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -47,7 +48,9 @@ func (r *productRepository) GetProductByID(
 		}
 		return entity.Product{}, apperror.New(apperror.DatabaseError, "failed to fetch product", err)
 	}
-	attributes, err := r.GetProductAttributesByID(ctx, id)
+	idAttr, _ := strconv.Atoi(id)
+	idUint := uint(idAttr)
+	attributes, err := r.GetProductAttributesByID(ctx, idUint)
 	if err != nil {
 		return entity.Product{}, err
 	}
@@ -77,6 +80,11 @@ func (r *productRepository) SelectProducts(
 	products := make([]entity.Product, len(productModels))
 	for i, pm := range productModels {
 		products[i] = model.ConvertProductToEntity(pm)
+		attributes, err := r.GetProductAttributesByID(ctx, pm.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		products[i].Attributes = attributes
 	}
 
 	return products, int(total), nil
@@ -106,8 +114,13 @@ func (r *productRepository) SelectProductsByName(
 	}
 
 	products := make([]entity.Product, len(models))
-	for i, p := range models {
-		products[i] = model.ConvertProductToEntity(p)
+	for i, pm := range models {
+		products[i] = model.ConvertProductToEntity(pm)
+		attributes, err := r.GetProductAttributesByID(ctx, pm.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		products[i].Attributes = attributes
 	}
 	return products, int(total), nil
 }
@@ -214,8 +227,13 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
 	products := make([]entity.Product, len(models))
-	for i, p := range models {
-		products[i] = model.ConvertProductToEntity(p)
+	for i, pm := range models {
+		products[i] = model.ConvertProductToEntity(pm)
+		attributes, err := r.GetProductAttributesByID(ctx, pm.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		products[i].Attributes = attributes
 	}
 
 	return products, totalCount, nil
@@ -246,7 +264,7 @@ func isDuplicateError(err error) bool {
 		strings.Contains(err.Error(), "unique violation")
 }
 
-func (r *productRepository) GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
+func (r *productRepository) GetProductAttributesByID(ctx context.Context, productID uint) (map[string]interface{}, error) {
 	var attributesJSONb []byte
 
 	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
