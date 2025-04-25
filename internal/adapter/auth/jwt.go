@@ -1,13 +1,18 @@
-package security
+package auth
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type AccessTokenClaims struct {
+	UserID    uint
+	IssuedAt  time.Time
+	ExpiresAt time.Time
+}
 
 type JWTManager struct {
 	secret        string
@@ -28,14 +33,20 @@ func (j *JWTManager) Generate(userID uint, duration time.Duration) (string, erro
 		"exp": time.Now().Add(duration).Unix(),
 	}
 	token := jwt.NewWithClaims(j.signingMethod, claims)
-	return token.SignedString([]byte(j.secret))
+	tokenString, err := token.SignedString([]byte(j.secret))
+	if err != nil {
+		appErr := apperror.ErrInvalidToken
+		appErr.WrappedErr = err
+		return "", appErr
+	}
+	return tokenString, nil
 }
 
 func (j *JWTManager) Parse(token string) (entity.AccessToken, error) {
 	claim := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] != j.signingMethod.Alg() {
-			return nil, fmt.Errorf("%w: invalid signing method", apperror.ErrInvalidToken)
+			return nil, apperror.ErrInvalidToken
 		}
 		return []byte(j.secret), nil
 	})

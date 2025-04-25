@@ -9,6 +9,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 
+	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
@@ -71,7 +72,7 @@ func initializeApp() error {
 	tokenRepository := repository.NewTokenRepository(db)
 
 	passwordManager := security.NewArgon2idPasswordManager()
-	jwtManager := security.NewJWTManager(cfg.Token.Secret)
+	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
