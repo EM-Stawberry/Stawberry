@@ -132,6 +132,11 @@ func (r *productRepository) SelectProductsByName(
 		}
 	}
 
+	products := make([]entity.Product, len(productModels))
+	for i, pm := range productModels {
+		products[i] = model.ConvertProductToEntity(pm)
+	}
+
 	products := make([]entity.Product, len(models))
 	for i, p := range models {
 		products[i] = model.ConvertProductToEntity(p)
