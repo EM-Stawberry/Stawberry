@@ -80,11 +80,6 @@ func (r *productRepository) SelectProducts(
 	products := make([]entity.Product, len(productModels))
 	for i, pm := range productModels {
 		products[i] = model.ConvertProductToEntity(pm)
-		attributes, err := r.GetProductAttributesByID(ctx, pm.ID)
-		if err != nil {
-			return nil, 0, err
-		}
-		products[i].Attributes = attributes
 	}
 
 	return products, int(total), nil
@@ -116,11 +111,6 @@ func (r *productRepository) SelectProductsByName(
 	products := make([]entity.Product, len(models))
 	for i, pm := range models {
 		products[i] = model.ConvertProductToEntity(pm)
-		attributes, err := r.GetProductAttributesByID(ctx, pm.ID)
-		if err != nil {
-			return nil, 0, err
-		}
-		products[i].Attributes = attributes
 	}
 	return products, int(total), nil
 }
@@ -229,13 +219,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	products := make([]entity.Product, len(models))
 	for i, pm := range models {
 		products[i] = model.ConvertProductToEntity(pm)
-		attributes, err := r.GetProductAttributesByID(ctx, pm.ID)
-		if err != nil {
-			return nil, 0, err
-		}
-		products[i].Attributes = attributes
 	}
-
 	return products, totalCount, nil
 }
 
