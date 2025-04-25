@@ -169,7 +169,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 		}
 	}
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), usr.(entity.User).ID, req.Status)
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), usr.ID, req.Status)
 	if err != nil {
 		c.Error(err)
 		return
