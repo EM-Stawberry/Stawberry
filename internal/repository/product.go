@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"encoding/json"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -46,8 +47,14 @@ func (r *productRepository) GetProductByID(
 		}
 		return entity.Product{}, apperror.New(apperror.DatabaseError, "failed to fetch product", err)
 	}
+	attributes, err := r.GetProductAttributesByID(ctx, id)
+	if err != nil {
+		return entity.Product{}, err
+	}
+	product := model.ConvertProductToEntity(productModel)
+	product.Attributes = attributes
 
-	return model.ConvertProductToEntity(productModel), nil
+	return product, nil
 }
 
 func (r *productRepository) SelectProducts(
@@ -237,4 +244,24 @@ func (r *productRepository) UpdateProduct(
 func isDuplicateError(err error) bool {
 	return strings.Contains(err.Error(), "duplicate") ||
 		strings.Contains(err.Error(), "unique violation")
+}
+
+func (r *productRepository) GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
+	var attributesJSONb []byte
+
+	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
+	err := r.db.GetContext(ctx, &attributesJSONb, query, productID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, apperror.New(apperror.DatabaseError, "failed to fetch product attributes", err)
+	}
+
+	var attributes map[string]interface{}
+	if err := json.Unmarshal(attributesJSONb, &attributes); err != nil {
+		return nil, apperror.New(apperror.DatabaseError, "failed to unmarshal product attributes", err)
+	}
+
+	return attributes, nil
 }

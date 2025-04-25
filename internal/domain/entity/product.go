@@ -5,4 +5,5 @@ type Product struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	CategoryID  uint   `json:"category_id"`
+	Attributes map[string]interface{} `json:"product_attributes"`
 }
