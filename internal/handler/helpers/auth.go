@@ -5,6 +5,7 @@ import "github.com/gin-gonic/gin"
 const (
 	UserIDKey      = "userID"
 	UserIsStoreKey = "userIsStore"
+	UserIsAdminKey = "userIsAdmin"
 )
 
 func UserIDContext(c *gin.Context) (uint, bool) {
@@ -17,6 +18,18 @@ func UserIDContext(c *gin.Context) (uint, bool) {
 		return 0, false
 	}
 	return idValue, true
+}
+
+func UserIsAdminContext(c *gin.Context) (bool, bool) {
+	isAdmin, exists := c.Get(UserIsAdminKey)
+	if !exists {
+		return false, false
+	}
+	isAdminValue, ok := isAdmin.(bool)
+	if !ok {
+		return false, false
+	}
+	return isAdminValue, true
 }
 
 func UserIsStoreContext(c *gin.Context) (bool, bool) {

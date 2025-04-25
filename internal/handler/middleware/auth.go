@@ -58,6 +58,9 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 
 		c.Set(helpers.UserIDKey, user.ID)
 		c.Set(helpers.UserIsStoreKey, user.IsStore)
+
+		// TODO: пробрасывать флаг админства после мёржа с веткой про работу админа
+		c.Set(helpers.UserIsAdminKey, false)
 		c.Next()
 	}
 }
