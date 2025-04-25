@@ -47,14 +47,14 @@ func SetupRouter(
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
 		secured.GET("/auth_required", func(c *gin.Context) {
-			userID, ok := helpers.GetUserID(c)
+			userID, ok := helpers.UserIDContext(c)
 			var status string
 			if ok {
 				status = "UserID found"
 			} else {
 				status = "UserID not found"
 			}
-			isStore, ok := helpers.GetUserIsStore(c)
+			isStore, ok := helpers.UserIsStoreContext(c)
 			c.JSON(http.StatusOK, gin.H{
 				"userID":  userID,
 				"status":  status,

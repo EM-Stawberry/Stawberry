@@ -7,7 +7,7 @@ const (
 	UserIsStoreKey = "userIsStore"
 )
 
-func GetUserID(c *gin.Context) (uint, bool) {
+func UserIDContext(c *gin.Context) (uint, bool) {
 	id, exists := c.Get(UserIDKey)
 	if !exists {
 		return 0, false
@@ -19,7 +19,7 @@ func GetUserID(c *gin.Context) (uint, bool) {
 	return idValue, true
 }
 
-func GetUserIsStore(c *gin.Context) (bool, bool) {
+func UserIsStoreContext(c *gin.Context) (bool, bool) {
 	isStore, exists := c.Get(UserIsStoreKey)
 	if !exists {
 		return false, false

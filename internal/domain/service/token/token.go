@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var signingMethod = jwt.SigningMethodHS256
