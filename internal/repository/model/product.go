@@ -1,7 +1,6 @@
 package model
 
 import (
-
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 )

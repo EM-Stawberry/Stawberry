@@ -50,7 +50,6 @@ func SetupRouter(
 		product.GET("/filters", productH.SelectFilteredProducts)
 	}
 
-
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
 		secured.GET("/auth_required", func(c *gin.Context) {

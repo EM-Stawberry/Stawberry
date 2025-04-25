@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	"strings"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -31,28 +31,13 @@ func (r *productRepository) InsertProduct(
 	product product.Product,
 ) (uint, error) {
 	productModel := model.ConvertProductFromSvc(product)
-	/* if err := r.db.WithContext(ctx).Create(productModel).Error; err != nil {
-		if isDuplicateError(err) {
-			return 0, &apperror.ProductError{
-				Code:    apperror.DuplicateError,
-				Message: "product with this id already exists",
-				Err:     err,
-			}
-		}
-		return 0, &apperror.ProductError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to create product",
-			Err:     err,
-		}
-	}
- */
 	return productModel.ID, nil
 }
 
 func (r *productRepository) GetProductByID(
 	ctx context.Context,
 	id string,
-	) (entity.Product, error) {
+) (entity.Product, error) {
 	var productModel model.Product
 	query := "SELECT id, name, description, category_id from products WHERE id = $1"
 	if err := r.db.GetContext(ctx, &productModel, query, id); err != nil {
@@ -69,10 +54,10 @@ func (r *productRepository) SelectProducts(
 	ctx context.Context,
 	offset,
 	limit int,
-	) ([]entity.Product, int, error) {
+) ([]entity.Product, int, error) {
 	var total int64
 	countQuery := "SELECT COUNT(*) FROM products"
-	
+
 	if err := r.db.GetContext(ctx, &total, countQuery); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
@@ -93,9 +78,9 @@ func (r *productRepository) SelectProducts(
 func (r *productRepository) SelectProductsByName(
 	ctx context.Context,
 	name string,
-	offset, 
+	offset,
 	limit int,
-	) ([]entity.Product, int, error) {
+) ([]entity.Product, int, error) {
 	var total int64
 	countQuery := `
 		SELECT COUNT(*) FROM products 
@@ -127,7 +112,6 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	limit, offset int,
 ) ([]entity.Product, int, error) {
 	var models []model.Product
-
 
 	var params []interface{}
 
@@ -205,7 +189,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 			strings.Join(attrConditions, " AND "),
 		)
 	} else {
-		countQuery =`
+		countQuery = `
 		WITH RECURSIVE category_tree AS (
 			SELECT id FROM categories WHERE id = $1
 			UNION
@@ -223,41 +207,20 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
 	products := make([]entity.Product, len(models))
-	for i, p := range  models{
+	for i, p := range models {
 		products[i] = model.ConvertProductToEntity(p)
 	}
 
 	return products, totalCount, nil
 }
 
-
 func (r *productRepository) SelectStoreProducts(
 	ctx context.Context,
 	id string, offset, limit int,
 ) ([]entity.Product, int, error) {
 	var total int64
-	/* if err := r.db.WithContext(ctx).
-		Model(&model.Product{}).
-		Where("store_id = ?", id).
-		Count(&total).Error; err != nil {
-		return nil, 0, &apperror.ProductError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to count store products",
-			Err:     err,
-		}
-	} */
 
 	var products []entity.Product
-	/* if err := r.db.WithContext(ctx).
-		Where("store_id = ?", id).
-		Offset(offset).Limit(limit).
-		Find(&products).Error; err != nil {
-		return nil, 0, &apperror.ProductError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to fetch store products",
-			Err:     err,
-		}
-	} */
 
 	return products, int(total), nil
 }
@@ -267,26 +230,6 @@ func (r *productRepository) UpdateProduct(
 	id string,
 	update product.UpdateProduct,
 ) error {
-	/* updateModel := model.ConvertUpdateProductFromSvc(update)
-	tx := r.db.WithContext(ctx).Model(&model.Product{}).Where("id = ?", id).Updates(updateModel)
-	if tx.Error != nil {
-		if isDuplicateError(tx.Error) {
-			return &apperror.ProductError{
-				Code:    apperror.DuplicateError,
-				Message: "product with these details already exists",
-				Err:     tx.Error,
-			}
-		}
-		return &apperror.ProductError{
-			Code:    apperror.DatabaseError,
-			Message: "failed to update product",
-			Err:     tx.Error,
-		}
-	}
-
-	if tx.RowsAffected == 0 {
-		return apperror.ErrProductNotFound
-	} */
 
 	return nil
 }

@@ -20,7 +20,7 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int,) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int) ([]entity.Product, int, error)
 	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 }
@@ -29,7 +29,7 @@ type productHandler struct {
 	productService ProductService
 }
 
- func NewProductHandler(productService ProductService) productHandler {
+func NewProductHandler(productService ProductService) productHandler {
 	return productHandler{productService: productService}
 }
 
@@ -190,7 +190,6 @@ func (h *productHandler) SelectFilteredProducts(c *gin.Context) {
 		},
 	})
 }
-
 
 func (h *productHandler) GetStoreProducts(c *gin.Context) {
 	id := c.Param("id")

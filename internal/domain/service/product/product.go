@@ -11,7 +11,7 @@ type Repository interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int,) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int) ([]entity.Product, int, error)
 	SelectStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 }
