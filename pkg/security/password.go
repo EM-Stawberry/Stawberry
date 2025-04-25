@@ -27,6 +27,24 @@ const (
 	memory    = 64 * 1024
 )
 
+// Argon2idPasswordManager реализует интерфейс для хеширования и проверки паролей с использованием алгоритма Argon2id
+type Argon2idPasswordManager struct{}
+
+// NewArgon2idPasswordManager создает новый экземпляр менеджера паролей Argon2id
+func NewArgon2idPasswordManager() *Argon2idPasswordManager {
+	return &Argon2idPasswordManager{}
+}
+
+// Hash хеширует пароль с использованием алгоритма Argon2id
+func (a *Argon2idPasswordManager) Hash(password string) (string, error) {
+	return HashArgon2id(password)
+}
+
+// Compare сравнивает пароль с его хешем используя алгоритм Argon2id
+func (a *Argon2idPasswordManager) Compare(password, hash string) (bool, error) {
+	return ComparePasswordAndArgon2id(password, hash)
+}
+
 func HashArgon2id(password string) (string, error) {
 	salt, err := generateRandomBytes(saltSize)
 	if err != nil {

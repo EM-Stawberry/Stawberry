@@ -2,23 +2,25 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
-	"github.com/EM-Stawberry/Stawberry/pkg/security"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=user Repository, TokenService
-
-const maxUsers = 5
 
 type Repository interface {
 	InsertUser(ctx context.Context, user User) (uint, error)
 	GetUser(ctx context.Context, email string) (entity.User, error)
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
+}
+
+// PasswordManager выполняет операции с паролями, такие как хеширование и проверка
+type PasswordManager interface {
+	Hash(password string) (string, error)
+	Compare(password, hash string) (bool, error)
 }
 
 type TokenService interface {
@@ -31,12 +33,20 @@ type TokenService interface {
 }
 
 type userService struct {
-	userRepository Repository
-	tokenService   TokenService
+	userRepository  Repository
+	tokenService    TokenService
+	passwordManager PasswordManager
 }
 
-func NewUserService(userRepo Repository, tokenService TokenService) *userService {
-	return &userService{userRepository: userRepo, tokenService: tokenService}
+func NewUserService(userRepo Repository,
+	tokenService TokenService,
+	passwordManager PasswordManager,
+) *userService {
+	return &userService{
+		userRepository:  userRepo,
+		tokenService:    tokenService,
+		passwordManager: passwordManager,
+	}
 }
 
 // CreateUser создает пользователя, хэшируя его пароль, используя HashArgon2id
@@ -46,7 +56,7 @@ func (us *userService) CreateUser(
 	user User,
 	fingerprint string,
 ) (string, string, error) {
-	hash, err := security.HashArgon2id(user.Password)
+	hash, err := us.passwordManager.Hash(user.Password)
 	if err != nil {
 		err := apperror.ErrFailedToGeneratePassword
 		err.WrappedErr = fmt.Errorf("failed to generate password %w", err)
@@ -83,13 +93,13 @@ func (us *userService) Authenticate(
 		return "", "", apperror.ErrUserNotFound
 	}
 
-	compared, err := security.ComparePasswordAndArgon2id(password, user.Password)
+	compared, err := us.passwordManager.Compare(password, user.Password)
 	if err != nil {
 		return "", "", err
 	}
 
 	if !compared {
-		return "", "", errors.New("invalid password")
+		return "", "", apperror.ErrIncorrectPassword
 	}
 
 	if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {

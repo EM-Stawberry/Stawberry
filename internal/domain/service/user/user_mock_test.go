@@ -86,6 +86,60 @@ func (mr *MockRepositoryMockRecorder) InsertUser(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUser", reflect.TypeOf((*MockRepository)(nil).InsertUser), ctx, user)
 }
 
+// MockPasswordManager is a mock of PasswordManager interface.
+type MockPasswordManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockPasswordManagerMockRecorder
+	isgomock struct{}
+}
+
+// MockPasswordManagerMockRecorder is the mock recorder for MockPasswordManager.
+type MockPasswordManagerMockRecorder struct {
+	mock *MockPasswordManager
+}
+
+// NewMockPasswordManager creates a new mock instance.
+func NewMockPasswordManager(ctrl *gomock.Controller) *MockPasswordManager {
+	mock := &MockPasswordManager{ctrl: ctrl}
+	mock.recorder = &MockPasswordManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPasswordManager) EXPECT() *MockPasswordManagerMockRecorder {
+	return m.recorder
+}
+
+// Compare mocks base method.
+func (m *MockPasswordManager) Compare(password, hash string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compare", password, hash)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compare indicates an expected call of Compare.
+func (mr *MockPasswordManagerMockRecorder) Compare(password, hash any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compare", reflect.TypeOf((*MockPasswordManager)(nil).Compare), password, hash)
+}
+
+// Hash mocks base method.
+func (m *MockPasswordManager) Hash(password string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Hash", password)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Hash indicates an expected call of Hash.
+func (mr *MockPasswordManagerMockRecorder) Hash(password any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hash", reflect.TypeOf((*MockPasswordManager)(nil).Hash), password)
+}
+
 // MockTokenService is a mock of TokenService interface.
 type MockTokenService struct {
 	ctrl     *gomock.Controller
