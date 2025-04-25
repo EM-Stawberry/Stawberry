@@ -12,6 +12,7 @@ package token
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	entity "github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	gomock "go.uber.org/mock/gomock"
@@ -126,4 +127,58 @@ func (m *MockRepository) Update(ctx context.Context, refresh entity.RefreshToken
 func (mr *MockRepositoryMockRecorder) Update(ctx, refresh any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), ctx, refresh)
+}
+
+// MockJWTManager is a mock of JWTManager interface.
+type MockJWTManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockJWTManagerMockRecorder
+	isgomock struct{}
+}
+
+// MockJWTManagerMockRecorder is the mock recorder for MockJWTManager.
+type MockJWTManagerMockRecorder struct {
+	mock *MockJWTManager
+}
+
+// NewMockJWTManager creates a new mock instance.
+func NewMockJWTManager(ctrl *gomock.Controller) *MockJWTManager {
+	mock := &MockJWTManager{ctrl: ctrl}
+	mock.recorder = &MockJWTManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockJWTManager) EXPECT() *MockJWTManagerMockRecorder {
+	return m.recorder
+}
+
+// Generate mocks base method.
+func (m *MockJWTManager) Generate(userID uint, duration time.Duration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Generate", userID, duration)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Generate indicates an expected call of Generate.
+func (mr *MockJWTManagerMockRecorder) Generate(userID, duration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockJWTManager)(nil).Generate), userID, duration)
+}
+
+// Parse mocks base method.
+func (m *MockJWTManager) Parse(token string) (entity.AccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Parse", token)
+	ret0, _ := ret[0].(entity.AccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Parse indicates an expected call of Parse.
+func (mr *MockJWTManagerMockRecorder) Parse(token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Parse", reflect.TypeOf((*MockJWTManager)(nil).Parse), token)
 }

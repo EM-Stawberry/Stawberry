@@ -71,10 +71,16 @@ func initializeApp() error {
 	tokenRepository := repository.NewTokenRepository(db)
 
 	passwordManager := security.NewArgon2idPasswordManager()
+	jwtManager := security.NewJWTManager(cfg.Token.Secret)
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.RefreshTokenDuration, cfg.Token.AccessTokenDuration)
+	tokenService := token.NewTokenService(
+		tokenRepository,
+		jwtManager,
+		cfg.Token.RefreshTokenDuration,
+		cfg.Token.AccessTokenDuration,
+	)
 	userService := user.NewUserService(userRepository, tokenService, passwordManager)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
