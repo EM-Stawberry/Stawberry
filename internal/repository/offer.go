@@ -3,11 +3,10 @@ package repository
 import (
 	"context"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/offer"
-
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type offerRepository struct {

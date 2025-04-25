@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
+	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/gin-gonic/gin"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/dto"
 )
 
 type ProductService interface {
@@ -20,7 +20,6 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int,) ([]entity.Product, int, error)
 	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
@@ -50,7 +49,7 @@ func (h *productHandler) PostProduct(c *gin.Context) {
 	var response dto.PostProductResp
 	var err error
 	if response.ID, err = h.productService.CreateProduct(context.Background(), postProductReq.ConvertToSvc()); err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -62,7 +61,7 @@ func (h *productHandler) GetProduct(c *gin.Context) {
 
 	product, err := h.productService.GetProductByID(context.Background(), id)
 	if err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -92,7 +91,7 @@ func (h *productHandler) SelectProducts(c *gin.Context) {
 
 	products, total, err := h.productService.SelectProducts(context.Background(), offset, limit)
 	if err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -132,7 +131,7 @@ func (h *productHandler) SearchProductsByName(c *gin.Context) {
 
 	products, total, err := h.productService.SelectProductsByName(c.Request.Context(), name, offset, limit)
 	if err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -149,47 +148,7 @@ func (h *productHandler) SearchProductsByName(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) SearchProductsByCategoryID(c *gin.Context) {
-	categoryID := c.Query("category")
-	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if err != nil || page < 1 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid page number",
-		})
-		return
-	}
-	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if err != nil || limit < 1 || limit > 100 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid limit value (should be between 1 and 100)",
-		})
-		return
-	}
-
-	offset := (page - 1) * limit
-
-	products, total, err := h.productService.SelectProductsByCategoryID(c.Request.Context(), categoryID, offset, limit)
-	if err != nil {
-		handleProductError(c, err)
-		return
-	}
-
-	totalPages := int(math.Ceil(float64(total) / float64(limit)))
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": products,
-		"meta": gin.H{
-			"current_page": page,
-			"per_page":     limit,
-			"total_items":  total,
-			"total_pages":  totalPages,
-		},
-	})
-}
-
-func (h *productHandler) GetFilteredProducts(c *gin.Context) {
+func (h *productHandler) SelectFilteredProducts(c *gin.Context) {
 	categoryIDStr := c.Query("category_id")
 	if categoryIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "category_id is required"})
@@ -215,7 +174,7 @@ func (h *productHandler) GetFilteredProducts(c *gin.Context) {
 
 	products, total, err := h.productService.SelectProductsByCategoryAndAttributes(c.Request.Context(), categoryID, filters, limit, offset)
 	if err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -258,7 +217,7 @@ func (h *productHandler) GetStoreProducts(c *gin.Context) {
 
 	products, total, err := h.productService.GetStoreProducts(context.Background(), id, offset, limit)
 	if err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -289,7 +248,7 @@ func (h *productHandler) PatchProduct(c *gin.Context) {
 	}
 
 	if err := h.productService.UpdateProduct(context.Background(), id, update.ConvertToSvc()); err != nil {
-		handleProductError(c, err)
+		c.Error(err)
 		return
 	}
 

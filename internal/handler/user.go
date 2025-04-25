@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/gin-gonic/gin"
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/dto"
 )
+
+//go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=handler UserService
 
 type UserService interface {
 	CreateUser(ctx context.Context, user user.User, fingerprint string) (string, string, error)
@@ -18,7 +20,6 @@ type UserService interface {
 	Refresh(ctx context.Context, refreshToken, fingerprint string) (string, string, error)
 	Logout(ctx context.Context, refreshToken, fingerprint string) error
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
-	UpdateUser(ctx context.Context, id uint, updateUser user.UpdateUser) error
 }
 
 type userHandler struct {
@@ -54,12 +55,12 @@ func (h *userHandler) Registration(c *gin.Context) {
 	}
 
 	accessToken, refreshToken, err := h.userService.CreateUser(
-		context.Background(),
+		c.Request.Context(),
 		regUserDTO.ConvertToSvc(),
 		regUserDTO.Fingerprint,
 	)
 	if err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 	response := dto.RegistrationUserResp{
@@ -84,13 +85,14 @@ func (h *userHandler) Login(c *gin.Context) {
 	}
 
 	accessToken, refreshToken, err := h.userService.Authenticate(
-		context.Background(),
+		c.Request.Context(),
 		loginUserDTO.Email,
 		loginUserDTO.Password,
 		loginUserDTO.Fingerprint,
 	)
+
 	if err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -129,12 +131,12 @@ func (h *userHandler) Refresh(c *gin.Context) {
 	}
 
 	accessToken, refreshToken, err := h.userService.Refresh(
-		context.Background(),
+		c.Request.Context(),
 		refreshDTO.RefreshToken,
 		refreshDTO.Fingerprint,
 	)
 	if err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -173,11 +175,11 @@ func (h *userHandler) Logout(c *gin.Context) {
 	}
 
 	if err := h.userService.Logout(
-		context.Background(),
+		c.Request.Context(),
 		logoutDTO.RefreshToken,
 		logoutDTO.Fingerprint,
 	); err != nil {
-		handleUserError(c, err)
+		c.Error(err)
 		return
 	}
 

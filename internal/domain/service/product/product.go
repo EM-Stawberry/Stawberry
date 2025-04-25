@@ -3,7 +3,7 @@ package product
 import (
 	"context"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type Repository interface {
@@ -11,7 +11,6 @@ type Repository interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryID(ctx context.Context, categoryID string, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int,) ([]entity.Product, int, error)
 	SelectStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
@@ -54,15 +53,6 @@ func (ps *productService) SelectProductsByName(
 	limit int,
 ) ([]entity.Product, int, error) {
 	return ps.productRepository.SelectProductsByName(ctx, name, offset, limit)
-}
-
-func (ps *productService) SelectProductsByCategoryID(
-	ctx context.Context,
-	categoryID string,
-	offset,
-	limit int,
-) ([]entity.Product, int, error) {
-	return ps.productRepository.SelectProductsByCategoryID(ctx,categoryID, offset, limit)
 }
 
 func (ps *productService) SelectProductsByCategoryAndAttributes(

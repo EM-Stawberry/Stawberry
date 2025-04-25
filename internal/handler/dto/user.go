@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 )
 
 type RegistrationUserReq struct {
@@ -9,7 +9,6 @@ type RegistrationUserReq struct {
 	Password    string `json:"password" binding:"required"`
 	Email       string `json:"email" binding:"required"`
 	Phone       string `json:"phone" binding:"required"`
-	IsStore     bool   `json:"is_store" binding:"required"`
 	Fingerprint string `json:"fingerprint" binding:"required"`
 }
 
@@ -23,7 +22,7 @@ func (ru *RegistrationUserReq) ConvertToSvc() user.User {
 		Name:     ru.Name,
 		Password: ru.Password,
 		Email:    ru.Email,
-		IsStore:  ru.IsStore,
+		Phone:    ru.Phone,
 	}
 }
 

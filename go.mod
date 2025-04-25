@@ -1,19 +1,21 @@
-module github.com/zuzaaa-dev/stawberry
+module github.com/EM-Stawberry/Stawberry
 
-go 1.22
+go 1.23
 
 require (
+	github.com/Masterminds/squirrel v1.5.4
 	github.com/aws/aws-sdk-go-v2 v1.33.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.74.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
+	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
+	go.uber.org/mock v0.5.1
 	golang.org/x/crypto v0.31.0
 )
 
@@ -21,6 +23,8 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 )
 
 require (

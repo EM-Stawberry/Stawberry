@@ -5,125 +5,56 @@ import (
 )
 
 const (
-	NotFound       = "NOT_FOUND"
-	DatabaseError  = "DATABASE_ERROR"
-	InternalError  = "INTERNAL_ERROR"
-	DuplicateError = "DUPLICATE_ERROR"
-	BadRequest     = "BAD_REQUEST"
-	Unauthorized   = "UNAUTHORIZED"
-	InvalidToken   = "INVALID_TOKEN"
+	NotFound           = "NOT_FOUND"
+	DatabaseError      = "DATABASE_ERROR"
+	InternalError      = "INTERNAL_ERROR"
+	DuplicateError     = "DUPLICATE_ERROR"
+	BadRequest         = "BAD_REQUEST"
+	Unauthorized       = "UNAUTHORIZED"
+	InvalidToken       = "INVALID_TOKEN"
+	InvalidFingerprint = "INVALID_FINGERPRINT"
 )
 
-type ProductError struct {
-	Code    string
-	Message string
-	Err     error
+type AppError interface {
+	error
+	Code() string
+	Message() string
+	Unwrap() error
 }
 
-func (e *ProductError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
+type Error struct {
+	ErrCode    string
+	ErrMsg     string
+	WrappedErr error
+}
+
+func (e *Error) Error() string {
+	if e.WrappedErr != nil {
+		return fmt.Sprintf("%s: %v", e.ErrMsg, e.WrappedErr)
 	}
-	return e.Message
+	return e.ErrMsg
+}
+func (e *Error) Code() string    { return e.ErrCode }
+func (e *Error) Message() string { return e.ErrMsg }
+func (e *Error) Unwrap() error   { return e.WrappedErr }
+
+func New(code, message string, cause error) *Error {
+	return &Error{ErrCode: code, ErrMsg: message, WrappedErr: cause}
 }
 
 var (
-	ErrProductNotFound = &ProductError{
-		Code:    NotFound,
-		Message: "product not found",
-	}
-	ErrStoreNotFound = &ProductError{
-		Code:    NotFound,
-		Message: "store not found",
-	}
-)
+	ErrProductNotFound = New(NotFound, "product not found", nil)
+	ErrStoreNotFound   = New(NotFound, "store not found", nil)
 
-type OfferError struct {
-	Code    string
-	Message string
-	Err     error
-}
+	ErrOfferNotFound = New(NotFound, "offer not found", nil)
 
-func (e *OfferError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
-	}
-	return e.Message
-}
+	ErrUserNotFound             = New(NotFound, "user not found", nil)
+	ErrIncorrectPassword        = New(Unauthorized, "incorrect password", nil)
+	ErrFailedToGeneratePassword = New(InternalError, "failed to generate password", nil)
+	ErrInvalidFingerprint       = New(InvalidFingerprint, "fingerprints don't match", nil)
 
-var ErrOfferNotFound = &OfferError{
-	Code:    NotFound,
-	Message: "product not found",
-}
+	ErrInvalidToken  = New(InvalidToken, "invalid token", nil)
+	ErrTokenNotFound = New(NotFound, "token not found", nil)
 
-type UserError struct {
-	Code    string
-	Message string
-	Err     error
-}
-
-func (e *UserError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
-	}
-	return e.Message
-}
-
-var (
-	ErrUserNotFound = &ProductError{
-		Code:    NotFound,
-		Message: "product not found",
-	}
-	ErrIncorrectPassword = &ProductError{
-		Code:    Unauthorized,
-		Message: "incorrect password",
-	}
-	ErrFailedToGeneratePassword = &ProductError{
-		Code:    InternalError,
-		Message: "failed to generate password",
-	}
-)
-
-type TokenError struct {
-	Code    string
-	Message string
-	Err     error
-}
-
-func (e *TokenError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
-	}
-	return e.Message
-}
-
-var (
-	ErrInvalidToken = &TokenError{
-		Code:    InvalidToken,
-		Message: "invalid token",
-	}
-	ErrTokenNotFound = &TokenError{
-		Code:    NotFound,
-		Message: "token not found",
-	}
-)
-
-type NotificationError struct {
-	Code    string
-	Message string
-	Err     error
-}
-
-func (e *NotificationError) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
-	}
-	return e.Message
-}
-
-var (
-	ErrNotificationNotFound = &NotificationError{
-		Code:    NotFound,
-		Message: "notification not found",
-	}
+	ErrNotificationNotFound = New(NotFound, "notification not found", nil)
 )
