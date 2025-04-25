@@ -142,24 +142,31 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 		return
 	}
 
-	validStatuses := map[string]struct{}{
-		"accepted":  {},
-		"declined":  {},
-		"cancelled": {}, // should be coming from a buyer
-	}
-	if _, ok := validStatuses[req.Status]; !ok {
-		c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
-		return
-	}
-
-	tmp, ok := c.Get("user")
+	usr, ok := c.Get("user")
 	if !ok {
 		c.Error(apperror.New(apperror.InternalError, "user context not found",
 			fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
 		return
 	}
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), tmp.(entity.User).ID, req.Status)
+	validStatusesShop := map[string]struct{}{
+		"accepted": {},
+		"declined": {},
+	}
+	validStatusesBuyer := map[string]struct{}{
+		"cancelled": {},
+	}
+
+	if _, ok = validStatusesShop[req.Status]; !ok || !usr.(entity.User).IsStore {
+		c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
+		return
+	}
+	if _, ok = validStatusesBuyer[req.Status]; !ok || usr.(entity.User).IsStore {
+		c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
+		return
+	}
+
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), usr.(entity.User).ID, req.Status)
 	if err != nil {
 		c.Error(err)
 		return
