@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/Masterminds/squirrel"
+	"log/slog"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
@@ -64,7 +65,7 @@ func (r *offerRepository) UpdateOfferStatus(
 	updateOfferStatusQuery, args := squirrel.Update("offers").
 		Set("status", status).
 		Set("updated_at", time.Now()).
-		Where(squirrel.Eq{"id": offerID}).
+		Where(squirrel.Eq{"id": offerID, "status": "pending"}).
 		Suffix("returning id, offer_price, status, created_at, " +
 			"updated_at, user_id, product_id, shop_id").
 		PlaceholderFormat(squirrel.Dollar).
@@ -112,6 +113,26 @@ func (r *offerRepository) IsUserShopOwner(ctx context.Context, offerID, userID u
 		return false, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
 	}
 	return true, nil
+}
+
+func (r *offerRepository) IsPendingOffer(ctx context.Context, offerID uint) (bool, error) {
+	getOfferStatusQuery, args := squirrel.Select("offers.status = 'pending'").
+		From("offers").
+		Where(squirrel.Eq{"offers.id": offerID}).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	var ok bool
+	err := r.db.QueryRowxContext(ctx, getOfferStatusQuery, args...).Scan(&ok)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, apperror.ErrOfferNotFound
+		}
+		slog.Error(err.Error())
+		return false, apperror.New(apperror.InternalError, "error scanning offer status", err)
+	}
+
+	return ok, nil
 }
 
 func (r *offerRepository) DeleteOffer(

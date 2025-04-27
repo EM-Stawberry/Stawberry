@@ -3,7 +3,6 @@ package offer
 import (
 	"context"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
-
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
@@ -14,6 +13,7 @@ type Repository interface {
 	UpdateOfferStatus(ctx context.Context, offerID uint, status string) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 	IsUserShopOwner(ctx context.Context, offerID uint, userID uint) (bool, error)
+	IsPendingOffer(ctx context.Context, offerID uint) (bool, error)
 }
 
 type offerService struct {
@@ -53,13 +53,23 @@ func (os *offerService) UpdateOfferStatus(
 	userID uint,
 	status string,
 ) (entity.Offer, error) {
+	isPending, err := os.offerRepository.IsPendingOffer(ctx, offerID)
+	if err != nil {
+		return entity.Offer{}, err
+	}
+	if !isPending {
+		return entity.Offer{}, apperror.New(apperror.Conflict,
+			"offer is not in a pending status", nil)
+	}
+
 	isOwner, err := os.offerRepository.IsUserShopOwner(ctx, offerID, userID)
 	if err != nil {
 		return entity.Offer{}, err
 	}
 
 	if !isOwner {
-		return entity.Offer{}, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
+		return entity.Offer{}, apperror.New(apperror.Unauthorized,
+			"unauthorized to update offer status", nil)
 	}
 
 	return os.offerRepository.UpdateOfferStatus(ctx, offerID, status)
