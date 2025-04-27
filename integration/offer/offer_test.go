@@ -21,13 +21,12 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"time"
 )
 
 var (
 	imageName  = "postgres:17.4-alpine"
-	dbName     = "postgres"
+	dbName     = "db_test"
 	dbUser     = "postgres"
 	dbPassword = "postgres"
 )
@@ -48,45 +47,45 @@ func GetContainer() *postgres.PostgresContainer {
 		return nil
 	}
 
+	err = pgContainer.Snapshot(context.Background())
+	if err != nil {
+		slog.Error("error snapshotting container", "err", err)
+		return nil
+	}
+
 	return pgContainer
 }
 
-func GetDB() (*sqlx.DB, *postgres.PostgresContainer, error) {
-	pgContainer := GetContainer()
-	resp, err := pgContainer.Inspect(context.Background())
-	fmt.Println(resp.State.Status)
-
+func GetDB(pgContainer *postgres.PostgresContainer) (*sqlx.DB, error) {
 	connString, err := pgContainer.ConnectionString(context.Background(), "sslmode=disable")
 	if err != nil {
 		slog.Error(err.Error())
 		pgContainer.Terminate(context.Background())
-		return nil, nil, err
+		return nil, err
 	}
 
 	db, err := sqlx.Connect("pgx", connString)
 	if err != nil {
 		pgContainer.Terminate(context.Background())
-		return nil, nil, err
+		return nil, err
 	}
 
 	goose.SetDialect("postgres")
 
-	os.Chdir("../..")
-
-	err = goose.Up(db.DB, `migrations`)
+	err = goose.Up(db.DB, `../../migrations`)
 	if err != nil {
 		pgContainer.Terminate(context.Background())
 		slog.Error(err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 
-	_, err = sqlx.LoadFile(db, `.\integration\testdata\offer\sql\populate_test_db.sql`)
+	_, err = sqlx.LoadFile(db, `../testdata/offer/sql/populate_test_db.sql`)
 	if err != nil {
 		slog.Error(err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 
-	return db, pgContainer, nil
+	return db, nil
 }
 
 func mockAuthShopOwnerMiddleware() gin.HandlerFunc {
@@ -135,10 +134,12 @@ func mockAuthIncorrectShopOwnerMiddleware() gin.HandlerFunc {
 }
 
 var _ = Describe("offer patch status handler", Ordered, func() {
-	db, container, _ := GetDB()
-	_ = container
-
-	container.Snapshot(context.Background())
+	dbCont := GetContainer()
+	db, err := GetDB(dbCont)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
 
 	offerRepo := repository.NewOfferRepository(db)
 	offerServ := offer.NewOfferService(offerRepo)
@@ -152,9 +153,7 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
 
 		It("successfully updates the offer status if everything is fine", func() {
-			container.Restore(context.Background())
-
-			correctOfferID := 4
+			correctOfferID := 1
 			correctStatus := "accepted"
 			jsonBody, _ := json.Marshal(struct {
 				Status string
@@ -178,8 +177,6 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 		})
 
 		It("fails data validation if the is negative", func() {
-			container.Restore(context.Background())
-
 			badOfferID := -2
 			correctStatus := "accepted"
 			jsonBody, _ := json.Marshal(struct {
@@ -200,8 +197,6 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 		})
 
 		It("fails data validation if the is non-numeric", func() {
-			container.Restore(context.Background())
-
 			badOfferID := "two"
 			correctStatus := "accepted"
 			jsonBody, _ := json.Marshal(struct {
@@ -222,8 +217,6 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 		})
 
 		It("fails data validation if the status is not accepted/declined", func() {
-			container.Restore(context.Background())
-
 			correctOfferID := 4
 			badStatus := "bad_status"
 			jsonBody, _ := json.Marshal(struct {
@@ -242,6 +235,61 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 
 			Expect(rec.Code).To(Equal(http.StatusBadRequest))
 		})
+
+		It("fails data validation if the JSON body is malformed", func() {
+			correctOfferID := 4
+			malformedJSON := []byte(`{"status": "accepted"`)
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
+				bytes.NewBuffer(malformedJSON))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusBadRequest))
+		})
+
+		It("fails if the offer is not found", func() {
+			badOfferID := 999
+			correctStatus := "accepted"
+			jsonBody, _ := json.Marshal(struct {
+				Status string
+			}{
+				Status: correctStatus,
+			})
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", badOfferID),
+				bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusNotFound))
+		})
+
+		It("fails if the offer is not in a `pending` state", func() {
+			correctOfferID := 1 // was changed in the first test to `accepted`
+			correctStatus := "accepted"
+			jsonBody, _ := json.Marshal(struct {
+				Status string
+			}{
+				Status: correctStatus,
+			})
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
+				bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusConflict))
+		})
 	})
 
 	Context("when the user is an owner of a different shop", func() {
@@ -252,9 +300,7 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
 
 		It("fails to update the offer status, even if everything is fine", func() {
-			container.Restore(context.Background())
-
-			correctOfferID := 4
+			correctOfferID := 2
 			correctStatus := "accepted"
 			jsonBody, _ := json.Marshal(struct {
 				Status string
@@ -271,23 +317,7 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 			router.ServeHTTP(rec, req)
 
 			Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-		})
 
-		It("fails data validation if the JSON body is malformed", func() {
-			container.Restore(context.Background())
-
-			correctOfferID := 4
-			malformedJSON := []byte(`{"status": "accepted"`)
-
-			req := httptest.NewRequest(http.MethodPatch,
-				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
-				bytes.NewBuffer(malformedJSON))
-			req.Header.Set("Content-Type", "application/json")
-
-			rec := httptest.NewRecorder()
-			router.ServeHTTP(rec, req)
-
-			Expect(rec.Code).To(Equal(http.StatusBadRequest))
 		})
 	})
 })
