@@ -25,8 +25,6 @@ import (
 	"time"
 )
 
-type CleanupFunc func(ctx context.Context, opts ...testcontainers.TerminateOption) error
-
 var (
 	imageName  = "postgres:17.4-alpine"
 	dbName     = "postgres"
@@ -53,7 +51,7 @@ func GetContainer() *postgres.PostgresContainer {
 	return pgContainer
 }
 
-func GetDB() (*sqlx.DB, *postgres.PostgresContainer, CleanupFunc, error) {
+func GetDB() (*sqlx.DB, *postgres.PostgresContainer, error) {
 	pgContainer := GetContainer()
 	resp, err := pgContainer.Inspect(context.Background())
 	fmt.Println(resp.State.Status)
@@ -62,34 +60,33 @@ func GetDB() (*sqlx.DB, *postgres.PostgresContainer, CleanupFunc, error) {
 	if err != nil {
 		slog.Error(err.Error())
 		pgContainer.Terminate(context.Background())
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	db, err := sqlx.Connect("pgx", connString)
 	if err != nil {
 		pgContainer.Terminate(context.Background())
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	goose.SetDialect("postgres")
 
-	os.Chdir("..")
-	os.Chdir("..")
+	os.Chdir("../..")
 
 	err = goose.Up(db.DB, `migrations`)
 	if err != nil {
 		pgContainer.Terminate(context.Background())
 		slog.Error(err.Error())
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	_, err = sqlx.LoadFile(db, `.\integration\testdata\offer\sql\populate_test_db.sql`)
 	if err != nil {
 		slog.Error(err.Error())
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return db, pgContainer, pgContainer.Terminate, nil
+	return db, pgContainer, nil
 }
 
 func mockAuthShopOwnerMiddleware() gin.HandlerFunc {
@@ -138,8 +135,7 @@ func mockAuthIncorrectShopOwnerMiddleware() gin.HandlerFunc {
 }
 
 var _ = Describe("offer patch status handler", Ordered, func() {
-	db, container, cleanup, _ := GetDB()
-	_ = cleanup
+	db, container, _ := GetDB()
 	_ = container
 
 	container.Snapshot(context.Background())
@@ -275,6 +271,23 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 			router.ServeHTTP(rec, req)
 
 			Expect(rec.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("fails data validation if the JSON body is malformed", func() {
+			container.Restore(context.Background())
+
+			correctOfferID := 4
+			malformedJSON := []byte(`{"status": "accepted"`)
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
+				bytes.NewBuffer(malformedJSON))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusBadRequest))
 		})
 	})
 })
