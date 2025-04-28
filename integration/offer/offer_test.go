@@ -145,6 +145,11 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 	offerServ := offer.NewOfferService(offerRepo)
 	offerHand := handler.NewOfferHandler(offerServ)
 
+	AfterAll(func() {
+		db.Close()
+		dbCont.Terminate(context.Background())
+	})
+
 	Context("when the user is the shop owner", func() {
 
 		router := gin.Default()
