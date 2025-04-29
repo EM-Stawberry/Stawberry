@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"log"
 	"os"
 	"time"
@@ -26,6 +28,12 @@ var (
 	router *gin.Engine
 )
 
+var enableMail bool
+
+func init() {
+	flag.BoolVar(&enableMail, "mail", false, "enable email notifications")
+}
+
 func main() {
 	// Initialize application
 	if err := initializeApp(); err != nil {
@@ -46,8 +54,12 @@ func main() {
 
 // initializeApp initializes all application components
 func initializeApp() error {
+	flag.Parse()
+
 	// Load configuration
 	cfg := config.LoadConfig()
+
+	email.SetupEmail(enableMail)
 
 	// Set Gin mode based on environment
 	if os.Getenv("GIN_MODE") == "release" {
