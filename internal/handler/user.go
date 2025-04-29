@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -71,6 +73,12 @@ func (h *userHandler) Registration(c *gin.Context) {
 	setRefreshCookie(c, refreshToken, h.basePath, h.domain, h.refreshLife)
 
 	c.JSON(http.StatusOK, response)
+
+	err = email.Registered(regUserDTO.Name, regUserDTO.Email)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
 }
 
 func (h *userHandler) Login(c *gin.Context) {
