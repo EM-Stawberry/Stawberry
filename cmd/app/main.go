@@ -1,6 +1,8 @@
 package main
 
 import (
+	flag "github.com/spf13/pflag"
+
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"github.com/EM-Stawberry/Stawberry/pkg/logger"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
 	"github.com/EM-Stawberry/Stawberry/pkg/server"
@@ -19,6 +22,12 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
 	"github.com/gin-gonic/gin"
 )
+
+var enableMail bool
+
+func init() {
+	flag.BoolVarP(&enableMail, "mail", "m", false, "enable email notifications")
+}
 
 func main() {
 
@@ -40,6 +49,8 @@ func main() {
 
 func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
 
+	mailer := email.NewMailer(&cfg.Email)
+
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
@@ -48,9 +59,9 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	log.Info("Repositories initialized")
 
 	productService := product.NewProductService(productRepository)
-	offerService := offer.NewOfferService(offerRepository)
+	offerService := offer.NewOfferService(offerRepository, mailer)
 	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
-	userService := user.NewUserService(userRepository, tokenService)
+	userService := user.NewUserService(userRepository, tokenService, mailer)
 	notificationService := notification.NewNotificationService(notificationRepository)
 	log.Info("Services initialized")
 
