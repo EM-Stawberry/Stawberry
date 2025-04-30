@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/Masterminds/squirrel"
-	"log/slog"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
@@ -54,13 +53,13 @@ func (r *offerRepository) SelectUserOffers(
 
 func (r *offerRepository) UpdateOfferStatus(
 	ctx context.Context,
+	userID uint,
 	offerID uint,
 	status string,
 ) (entity.Offer, error) {
+	var offer entity.Offer
 
 	// TODO: zap debug coverage
-
-	var offer entity.Offer
 
 	updateOfferStatusQuery, args := squirrel.Update("offers").
 		Set("status", status).
@@ -77,6 +76,16 @@ func (r *offerRepository) UpdateOfferStatus(
 	}
 	defer tx.Rollback()
 
+	err = isPendingOffer(ctx, offerID, tx)
+	if err != nil {
+		return entity.Offer{}, err
+	}
+
+	err = isUserShopOwner(ctx, offerID, userID, tx)
+	if err != nil {
+		return entity.Offer{}, err
+	}
+
 	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
 	if err != nil {
 		return offer, apperror.New(apperror.DatabaseError, "error scanning into struct", err)
@@ -90,9 +99,7 @@ func (r *offerRepository) UpdateOfferStatus(
 	return offer, nil
 }
 
-func (r *offerRepository) IsUserShopOwner(ctx context.Context, offerID, userID uint) (bool, error) {
-	var requiredID uint
-
+func isUserShopOwner(ctx context.Context, offerID, userID uint, tx *sqlx.Tx) error {
 	validateShopOwnerIDQuery, args := squirrel.Select("users.id").
 		From("users").
 		InnerJoin("shops on users.id = shops.user_id").
@@ -101,21 +108,23 @@ func (r *offerRepository) IsUserShopOwner(ctx context.Context, offerID, userID u
 		PlaceholderFormat(squirrel.Dollar).
 		MustSql()
 
-	err := r.db.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
+	var requiredID uint
+	err := tx.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, apperror.ErrOfferNotFound
+			return apperror.ErrUserNotFound
 		}
-		return false, apperror.New(apperror.InternalError, "error scanning into uint", err)
+		return apperror.New(apperror.InternalError, "error scanning into uint", err)
 	}
 
 	if userID != requiredID {
-		return false, apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
+		return apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
 	}
-	return true, nil
+
+	return nil
 }
 
-func (r *offerRepository) IsPendingOffer(ctx context.Context, offerID uint) (bool, error) {
+func isPendingOffer(ctx context.Context, offerID uint, tx *sqlx.Tx) error {
 	getOfferStatusQuery, args := squirrel.Select("offers.status = 'pending'").
 		From("offers").
 		Where(squirrel.Eq{"offers.id": offerID}).
@@ -123,16 +132,19 @@ func (r *offerRepository) IsPendingOffer(ctx context.Context, offerID uint) (boo
 		MustSql()
 
 	var ok bool
-	err := r.db.QueryRowxContext(ctx, getOfferStatusQuery, args...).Scan(&ok)
+	err := tx.QueryRowxContext(ctx, getOfferStatusQuery, args...).Scan(&ok)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, apperror.ErrOfferNotFound
+			return apperror.ErrOfferNotFound
 		}
-		slog.Error(err.Error())
-		return false, apperror.New(apperror.InternalError, "error scanning offer status", err)
+		return apperror.New(apperror.InternalError, "error scanning offer status", err)
 	}
 
-	return ok, nil
+	if !ok {
+		return apperror.New(apperror.Conflict, "offer is not in a pending status", nil)
+	}
+
+	return nil
 }
 
 func (r *offerRepository) DeleteOffer(
