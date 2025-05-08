@@ -33,3 +33,7 @@ func (po *PostOfferReq) ConvertToSvc() offer.Offer {
 type PatchOfferStatusReq struct {
 	Status string `json:"status" binding:"required"`
 }
+
+type PatchOfferStatusResp struct {
+	NewStatus string `json:"new_status"`
+}

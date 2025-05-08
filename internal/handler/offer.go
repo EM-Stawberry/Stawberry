@@ -185,7 +185,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	// }
 	// h.notifyRepo.Create(&notification)
 
-	c.JSON(http.StatusOK, updatedOffer)
+	c.JSON(http.StatusOK, dto.PatchOfferStatusResp{NewStatus: updatedOffer.Status})
 }
 
 func (h *offerHandler) DeleteOffer(c *gin.Context) {
