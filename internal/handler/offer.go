@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"fmt"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"math"
 	"net/http"
 	"strconv"
@@ -18,7 +20,7 @@ type OfferService interface {
 	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
 	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
-	UpdateOfferStatus(ctx context.Context, offerID uint, status string) (entity.Offer, error)
+	UpdateOfferStatus(ctx context.Context, offerID uint, userID uint, status string) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
 
@@ -120,24 +122,60 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 }
 
 func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	// TODO: zap debug coverage
+	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*10)
+	defer ctxCancel()
+
+	id, err := strconv.Atoi(c.Param("offerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid nondigit offer id"})
+		c.Error(apperror.New(apperror.BadRequest, "offerID must be numeric", err))
+		return
+	}
+	if id <= 0 {
+		c.Error(apperror.New(apperror.BadRequest, "offerID must be positive", nil))
 		return
 	}
 
-	// предположу что статус будет лежать в теле запроса
 	var req dto.PatchOfferStatusReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+	if err = c.ShouldBindJSON(&req); err != nil {
+		c.Error(apperror.New(apperror.BadRequest, "status field not provided", err))
 		return
 	}
 
-	offer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), req.Status)
+	tmp, ok := c.Get("user")
+	usr := tmp.(entity.User)
+	if !ok {
+		c.Error(apperror.New(apperror.InternalError, "user context not found",
+			fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
+		return
+	}
+
+	if usr.IsStore {
+		validStatusesShop := map[string]struct{}{
+			"accepted": {},
+			"declined": {},
+		}
+		if _, ok = validStatusesShop[req.Status]; !ok || !usr.IsStore {
+			c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
+			return
+		}
+	} else {
+		validStatusesBuyer := map[string]struct{}{
+			"cancelled": {},
+		}
+		if _, ok = validStatusesBuyer[req.Status]; !ok || usr.IsStore {
+			c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
+			return
+		}
+	}
+
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), usr.ID, req.Status)
 	if err != nil {
 		c.Error(err)
 		return
 	}
+
+	// TODO: notify the user about offer status change
 
 	// Create notification for store
 	// notification := models.Notification{
@@ -147,7 +185,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	// }
 	// h.notifyRepo.Create(&notification)
 
-	c.JSON(http.StatusCreated, offer)
+	c.JSON(http.StatusOK, dto.PatchOfferStatusResp{NewStatus: updatedOffer.Status})
 }
 
 func (h *offerHandler) DeleteOffer(c *gin.Context) {

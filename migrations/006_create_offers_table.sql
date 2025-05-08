@@ -3,11 +3,13 @@
 CREATE TABLE offers (
     id SERIAL PRIMARY KEY,
     offer_price DECIMAL(10,2) NOT NULL,
-    status VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id INT,
     product_id INT,
+    shop_id INT,
+    FOREIGN KEY (shop_id) REFERENCES shops(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
