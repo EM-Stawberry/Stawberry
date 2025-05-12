@@ -8,8 +8,6 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     is_store BOOLEAN NOT NULL DEFAULT FALSE
 );
-
-CREATE INDEX idx_users_email ON users(email);
 -- +goose StatementEnd
 
 -- +goose Down
