@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	user "github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
+	entity "github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	user "github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 	gomock "go.uber.org/mock/gomock"
 )
 
