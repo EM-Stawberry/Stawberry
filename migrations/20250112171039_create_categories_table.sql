@@ -10,6 +10,8 @@ CREATE TABLE categories (
 );
 
 CREATE INDEX idx_categories_parent_id ON categories(parent_id);
+CREATE INDEX idx_categories_lft_id ON categories(lft);
+CREATE INDEX idx_categories_rgt_id ON categories(rgt);
 -- +goose StatementEnd
 
 -- +goose Down

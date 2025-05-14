@@ -5,7 +5,7 @@ CREATE TABLE notifications (
     message TEXT NOT NULL,
     sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id INT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) on delete set null
 );
 
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
