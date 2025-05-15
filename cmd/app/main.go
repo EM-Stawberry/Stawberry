@@ -1,10 +1,11 @@
 package main
 
 import (
-	flag "github.com/spf13/pflag"
 	"log"
 	"os"
 	"time"
+
+	flag "github.com/spf13/pflag"
 
 	"github.com/EM-Stawberry/Stawberry/pkg/email"
 

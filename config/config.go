@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/pflag"
 	"log"
 	"time"
+
+	"github.com/spf13/pflag"
 
 	"github.com/spf13/viper"
 )

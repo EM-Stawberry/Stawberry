@@ -2,9 +2,10 @@ package email
 
 import (
 	"fmt"
-	"github.com/EM-Stawberry/Stawberry/config"
 	"log/slog"
 	"net/smtp"
+
+	"github.com/EM-Stawberry/Stawberry/config"
 )
 
 type MailerService interface {

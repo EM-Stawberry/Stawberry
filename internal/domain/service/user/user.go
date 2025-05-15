@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
