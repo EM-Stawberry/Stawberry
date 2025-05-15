@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
+
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
@@ -33,10 +35,11 @@ type TokenService interface {
 type userService struct {
 	userRepository Repository
 	tokenService   TokenService
+	mailer         email.MailerService
 }
 
-func NewUserService(userRepo Repository, tokenService TokenService) *userService {
-	return &userService{userRepository: userRepo, tokenService: tokenService}
+func NewUserService(userRepo Repository, tokenService TokenService, mailer email.MailerService) *userService {
+	return &userService{userRepository: userRepo, tokenService: tokenService, mailer: mailer}
 }
 
 // CreateUser создает пользователя, хэшируя его пароль, используя HashArgon2id
@@ -67,6 +70,8 @@ func (us *userService) CreateUser(
 	if err = us.tokenService.InsertToken(ctx, refreshToken); err != nil {
 		return "", "", err
 	}
+
+	// TODO: send email "registered"
 
 	return accessToken, refreshToken.UUID.String(), nil
 }

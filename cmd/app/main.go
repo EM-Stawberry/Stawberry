@@ -5,6 +5,10 @@ import (
 	"os"
 	"time"
 
+	flag "github.com/spf13/pflag"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
+
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
@@ -26,6 +30,12 @@ var (
 	router *gin.Engine
 )
 
+var enableMail bool
+
+func init() {
+	flag.BoolVarP(&enableMail, "mail", "m", false, "enable email notifications")
+}
+
 func main() {
 	// Initialize application
 	if err := initializeApp(); err != nil {
@@ -46,6 +56,8 @@ func main() {
 
 // initializeApp initializes all application components
 func initializeApp() error {
+	flag.Parse()
+
 	// Load configuration
 	cfg := config.LoadConfig()
 
@@ -63,6 +75,8 @@ func initializeApp() error {
 	// Run migrations
 	migrator.RunMigrations(db, "migrations")
 
+	mailer := email.NewMailer(&cfg.Email)
+
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
@@ -70,9 +84,9 @@ func initializeApp() error {
 	tokenRepository := repository.NewTokenRepository(db)
 
 	productService := product.NewProductService(productRepository)
-	offerService := offer.NewOfferService(offerRepository)
+	offerService := offer.NewOfferService(offerRepository, mailer)
 	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
-	userService := user.NewUserService(userRepository, tokenService)
+	userService := user.NewUserService(userRepository, tokenService, mailer)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
 	productHandler := handler.NewProductHandler(productService)
