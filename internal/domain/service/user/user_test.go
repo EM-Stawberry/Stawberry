@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"github.com/EM-Stawberry/Stawberry/pkg/email/mock_email"
 	"testing"
 	"time"
 
@@ -21,7 +22,8 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewUserService(mockRepo, mockTokenService, mockEmailService)
 
 	ctx := context.Background()
 	testUser := User{
@@ -83,7 +85,8 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewUserService(mockRepo, mockTokenService, mockEmailService)
 
 	ctx := context.Background()
 	email := "test@example.com"
@@ -210,7 +213,8 @@ func TestUserService_Refresh(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewUserService(mockRepo, mockTokenService, mockEmailService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -334,7 +338,8 @@ func TestUserService_Logout(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewUserService(mockRepo, mockTokenService, mockEmailService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -422,7 +427,8 @@ func TestUserService_GetUserByID(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewUserService(mockRepo, mockTokenService, mockEmailService)
 
 	ctx := context.Background()
 	userID := uint(1)

@@ -8,6 +8,8 @@ import (
 	"github.com/EM-Stawberry/Stawberry/config"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=mock_email/mock_email.go -package=mock_email
+
 type MailerService interface {
 	Registered(userName string, userMail string) error
 	StatusUpdate(offerID uint, status string, userMail string) error
