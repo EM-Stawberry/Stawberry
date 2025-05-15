@@ -3,9 +3,10 @@ package user
 import (
 	"context"
 	"errors"
-	"github.com/EM-Stawberry/Stawberry/pkg/email/mock_email"
 	"testing"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email/mock_email"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
