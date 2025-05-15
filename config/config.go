@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/spf13/pflag"
 	"log"
 	"time"
 
@@ -12,6 +13,14 @@ type TokenConfig struct {
 	Secret               string
 	AccessTokenDuration  time.Duration
 	RefreshTokenDuration time.Duration
+}
+
+type EmailConfig struct {
+	Enabled  bool
+	From     string
+	Password string
+	SmtpHost string
+	SmtpPort string
 }
 
 type Config struct {
@@ -27,6 +36,7 @@ type Config struct {
 	URL           string
 	SigningRegion string
 	Token         TokenConfig
+	Email         EmailConfig
 }
 
 func LoadConfig() *Config {
@@ -37,6 +47,10 @@ func LoadConfig() *Config {
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Config reading failed: %v", err)
+	}
+
+	if err := viper.BindPFlag("mail", pflag.Lookup("mail")); err != nil {
+		log.Printf("Binding mail flag failed: %v", err)
 	}
 
 	config := &Config{
@@ -55,6 +69,13 @@ func LoadConfig() *Config {
 			Secret:               viper.GetString("TOKEN_SECRET"),
 			AccessTokenDuration:  viper.GetDuration("TOKEN_ACCESS_DURATION"),
 			RefreshTokenDuration: viper.GetDuration("TOKEN_REFRESH_DURATION"),
+		},
+		Email: EmailConfig{
+			Enabled:  viper.GetBool("EMAIL_ENABLED") || viper.GetBool("mail"),
+			From:     viper.GetString("FROM_EMAIL"),
+			Password: viper.GetString("FROM_PASSWORD"),
+			SmtpHost: viper.GetString("SMTP_HOST"),
+			SmtpPort: viper.GetString("SMTP_PORT"),
 		},
 	}
 

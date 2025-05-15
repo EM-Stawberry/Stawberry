@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	flag "github.com/spf13/pflag"
 	"log"
 	"os"
 	"time"
@@ -32,7 +32,7 @@ var (
 var enableMail bool
 
 func init() {
-	flag.BoolVar(&enableMail, "mail", false, "enable email notifications")
+	flag.BoolVarP(&enableMail, "mail", "m", false, "enable email notifications")
 }
 
 func main() {
@@ -60,8 +60,6 @@ func initializeApp() error {
 	// Load configuration
 	cfg := config.LoadConfig()
 
-	email.SetupEmail(enableMail)
-
 	// Set Gin mode based on environment
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
@@ -76,6 +74,8 @@ func initializeApp() error {
 	// Run migrations
 	migrator.RunMigrations(db, "migrations")
 
+	mailer := email.NewMailer(&cfg.Email)
+
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
@@ -83,9 +83,9 @@ func initializeApp() error {
 	tokenRepository := repository.NewTokenRepository(db)
 
 	productService := product.NewProductService(productRepository)
-	offerService := offer.NewOfferService(offerRepository)
+	offerService := offer.NewOfferService(offerRepository, mailer)
 	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
-	userService := user.NewUserService(userRepository, tokenService)
+	userService := user.NewUserService(userRepository, tokenService, mailer)
 	notificationService := notification.NewNotificationService(notificationRepository)
 
 	productHandler := handler.NewProductHandler(productService)

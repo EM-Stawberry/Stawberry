@@ -2,6 +2,7 @@ package offer
 
 import (
 	"context"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
@@ -16,10 +17,11 @@ type Repository interface {
 
 type offerService struct {
 	offerRepository Repository
+	mailer          email.MailerService
 }
 
-func NewOfferService(offerRepository Repository) *offerService {
-	return &offerService{offerRepository: offerRepository}
+func NewOfferService(offerRepository Repository, mailer email.MailerService) *offerService {
+	return &offerService{offerRepository: offerRepository, mailer: mailer}
 }
 
 func (os *offerService) CreateOffer(
