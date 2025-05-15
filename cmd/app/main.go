@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"log"
 	"os"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"

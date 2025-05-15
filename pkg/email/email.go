@@ -2,9 +2,10 @@ package email
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"log/slog"
 	"net/smtp"
+
+	"github.com/spf13/viper"
 )
 
 var enableMail bool

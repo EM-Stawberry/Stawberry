@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
-	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
