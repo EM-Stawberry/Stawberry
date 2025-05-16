@@ -326,4 +326,84 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 
 		})
 	})
+
+	Context("when a user is the creator of an offer", func() {
+
+		router := gin.Default()
+		router.Use(middleware.Errors())
+		router.Use(mockAuthBuyerMiddleware())
+		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
+
+		It("updates the status to `cancelled` if the request is correct", func() {
+			correctOfferID := 2
+			correctStatus := "cancelled"
+			jsonBody, _ := json.Marshal(struct {
+				Status string
+			}{
+				Status: correctStatus,
+			})
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
+				bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusOK))
+
+			var ofr dto.PatchOfferStatusResp
+			_ = json.Unmarshal(rec.Body.Bytes(), &ofr)
+			Expect(ofr.NewStatus).To(Equal("cancelled"))
+		})
+
+		It("fails to update the status to `accepted`, since that status can only be used by shop owner", func() {
+			correctOfferID := 3
+			correctStatus := "accepted"
+			jsonBody, _ := json.Marshal(struct {
+				Status string
+			}{
+				Status: correctStatus,
+			})
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
+				bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusBadRequest))
+		})
+	})
+
+	Context("when a user is NOT the creator of an offer", func() {
+
+		router := gin.Default()
+		router.Use(middleware.Errors())
+		router.Use(mockAuthBuyerMiddleware())
+		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
+
+		It("updates the status to `cancelled` if the request is correct", func() {
+			correctOfferID := 5
+			correctStatus := "cancelled"
+			jsonBody, _ := json.Marshal(struct {
+				Status string
+			}{
+				Status: correctStatus,
+			})
+
+			req := httptest.NewRequest(http.MethodPatch,
+				fmt.Sprintf("/api/test/offers/%d/status-update", correctOfferID),
+				bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusNotFound))
+		})
+	})
 })
