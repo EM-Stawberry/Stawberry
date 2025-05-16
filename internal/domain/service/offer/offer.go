@@ -2,6 +2,7 @@ package offer
 
 import (
 	"context"
+
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
@@ -63,7 +64,7 @@ func (os *offerService) UpdateOfferStatus(
 			statusDeclined: {},
 		}
 		if _, ok := validStatusesShop[offer.Status]; !ok {
-			return offer, apperror.New(apperror.BadRequest, "invalid status field value", nil)
+			return entity.Offer{}, apperror.New(apperror.BadRequest, "invalid status field value", nil)
 		}
 
 	} else {
@@ -71,7 +72,7 @@ func (os *offerService) UpdateOfferStatus(
 			statusCancelled: {},
 		}
 		if _, ok := validStatusesBuyer[offer.Status]; !ok {
-			return offer, apperror.New(apperror.BadRequest, "invalid status field value", nil)
+			return entity.Offer{}, apperror.New(apperror.BadRequest, "invalid status field value", nil)
 		}
 	}
 
