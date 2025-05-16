@@ -70,7 +70,7 @@ func SetupRouter(
 			})
 		})
 
-		secured.PATCH("offers/:offerID/status-update", offerH.PatchOfferStatus)
+		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
 	}
 
 	return router
