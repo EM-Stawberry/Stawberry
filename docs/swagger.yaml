@@ -1,4 +1,25 @@
 basePath: /
+definitions:
+  apperror.Error:
+    properties:
+      errCode:
+        type: string
+      errMsg:
+        type: string
+      wrappedErr: {}
+    type: object
+  dto.PatchOfferStatusReq:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  dto.PatchOfferStatusResp:
+    properties:
+      new_status:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -20,4 +41,50 @@ paths:
       summary: Получить статус сервера
       tags:
       - health
+  /offers/{offerID}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Offer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Offer status update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PatchOfferStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PatchOfferStatusResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Update offer status
+      tags:
+      - offer
 swagger: "2.0"

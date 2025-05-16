@@ -1,35 +1,49 @@
 package dto
 
 import (
-	"time"
-
-	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type PostOfferReq struct {
-	UserID    uint      `json:"user_id"`
-	ProductID uint      `json:"product_id"`
-	StoreID   uint      `json:"store_id"`
-	Price     float64   `json:"price"`
-	Status    string    `json:"status"`
-	ExpiresAt time.Time `json:"expires_at"`
+	UserID    uint    `json:"user_id" binding:"required"`
+	ProductID uint    `json:"product_id" binding:"required"`
+	StoreID   uint    `json:"store_id" binding:"required"`
+	Price     float64 `json:"offer_price" binding:"required"`
+	Currency  string  `json:"currency" binding:"required"`
 }
 
 type PostOfferResp struct {
 	ID uint `json:"id"`
 }
 
-func (po *PostOfferReq) ConvertToSvc() offer.Offer {
-	return offer.Offer{
+func (po *PostOfferReq) ConvertToEntity() entity.Offer {
+	return entity.Offer{
+		Price:     po.Price,
+		Currency:  po.Currency,
+		ShopID:    po.StoreID,
 		UserID:    po.UserID,
 		ProductID: po.ProductID,
-		StoreID:   po.StoreID,
-		Price:     po.Price,
-		Status:    po.Status,
-		ExpiresAt: po.ExpiresAt,
 	}
+}
+
+func ConvertToPostOfferResp(o entity.Offer) PostOfferResp {
+	return PostOfferResp{ID: o.ID}
 }
 
 type PatchOfferStatusReq struct {
 	Status string `json:"status" binding:"required"`
+}
+
+type PatchOfferStatusResp struct {
+	NewStatus string `json:"new_status"`
+}
+
+func (p *PatchOfferStatusReq) ConvertToEntity() entity.Offer {
+	return entity.Offer{
+		Status: p.Status,
+	}
+}
+
+func ConvertToPatchOfferStatusResp(o entity.Offer) PatchOfferStatusResp {
+	return PatchOfferStatusResp{NewStatus: o.Status}
 }
