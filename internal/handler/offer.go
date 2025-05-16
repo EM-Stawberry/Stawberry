@@ -20,7 +20,7 @@ type OfferService interface {
 	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
 	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
-	UpdateOfferStatus(ctx context.Context, offerID uint, userID uint, status string) (entity.Offer, error)
+	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
 
@@ -42,15 +42,15 @@ func (h *offerHandler) PostOffer(c *gin.Context) {
 	}
 
 	offer.UserID = userID.(uint)
-	offer.Status = "pending"
-	offer.ExpiresAt = time.Now().Add(24 * time.Hour)
+	// offer.Status = "pending"
+	// offer.ExpiresAt = time.Now().Add(24 * time.Hour)
 
-	var response dto.PostOfferResp
-	var err error
-	if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToSvc()); err != nil {
-		c.Error(err)
-		return
-	}
+	//var response dto.PostOfferResp
+	//var err error
+	//if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToSvc()); err != nil {
+	//	c.Error(err)
+	//	return
+	//}
 
 	// Create notification for store
 	// notification := models.Notification{
@@ -150,32 +150,14 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 		return
 	}
 
-	if usr.IsStore {
-		validStatusesShop := map[string]struct{}{
-			"accepted": {},
-			"declined": {},
-		}
-		if _, ok = validStatusesShop[req.Status]; !ok || !usr.IsStore {
-			c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
-			return
-		}
-	} else {
-		validStatusesBuyer := map[string]struct{}{
-			"cancelled": {},
-		}
-		if _, ok = validStatusesBuyer[req.Status]; !ok || usr.IsStore {
-			c.Error(apperror.New(apperror.BadRequest, "invalid status field value", nil))
-			return
-		}
-	}
+	offerEntity := req.ConvertToEntity()
+	offerEntity.ID = uint(id)
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, uint(id), usr.ID, req.Status)
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, offerEntity, usr.ID, usr.IsStore)
 	if err != nil {
 		c.Error(err)
 		return
 	}
-
-	// TODO: notify the user about offer status change
 
 	// Create notification for store
 	// notification := models.Notification{

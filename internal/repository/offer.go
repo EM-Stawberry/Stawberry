@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 	"github.com/Masterminds/squirrel"
 	"time"
 
@@ -53,50 +55,60 @@ func (r *offerRepository) SelectUserOffers(
 
 func (r *offerRepository) UpdateOfferStatus(
 	ctx context.Context,
+	offerEntity entity.Offer,
 	userID uint,
-	offerID uint,
-	status string,
+	isStore bool,
 ) (entity.Offer, error) {
-	var offer entity.Offer
-
-	// TODO: zap debug coverage
+	offer := model.ConvertOfferEntityToModel(offerEntity)
 
 	updateOfferStatusQuery, args := squirrel.Update("offers").
-		Set("status", status).
+		Set("status", offer.Status).
 		Set("updated_at", time.Now()).
-		Where(squirrel.Eq{"id": offerID, "status": "pending"}).
-		Suffix("returning id, offer_price, status, created_at, " +
-			"updated_at, user_id, product_id, shop_id").
+		Where(squirrel.Eq{"id": offer.ID}).
+		Suffix("returning status").
 		PlaceholderFormat(squirrel.Dollar).
 		MustSql()
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return offer, apperror.New(apperror.DatabaseError, "failed to begin transaction", err)
+		return entity.Offer{}, apperror.New(apperror.DatabaseError, "failed to begin transaction", err)
 	}
 	defer tx.Rollback()
 
-	err = isPendingOffer(ctx, offerID, tx)
+	err = isPendingOffer(ctx, offer.ID, tx)
 	if err != nil {
 		return entity.Offer{}, err
 	}
 
-	err = isUserShopOwner(ctx, offerID, userID, tx)
-	if err != nil {
-		return entity.Offer{}, err
+	if isStore {
+		err = isUserShopOwner(ctx, offer.ID, userID, tx)
+		if err != nil {
+			return entity.Offer{}, err
+		}
+
+	} else {
+		// Если запрос на обновление статуса отправляет НЕ магазин, то добавляем проверку user_id
+		// в квери, чтобы убедиться, что пользователь является создателем оффера.
+		updateOfferStatusQuery, args = squirrel.Update("offers").
+			Set("status", offer.Status).
+			Set("updated_at", time.Now()).
+			Where(squirrel.Eq{"id": offer.ID, "user_id": userID}).
+			Suffix("returning status").
+			PlaceholderFormat(squirrel.Dollar).
+			MustSql()
 	}
 
 	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
 	if err != nil {
-		return offer, apperror.New(apperror.DatabaseError, "error scanning into struct", err)
+		return entity.Offer{}, apperror.New(apperror.DatabaseError, "error scanning into struct", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return offer, apperror.New(apperror.DatabaseError, "failed to commit transaction", err)
+		return entity.Offer{}, apperror.New(apperror.DatabaseError, "failed to commit transaction", err)
 	}
 
-	return offer, nil
+	return offer.ConvertToEntity(), nil
 }
 
 func isUserShopOwner(ctx context.Context, offerID, userID uint, tx *sqlx.Tx) error {

@@ -2,6 +2,7 @@ package offer
 
 import (
 	"context"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
@@ -9,9 +10,15 @@ type Repository interface {
 	InsertOffer(ctx context.Context, offer Offer) (uint, error)
 	GetOfferByID(ctx context.Context, offerID uint) (entity.Offer, error)
 	SelectUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
-	UpdateOfferStatus(ctx context.Context, userID, offerID uint, status string) (entity.Offer, error)
+	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
+
+const (
+	statusAccepted  = "accepted"
+	statusDeclined  = "declined"
+	statusCancelled = "cancelled"
+)
 
 type offerService struct {
 	offerRepository Repository
@@ -46,12 +53,31 @@ func (os *offerService) GetUserOffers(
 
 func (os *offerService) UpdateOfferStatus(
 	ctx context.Context,
-	offerID uint,
+	offer entity.Offer,
 	userID uint,
-	status string,
+	isStore bool,
 ) (entity.Offer, error) {
+	if isStore {
+		validStatusesShop := map[string]struct{}{
+			statusAccepted: {},
+			statusDeclined: {},
+		}
+		if _, ok := validStatusesShop[offer.Status]; !ok {
+			return offer, apperror.New(apperror.BadRequest, "invalid status field value", nil)
+		}
 
-	return os.offerRepository.UpdateOfferStatus(ctx, userID, offerID, status)
+	} else {
+		validStatusesBuyer := map[string]struct{}{
+			statusCancelled: {},
+		}
+		if _, ok := validStatusesBuyer[offer.Status]; !ok {
+			return offer, apperror.New(apperror.BadRequest, "invalid status field value", nil)
+		}
+	}
+
+	offerResp, err := os.offerRepository.UpdateOfferStatus(ctx, offer, userID, isStore)
+
+	return offerResp, err
 }
 
 func (os *offerService) DeleteOffer(

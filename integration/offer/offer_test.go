@@ -8,6 +8,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/gin-gonic/gin"
@@ -176,9 +177,9 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 
 			Expect(rec.Code).To(Equal(http.StatusOK))
 
-			var ofr entity.Offer
+			var ofr dto.PatchOfferStatusResp
 			_ = json.Unmarshal(rec.Body.Bytes(), &ofr)
-			Expect(ofr.Status).To(Equal("accepted"))
+			Expect(ofr.NewStatus).To(Equal("accepted"))
 		})
 
 		It("fails data validation if the is negative", func() {
