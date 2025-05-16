@@ -13,6 +13,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 
+	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/gin-gonic/gin"
 )
@@ -122,6 +123,19 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 	})
 }
 
+// @summary Update offer status
+// @tags offer
+// @accept json
+// @produce json
+// @param id path int true "Offer ID"
+// @param body body dto.PatchOfferStatusReq true "Offer status update request"
+// @success 200 {object} dto.PatchOfferStatusResp
+// @failure 400 {object} apperror.Error
+// @failure 401 {object} apperror.Error
+// @failure 404 {object} apperror.Error
+// @failure 409 {object} apperror.Error
+// @failure 500 {object} apperror.Error
+// @Router /offers/{offerID} [patch]
 func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	// TODO: zap debug coverage
 	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*10)
