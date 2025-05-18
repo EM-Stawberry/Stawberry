@@ -49,8 +49,7 @@ func (r *productRepository) GetProductByID(
 		return entity.Product{}, apperror.New(apperror.DatabaseError, "failed to fetch product", err)
 	}
 	idAttr, _ := strconv.Atoi(id)
-	idUint := uint(idAttr)
-	attributes, err := r.GetProductAttributesByID(ctx, idUint)
+	attributes, err := r.GetProductAttributesByID(ctx, idAttr)
 	if err != nil {
 		return entity.Product{}, err
 	}
@@ -65,7 +64,7 @@ func (r *productRepository) SelectProducts(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	var total int64
+	var total int
 	countQuery := "SELECT COUNT(*) FROM products"
 
 	if err := r.db.GetContext(ctx, &total, countQuery); err != nil {
@@ -79,10 +78,15 @@ func (r *productRepository) SelectProducts(
 
 	products := make([]entity.Product, len(productModels))
 	for i, pm := range productModels {
+		idPrice := pm.ID
+		avgPrice, _ := r.GetAveragePriceByProductID(ctx, idPrice)
 		products[i] = model.ConvertProductToEntity(pm)
+		inpMap := make(map[string]interface{})
+		inpMap["Average Price"] = avgPrice
+		products[i].Attributes = inpMap
 	}
 
-	return products, int(total), nil
+	return products, total, nil
 }
 
 func (r *productRepository) SelectProductsByName(
@@ -110,7 +114,12 @@ func (r *productRepository) SelectProductsByName(
 
 	products := make([]entity.Product, len(models))
 	for i, pm := range models {
+		idPrice := pm.ID
+		avgPrice, _ := r.GetAveragePriceByProductID(ctx, idPrice)
 		products[i] = model.ConvertProductToEntity(pm)
+		inpMap := make(map[string]interface{})
+		inpMap["Average Price"] = avgPrice
+		products[i].Attributes = inpMap
 	}
 	return products, int(total), nil
 }
@@ -218,7 +227,12 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	}
 	products := make([]entity.Product, len(models))
 	for i, pm := range models {
+		idPrice := pm.ID
+		avgPrice, _ := r.GetAveragePriceByProductID(ctx, idPrice)
 		products[i] = model.ConvertProductToEntity(pm)
+		inpMap := make(map[string]interface{})
+		inpMap["Average Price"] = avgPrice
+		products[i].Attributes = inpMap
 	}
 	return products, totalCount, nil
 }
@@ -248,7 +262,7 @@ func isDuplicateError(err error) bool {
 		strings.Contains(err.Error(), "unique violation")
 }
 
-func (r *productRepository) GetProductAttributesByID(ctx context.Context, productID uint) (map[string]interface{}, error) {
+func (r *productRepository) GetProductAttributesByID(ctx context.Context, productID int) (map[string]interface{}, error) {
 	var attributesJSONb []byte
 
 	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
@@ -266,4 +280,16 @@ func (r *productRepository) GetProductAttributesByID(ctx context.Context, produc
 	}
 
 	return attributes, nil
+}
+
+func (r *productRepository) GetAveragePriceByProductID(ctx context.Context, productID uint) (float64, error) {
+	var AveragePrice float64
+
+	query := `SELECT AVG(price) FROM shop_inventory WHERE product_id = $1`
+	err := r.db.GetContext(ctx, &AveragePrice, query, productID)
+	if err != nil {
+		return 0, apperror.New(apperror.DatabaseError, "failed to calculate average price", err)
+	}
+
+	return AveragePrice, nil
 }
