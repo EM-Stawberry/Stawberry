@@ -35,11 +35,40 @@ func (e *SimpleEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field)
 
 	levelColor := getLevelColor(entry.Level)
 	fmt.Fprintf(buf, "%s%-5s%s ", levelColor, strings.ToUpper(entry.Level.String()), colorReset)
-	fmt.Fprintf(buf, "%s%s%s", colorMsg, entry.Message, colorReset)
 
+	// Получаем имя файла и директорию для определения типа лога
+	fileName := ""
+	dirName := ""
 	if entry.Caller.Defined {
-		fileName := filepath.Base(entry.Caller.File)
-		fmt.Fprintf(buf, " %s%s:%d%s", colorDate, fileName, entry.Caller.Line, colorReset)
+		fileName = filepath.Base(entry.Caller.File)
+		dirName = filepath.Base(filepath.Dir(entry.Caller.File))
+	}
+	
+	// Определяем тип лога
+	isSystemLog := strings.Contains(entry.Message, "Route:") || 
+		strings.Contains(entry.Message, "Server started") || 
+		strings.HasSuffix(fileName, "logger.go") ||
+		dirName == "middleware" ||
+		(entry.Caller.Defined && strings.Contains(entry.Caller.Function, "middleware"))
+	
+	// Если это лог от сервиса (не от Gin и не от middleware)
+	if !isSystemLog && entry.Caller.Defined {
+		// Получаем имя пакета из пути для сервисных логов
+		filePath := entry.Caller.File
+		fileName := filepath.Base(filePath)
+		pkgPath := filepath.Dir(filePath)
+		pkgName := filepath.Base(pkgPath)
+		
+		// Форматируем с выравниванием для сервисных логов
+		fmt.Fprintf(buf, "%s%-25s%s ", colorDate, fmt.Sprintf("%s/%s:%d", pkgName, fileName, entry.Caller.Line), colorReset)
+		fmt.Fprintf(buf, "%s%-30s%s", colorMsg, entry.Message, colorReset)
+	} else {
+		// Стандартное форматирование для Gin и middleware логов
+		fmt.Fprintf(buf, "%s%s%s", colorMsg, entry.Message, colorReset)
+		
+		if entry.Caller.Defined && dirName != "middleware" && !strings.HasSuffix(fileName, "logger.go") {
+			fmt.Fprintf(buf, " %s%s:%d%s", colorDate, fileName, entry.Caller.Line, colorReset)
+		}
 	}
 
 	if len(fields) > 0 {
@@ -48,8 +77,23 @@ func (e *SimpleEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field)
 			field.AddTo(tempEnc)
 		}
 
-		for k, v := range tempEnc.Fields {
-			fmt.Fprintf(buf, " %s%s=%v%s", colorMsg, k, v, colorReset)
+		if !isSystemLog && len(tempEnc.Fields) > 0 {
+			// Красивый формат JSON для сервисных логов
+			fmt.Fprintf(buf, " %s{", colorInfo)
+			first := true
+			for k, v := range tempEnc.Fields {
+				if !first {
+					fmt.Fprintf(buf, ", ")
+				}
+				fmt.Fprintf(buf, "%q: %q", k, v)
+				first = false
+			}
+			fmt.Fprintf(buf, "}%s", colorReset)
+		} else {
+			// Стандартный формат для логов Gin и middleware
+			for k, v := range tempEnc.Fields {
+				fmt.Fprintf(buf, " %s%s=%v%s", colorMsg, k, v, colorReset)
+			}
 		}
 	}
 
