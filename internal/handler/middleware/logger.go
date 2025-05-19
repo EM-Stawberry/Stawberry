@@ -63,19 +63,19 @@ func formatGinDebugMessage(s string) string {
 		// Начало сообщения с методом
 		prefix := fmt.Sprintf("Route: %s ", methodColor(method))
 		
-		// Вычисляем фактическую длину видимого текста без ANSI-кодов
+		// Вычисляем фактическую длину без ANSI-кодов
 		visibleLength := len("Route: " + method + " " + path)
 		
-		// Фиксированная позиция стрелки (можно настроить после тестирования)
+		// Фиксированная позиция стрелки
 		arrowPosition := 50
 		
-		// Вычисляем сколько пробелов нужно добавить после пути
-		padding := arrowPosition - visibleLength
-		if padding < 1 {
-			padding = 1 // Минимум один пробел
+		// Вычисляем сколько пробелов нужно добавить
+		spacing := arrowPosition - visibleLength
+		if spacing < 1 {
+			spacing = 1
 		}
 		
-		return prefix + path + strings.Repeat(" ", padding) + "→ " + shortHandler
+		return prefix + path + strings.Repeat(" ", spacing) + "→ " + shortHandler
 	}
 
 	s = strings.TrimPrefix(s, "[GIN-debug] ")
