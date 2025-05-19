@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// ANSI color codes for console output
 const (
 	ColorGray   = "\033[38;5;246m" // Gray for timestamps and filenames
 	ColorCyan   = "\033[36m"       // Cyan for debug level
@@ -27,7 +26,6 @@ type DisabledCore struct {
 
 // With overrides the With method to ignore all fields
 func (c DisabledCore) With(fields []zapcore.Field) zapcore.Core {
-	_ = fields
 	return c
 }
 
@@ -41,7 +39,6 @@ func (c DisabledCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 
 // Write overrides the Write method to ignore all fields
 func (c DisabledCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	_ = fields
 	return c.Core.Write(ent, nil)
 }
 

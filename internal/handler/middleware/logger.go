@@ -20,6 +20,14 @@ const (
 	colorMagenta = "\033[38;5;201m"   // Magenta for OPTIONS
 	colorPink    = "\033[1;38;5;219m" // Bold pink for metadata and handler names
 	colorReset   = "\033[0m"          // Reset color
+	colorGreen   = "\033[38;5;82m"    // Bright green for GET and success codes
+	colorBlue    = "\033[38;5;39m"    // Bright blue for POST
+	colorYellow  = "\033[38;5;220m"   // Bright yellow for PUT and warning codes
+	colorRed     = "\033[38;5;196m"   // Bright red for DELETE and error codes
+	colorCyan    = "\033[38;5;51m"    // Cyan for PATCH and arrows
+	colorMagenta = "\033[38;5;201m"   // Magenta for OPTIONS
+	colorPink    = "\033[1;38;5;219m" // Bold pink for metadata and handler names
+	colorReset   = "\033[0m"          // Reset color
 )
 
 // methodColor returns method string with appropriate color based on HTTP method
@@ -57,9 +65,7 @@ func statusCodeColor(code int) string {
 }
 
 // ginRoutesRegex matches Gin's debug route definitions
-var ginRoutesRegex = regexp.MustCompile(
-	`(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)` +
-		`\s+(.+)\s+--> (.+) \((\d+) handlers\)`)
+var ginRoutesRegex = regexp.MustCompile(`(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)\s+(.+)\s+--> (.+) \((\d+) handlers\)`)
 
 func formatGinDebugMessage(s string) string {
 	if matches := ginRoutesRegex.FindStringSubmatch(s); len(matches) == 5 {
@@ -80,9 +86,7 @@ func formatGinDebugMessage(s string) string {
 			padding = 1
 		}
 
-		return colorPink + "[Strawberry]" +
-			colorPink + " " + prefix + path + strings.Repeat(" ", padding) +
-			colorCyan + "→" + colorReset + " " + colorReset + shortHandler + colorReset
+		return colorPink + "[Strawberry]" + colorPink + " " + prefix + path + strings.Repeat(" ", padding) + colorCyan + "→" + colorReset + " " + colorReset + shortHandler + colorReset
 	}
 
 	s = strings.TrimPrefix(s, "[GIN-debug] ")
