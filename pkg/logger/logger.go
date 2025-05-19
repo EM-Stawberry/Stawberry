@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	colorDate  = "\033[38;5;246m" // Серый для даты
-	colorMsg   = "\033[38;5;15m"  // Белый для сообщения
-	colorDebug = "\033[36m"       // Cyan
-	colorInfo  = "\033[32m"       // Green
-	colorWarn  = "\033[33m"       // Yellow
-	colorError = "\033[31m"       // Red
-	colorReset = "\033[0m"        // Reset
+	colorDate  = "\033[38;5;246m"
+	colorMsg   = "\033[38;5;15m"
+	colorDebug = "\033[36m"
+	colorInfo  = "\033[32m"
+	colorWarn  = "\033[33m"
+	colorError = "\033[31m"
+	colorReset = "\033[0m"
 )
 
 type SimpleEncoder struct {
@@ -34,12 +34,12 @@ func (e *SimpleEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field)
 	fmt.Fprintf(buf, "%s%s%s ", colorDate, timeStr, colorReset)
 
 	levelColor := getLevelColor(entry.Level)
-	fmt.Fprintf(buf, "%s%s%s ", levelColor, strings.ToUpper(entry.Level.String()), colorReset)
-	fmt.Fprintf(buf, "%s%s%s ", colorMsg, entry.Message, colorReset)
+	fmt.Fprintf(buf, "%s%-5s%s ", levelColor, strings.ToUpper(entry.Level.String()), colorReset)
+	fmt.Fprintf(buf, "%s%s%s", colorMsg, entry.Message, colorReset)
 
 	if entry.Caller.Defined {
 		fileName := filepath.Base(entry.Caller.File)
-		fmt.Fprintf(buf, "%s%s:%d%s ", colorDate, fileName, entry.Caller.Line, colorReset)
+		fmt.Fprintf(buf, " %s%s:%d%s", colorDate, fileName, entry.Caller.Line, colorReset)
 	}
 
 	if len(fields) > 0 {
@@ -49,7 +49,7 @@ func (e *SimpleEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field)
 		}
 
 		for k, v := range tempEnc.Fields {
-			fmt.Fprintf(buf, "%s%s=%v%s ", colorMsg, k, v, colorReset)
+			fmt.Fprintf(buf, " %s%s=%v%s", colorMsg, k, v, colorReset)
 		}
 	}
 
@@ -76,6 +76,7 @@ func getEncoder(isJSON bool) zapcore.Encoder {
 	if isJSON {
 		encoderConfig := zap.NewProductionEncoderConfig()
 		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 		return zapcore.NewJSONEncoder(encoderConfig)
 	}
 
