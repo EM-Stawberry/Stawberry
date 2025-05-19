@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/google/uuid"
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/golang-jwt/jwt"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 )
 
 var signingMethod = jwt.SigningMethodHS256
+
+//go:generate mockgen -source=$GOFILE -destination=token_mock_test.go -package=token Repository
 
 type Repository interface {
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
@@ -77,11 +79,9 @@ func (ts *tokenService) ValidateToken(
 // parse извлекает токен JWT и извлекает claims.
 func (ts *tokenService) parse(token string) (entity.AccessToken, error) {
 	claim := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] != signingMethod.Alg() {
-			appError := apperror.ErrInvalidToken
-			appError.Err = fmt.Errorf("invalid signing method")
-			return nil, appError
+			return nil, fmt.Errorf("%w: invalid signing method", apperror.ErrInvalidToken)
 		}
 		return []byte(ts.jwtSecret), nil
 	})
@@ -154,6 +154,7 @@ func (ts *tokenService) Update(
 func generateJWT(userID uint, secret string, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
+		"iat": time.Now().Unix(),
 		"exp": time.Now().Add(duration).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

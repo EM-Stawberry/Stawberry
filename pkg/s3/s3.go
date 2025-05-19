@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/zuzaaa-dev/stawberry/config"
+	"github.com/EM-Stawberry/Stawberry/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	sdkConfig "github.com/aws/aws-sdk-go-v2/config"

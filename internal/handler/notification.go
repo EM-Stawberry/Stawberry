@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/gin-gonic/gin"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
 )
 
 type NotificationService interface {
@@ -55,7 +55,7 @@ func (h *notificationHandler) GetNotification(c *gin.Context) {
 	}
 	notifications, total, err := h.offerService.GetNotification(strconv.FormatUint(uint64(uid), 10), offset, limit)
 	if err != nil {
-		handleNotificationError(c, err)
+		c.Error(err)
 		return
 	}
 

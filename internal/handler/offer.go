@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/offer"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 
+	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/gin-gonic/gin"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/dto"
 )
 
 type OfferService interface {
@@ -46,7 +46,7 @@ func (h *offerHandler) PostOffer(c *gin.Context) {
 	var response dto.PostOfferResp
 	var err error
 	if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToSvc()); err != nil {
-		handleOfferError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *offerHandler) GetUserOffers(c *gin.Context) {
 
 	offers, total, err := h.offerService.GetUserOffers(context.Background(), userID.(uint), offset, limit)
 	if err != nil {
-		handleOfferError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 
 	offer, err := h.offerService.GetOffer(context.Background(), uint(id))
 	if err != nil {
-		handleOfferError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 
 	offer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), req.Status)
 	if err != nil {
-		handleOfferError(c, err)
+		c.Error(err)
 		return
 	}
 
@@ -159,7 +159,8 @@ func (h *offerHandler) DeleteOffer(c *gin.Context) {
 
 	offer, err := h.offerService.DeleteOffer(context.Background(), uint(id))
 	if err != nil {
-		handleOfferError(c, err)
+		c.Error(err)
+		return
 	}
 
 	// Create notification for store

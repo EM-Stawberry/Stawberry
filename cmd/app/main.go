@@ -5,21 +5,22 @@ import (
 	"os"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/notification"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/user"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 
-	"github.com/zuzaaa-dev/stawberry/internal/repository"
-	"github.com/zuzaaa-dev/stawberry/pkg/logger"
-	"github.com/zuzaaa-dev/stawberry/pkg/migrator"
+	"github.com/EM-Stawberry/Stawberry/internal/repository"
+	"github.com/EM-Stawberry/Stawberry/pkg/logger"
+	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
 
+	"github.com/EM-Stawberry/Stawberry/config"
+	"github.com/EM-Stawberry/Stawberry/internal/app"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
+	"github.com/EM-Stawberry/Stawberry/internal/handler"
+	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 	"github.com/gin-gonic/gin"
-	"github.com/zuzaaa-dev/stawberry/config"
-	"github.com/zuzaaa-dev/stawberry/internal/app"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/offer"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
-	"github.com/zuzaaa-dev/stawberry/internal/handler"
-	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
 )
 
 // Global variables for application state
@@ -75,11 +76,13 @@ func initializeApp() error {
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
+	tokenRepository := repository.NewTokenRepository(db)
 	log.Info("Repositories initialized")
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	userService := user.NewUserService(userRepository)
+	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
+	userService := user.NewUserService(userRepository, tokenService)
 	notificationService := notification.NewNotificationService(notificationRepository)
 	log.Info("Services initialized")
 
@@ -97,6 +100,8 @@ func initializeApp() error {
 		offerHandler,
 		userHandler,
 		notificationHandler,
+		userService,
+		tokenService,
 		s3,
 		"api",
 		log,
