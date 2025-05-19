@@ -16,6 +16,7 @@ CREATE TABLE offers (
 
 CREATE INDEX idx_offers_user_id ON offers(user_id);
 CREATE INDEX idx_offers_product_id ON offers(product_id);
+CREATE INDEX idx_offers_status_id ON offers(status) WHERE status = 'pending';
 -- +goose StatementEnd
 
 -- +goose Down
