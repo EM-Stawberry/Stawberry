@@ -12,13 +12,17 @@ import (
 )
 
 const (
-	colorGreen  = "\033[32m"
-	colorBlue   = "\033[34m"
-	colorYellow = "\033[33m"
-	colorRed    = "\033[31m"
-	colorReset  = "\033[0m"
+	colorGreen   = "\033[38;5;82m"    // Bright green for GET and success codes
+	colorBlue    = "\033[38;5;39m"    // Bright blue for POST
+	colorYellow  = "\033[38;5;220m"   // Bright yellow for PUT and warning codes
+	colorRed     = "\033[38;5;196m"   // Bright red for DELETE and error codes
+	colorCyan    = "\033[38;5;51m"    // Cyan for PATCH and arrows
+	colorMagenta = "\033[38;5;201m"   // Magenta for OPTIONS
+	colorPink    = "\033[1;38;5;219m" // Bold pink for metadata and handler names
+	colorReset   = "\033[0m"          // Reset color
 )
 
+// methodColor returns method string with appropriate color based on HTTP method
 func methodColor(method string) string {
 	switch method {
 	case "GET":
@@ -30,12 +34,15 @@ func methodColor(method string) string {
 	case "DELETE":
 		return colorRed + method + colorReset
 	case "PATCH":
-		return colorBlue + method + colorReset
+		return colorCyan + method + colorReset
+	case "OPTIONS":
+		return colorMagenta + method + colorReset
 	default:
-		return method
+		return colorReset + method + colorReset
 	}
 }
 
+// statusCodeColor returns status code with appropriate color based on HTTP status
 func statusCodeColor(code int) string {
 	switch {
 	case code >= 200 && code < 300:
@@ -49,6 +56,7 @@ func statusCodeColor(code int) string {
 	}
 }
 
+// ginRoutesRegex matches Gin's debug route definitions
 var ginRoutesRegex = regexp.MustCompile(`(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)\s+(.+)\s+--> (.+) \((\d+) handlers\)`)
 
 func formatGinDebugMessage(s string) string {
@@ -60,45 +68,41 @@ func formatGinDebugMessage(s string) string {
 		handlerParts := strings.Split(handler, ".")
 		shortHandler := handlerParts[len(handlerParts)-1]
 
-		// Начало сообщения с методом
 		prefix := fmt.Sprintf("Route: %s ", methodColor(method))
-		
-		// Вычисляем фактическую длину без ANSI-кодов
-		visibleLength := len("Route: " + method + " " + path)
-		
-		// Фиксированная позиция стрелки
+
+		visiblePrefix := fmt.Sprintf("Route: %s ", method)
+		visibleLength := len(visiblePrefix) + len(path)
 		arrowPosition := 50
-		
-		// Вычисляем сколько пробелов нужно добавить
-		spacing := arrowPosition - visibleLength
-		if spacing < 1 {
-			spacing = 1
+		padding := arrowPosition - visibleLength
+		if padding < 1 {
+			padding = 1
 		}
-		
-		return prefix + path + strings.Repeat(" ", spacing) + "→ " + shortHandler
+
+		return colorPink + "[Strawberry]" + colorPink + " " + prefix + path + strings.Repeat(" ", padding) + colorCyan + "→" + colorReset + " " + colorReset + shortHandler + colorReset
 	}
 
 	s = strings.TrimPrefix(s, "[GIN-debug] ")
 
 	if strings.HasPrefix(s, "Listening and serving HTTP") {
-		return "Server started: " + s
+		return colorGreen + "Server started: " + s + colorReset
 	}
 
 	if strings.HasPrefix(s, "redirecting request") {
-		return "Redirect: " + s
+		return colorBlue + "Redirect: " + s + colorReset
 	}
 
 	if strings.HasPrefix(s, "Loading HTML Templates") {
-		return "Templates loaded: " + s
+		return colorCyan + "Templates loaded: " + s + colorReset
 	}
 
 	if strings.Contains(s, "router") {
-		return "Router: " + s
+		return colorYellow + "Router: " + s + colorReset
 	}
 
 	return s
 }
 
+// zapWriter implements io.Writer interface to redirect Gin logs to Zap
 type zapWriter struct {
 	logger *zap.Logger
 }
@@ -119,11 +123,13 @@ func (w zapWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// SetupGinWithZap configures Gin to use Zap as its logger
 func SetupGinWithZap(logger *zap.Logger) {
 	gin.DefaultWriter = &zapWriter{logger: logger}
 	gin.DefaultErrorWriter = &zapWriter{logger: logger.WithOptions(zap.IncreaseLevel(zapcore.ErrorLevel))}
 }
 
+// ZapLogger returns a gin.HandlerFunc middleware that logs requests using Zap
 func ZapLogger(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -143,15 +149,17 @@ func ZapLogger(logger *zap.Logger) gin.HandlerFunc {
 			path = path + "?" + query
 		}
 
-		message := fmt.Sprintf("%s %-5s %12s %s",
+		message := fmt.Sprintf("%s %s %s%s%s %s",
 			methodColor(method),
 			statusCodeColor(status),
+			colorReset,
 			latency.String(),
+			colorReset,
 			path,
 		)
 
 		fields := []zap.Field{zap.String("ip", ip)}
-		
+
 		if errorMessage != "" {
 			fields = append(fields, zap.String("error", errorMessage))
 		}
@@ -167,6 +175,7 @@ func ZapLogger(logger *zap.Logger) gin.HandlerFunc {
 	}
 }
 
+// ZapRecovery returns a gin.HandlerFunc middleware that recovers from panics
 func ZapRecovery(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
