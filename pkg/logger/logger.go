@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/config"
+	"github.com/EM-Stawberry/Stawberry/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
