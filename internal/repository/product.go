@@ -2,11 +2,11 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -237,14 +237,37 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	return products, totalCount, nil
 }
 
-func (r *productRepository) SelectStoreProducts(
+func (r *productRepository) SelectShopProducts(
 	ctx context.Context,
-	id string, offset, limit int,
+	shopID int, offset, limit int,
 ) ([]entity.Product, int, error) {
 	var total int64
+	countQuery := `
+		SELECT COUNT(*) FROM products p
+		JOIN shop_inventory si ON p.id = si.product_id 
+		WHERE si.shop_id = $1 `
+	if err := r.db.GetContext(ctx, &total, countQuery, shopID); err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
+	}
+	var models []model.Product
+	searchQuery := `
+		SELECT id, name, category_id, description  FROM products p
+		JOIN shop_inventory si ON p.id = si.product_id 
+		WHERE si.shop_id = $1
+		LIMIT $2 OFFSET $3 `
+	if err := r.db.SelectContext(ctx, &models, searchQuery, shopID, limit, offset); err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
+	}
 
-	var products []entity.Product
-
+	products := make([]entity.Product, len(models))
+	for i, pm := range models {
+		idPrice := pm.ID
+		avgPrice, _ := r.GetAveragePriceByProductID(ctx, idPrice)
+		products[i] = model.ConvertProductToEntity(pm)
+		inpMap := make(map[string]interface{})
+		inpMap["Average Price"] = avgPrice
+		products[i].Attributes = inpMap
+	}
 	return products, int(total), nil
 }
 

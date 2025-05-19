@@ -21,7 +21,7 @@ type ProductService interface {
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int) ([]entity.Product, int, error)
-	GetStoreProducts(ctx context.Context, id string, offset, limit int) ([]entity.Product, int, error)
+	SelectShopProducts(ctx context.Context, storeID int, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 }
 
@@ -191,8 +191,17 @@ func (h *productHandler) SelectFilteredProducts(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) GetStoreProducts(c *gin.Context) {
-	id := c.Param("id")
+func (h *productHandler) SelectShopProducts(c *gin.Context) {
+	shopIDStr := c.Query("shop_id")
+	if shopIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "shop_id is required"})
+		return
+	}
+	shopID, err := strconv.Atoi(shopIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid shop_id"})
+		return
+	}
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
@@ -214,7 +223,7 @@ func (h *productHandler) GetStoreProducts(c *gin.Context) {
 
 	offset := (page - 1) * limit
 
-	products, total, err := h.productService.GetStoreProducts(context.Background(), id, offset, limit)
+	products, total, err := h.productService.SelectShopProducts(context.Background(), shopID, offset, limit)
 	if err != nil {
 		c.Error(err)
 		return
