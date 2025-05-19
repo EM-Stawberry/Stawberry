@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	colorGreen  = "\033[32m" // Зеленый для успешных операций
-	colorBlue   = "\033[34m" // Синий для информации
-	colorYellow = "\033[33m" // Желтый для предупреждений
-	colorRed    = "\033[31m" // Красный для ошибок
-	colorReset  = "\033[0m"  // Сброс цвета
+	colorGreen  = "\033[32m"
+	colorBlue   = "\033[34m"
+	colorYellow = "\033[33m"
+	colorRed    = "\033[31m"
+	colorReset  = "\033[0m"
 )
 
 func methodColor(method string) string {
@@ -60,11 +60,22 @@ func formatGinDebugMessage(s string) string {
 		handlerParts := strings.Split(handler, ".")
 		shortHandler := handlerParts[len(handlerParts)-1]
 
-		return fmt.Sprintf("Route: %s %s → %s",
-			methodColor(method),
-			path,
-			shortHandler,
-		)
+		// Начало сообщения с методом
+		prefix := fmt.Sprintf("Route: %s ", methodColor(method))
+		
+		// Вычисляем фактическую длину видимого текста без ANSI-кодов
+		visibleLength := len("Route: " + method + " " + path)
+		
+		// Фиксированная позиция стрелки (можно настроить после тестирования)
+		arrowPosition := 50
+		
+		// Вычисляем сколько пробелов нужно добавить после пути
+		padding := arrowPosition - visibleLength
+		if padding < 1 {
+			padding = 1 // Минимум один пробел
+		}
+		
+		return prefix + path + strings.Repeat(" ", padding) + "→ " + shortHandler
 	}
 
 	s = strings.TrimPrefix(s, "[GIN-debug] ")
@@ -99,8 +110,7 @@ func (w zapWriter) Write(p []byte) (n int, err error) {
 		message := formatGinDebugMessage(s)
 		w.logger.Debug(message, zap.String("component", "gin"))
 	} else if strings.Contains(s, "[GIN]") {
-		message := strings.Replace(s, "[GIN]", "", 1)
-		message = strings.TrimSpace(message)
+		message := strings.TrimSpace(strings.Replace(s, "[GIN]", "", 1))
 		w.logger.Debug(message, zap.String("component", "gin"))
 	} else {
 		w.logger.Debug(s)
@@ -133,30 +143,26 @@ func ZapLogger(logger *zap.Logger) gin.HandlerFunc {
 			path = path + "?" + query
 		}
 
-		message := fmt.Sprintf("%s | %s | %s | %s",
+		message := fmt.Sprintf("%s %-5s %12s %s",
 			methodColor(method),
 			statusCodeColor(status),
 			latency.String(),
 			path,
 		)
 
+		fields := []zap.Field{zap.String("ip", ip)}
+		
+		if errorMessage != "" {
+			fields = append(fields, zap.String("error", errorMessage))
+		}
+
 		switch {
 		case status >= 500:
-			logger.Error(message,
-				zap.Int("status", status),
-				zap.String("ip", ip),
-				zap.String("error", errorMessage),
-			)
+			logger.Error(message, fields...)
 		case status >= 400:
-			logger.Warn(message,
-				zap.Int("status", status),
-				zap.String("ip", ip),
-				zap.String("error", errorMessage),
-			)
+			logger.Warn(message, fields...)
 		default:
-			logger.Info(message,
-				zap.String("ip", ip),
-			)
+			logger.Info(message, fields...)
 		}
 	}
 }
@@ -167,9 +173,10 @@ func ZapRecovery(logger *zap.Logger) gin.HandlerFunc {
 			if err := recover(); err != nil {
 				logger.Error("Panic recovered",
 					zap.Any("error", err),
-					zap.String("request", c.Request.URL.Path),
+					zap.String("path", c.Request.URL.Path),
+					zap.String("method", c.Request.Method),
+					zap.String("ip", c.ClientIP()),
 				)
-
 				c.AbortWithStatus(500)
 			}
 		}()
