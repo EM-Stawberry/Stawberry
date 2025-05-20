@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 
@@ -81,9 +80,4 @@ func (r *ProductRepository) UpdateProduct(
 	_ = update
 
 	return nil
-}
-
-func isDuplicateError(err error) bool {
-	return strings.Contains(err.Error(), "duplicate") ||
-		strings.Contains(err.Error(), "unique violation")
 }
