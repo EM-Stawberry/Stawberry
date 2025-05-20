@@ -55,7 +55,7 @@ func (h *NotificationHandler) GetNotification(c *gin.Context) {
 	}
 	notifications, total, err := h.offerService.GetNotification(strconv.FormatUint(uint64(uid), 10), offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

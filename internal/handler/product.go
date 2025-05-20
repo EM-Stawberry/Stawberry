@@ -46,7 +46,7 @@ func (h *ProductHandler) PostProduct(c *gin.Context) {
 	var response dto.PostProductResp
 	var err error
 	if response.ID, err = h.productService.CreateProduct(context.Background(), postProductReq.ConvertToSvc()); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 
 	product, err := h.productService.GetProductByID(context.Background(), id)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 
 	products, total, err := h.productService.GetProducts(context.Background(), offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -130,7 +130,7 @@ func (h *ProductHandler) GetStoreProducts(c *gin.Context) {
 
 	products, total, err := h.productService.GetStoreProducts(context.Background(), id, offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -161,7 +161,7 @@ func (h *ProductHandler) PatchProduct(c *gin.Context) {
 	}
 
 	if err := h.productService.UpdateProduct(context.Background(), id, update.ConvertToSvc()); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

@@ -46,7 +46,7 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 	var response dto.PostOfferResp
 	var err error
 	if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToSvc()); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 
 	offers, total, err := h.offerService.GetUserOffers(context.Background(), userID.(uint), offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 
 	offer, err := h.offerService.GetOffer(context.Background(), uint(id))
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 
 	offer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), req.Status)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -159,7 +159,7 @@ func (h *OfferHandler) DeleteOffer(c *gin.Context) {
 
 	offer, err := h.offerService.DeleteOffer(context.Background(), uint(id))
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
