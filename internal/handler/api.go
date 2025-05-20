@@ -58,7 +58,8 @@ func SetupRouter(
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
 
-	// TODO: не забыть зарегистрировать роуты для продуктов, офферов и уведомлений
+	// Заглушки для нереализованных хендлеров.
+	// Не забудьте убрать их и добавить вызов .RegisterRoutes для каждого хендлера
 	_ = productH
 	_ = offerH
 	_ = notificationH
