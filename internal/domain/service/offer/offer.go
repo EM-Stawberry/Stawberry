@@ -14,29 +14,29 @@ type Repository interface {
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
 
-type OfferService struct {
+type Service struct {
 	offerRepository Repository
 }
 
-func NewOfferService(offerRepository Repository) *OfferService {
-	return &OfferService{offerRepository: offerRepository}
+func NewService(offerRepository Repository) *Service {
+	return &Service{offerRepository: offerRepository}
 }
 
-func (os *OfferService) CreateOffer(
+func (os *Service) CreateOffer(
 	ctx context.Context,
 	offer Offer,
 ) (uint, error) {
 	return os.offerRepository.InsertOffer(ctx, offer)
 }
 
-func (os *OfferService) GetOffer(
+func (os *Service) GetOffer(
 	ctx context.Context,
 	offerID uint,
 ) (entity.Offer, error) {
 	return os.offerRepository.GetOfferByID(ctx, offerID)
 }
 
-func (os *OfferService) GetUserOffers(
+func (os *Service) GetUserOffers(
 	ctx context.Context,
 	userID uint,
 	limit,
@@ -45,7 +45,7 @@ func (os *OfferService) GetUserOffers(
 	return os.offerRepository.SelectUserOffers(ctx, userID, limit, offset)
 }
 
-func (os *OfferService) UpdateOfferStatus(
+func (os *Service) UpdateOfferStatus(
 	ctx context.Context,
 	offerID uint,
 	status string,
@@ -53,7 +53,7 @@ func (os *OfferService) UpdateOfferStatus(
 	return os.offerRepository.UpdateOfferStatus(ctx, offerID, status)
 }
 
-func (os *OfferService) DeleteOffer(
+func (os *Service) DeleteOffer(
 	ctx context.Context,
 	offerID uint,
 ) (entity.Offer, error) {

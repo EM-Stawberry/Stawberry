@@ -24,15 +24,15 @@ type Repository interface {
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
 }
 
-type TokenService struct {
+type Service struct {
 	tokenRepository Repository
 	jwtSecret       string
 	refreshLife     time.Duration
 	accessLife      time.Duration
 }
 
-func NewTokenService(tokenRepo Repository, secret string, refreshLife, accessLife time.Duration) *TokenService {
-	return &TokenService{
+func NewService(tokenRepo Repository, secret string, refreshLife, accessLife time.Duration) *Service {
+	return &Service{
 		tokenRepository: tokenRepo,
 		jwtSecret:       secret,
 		refreshLife:     refreshLife,
@@ -41,7 +41,7 @@ func NewTokenService(tokenRepo Repository, secret string, refreshLife, accessLif
 }
 
 // GenerateTokens генерирует новый токен доступа и токен обновления для пользователя.
-func (ts *TokenService) GenerateTokens(
+func (ts *Service) GenerateTokens(
 	ctx context.Context,
 	fingerprint string,
 	userID uint,
@@ -69,7 +69,7 @@ func (ts *TokenService) GenerateTokens(
 }
 
 // ValidateToken проверяет access токен и возвращает расшифрованную информацию, если она действительна.
-func (ts *TokenService) ValidateToken(
+func (ts *Service) ValidateToken(
 	ctx context.Context,
 	token string,
 ) (entity.AccessToken, error) {
@@ -91,7 +91,7 @@ func (ts *TokenService) ValidateToken(
 }
 
 // parse извлекает токен JWT и извлекает claims.
-func (ts *TokenService) parse(token string) (entity.AccessToken, error) {
+func (ts *Service) parse(token string) (entity.AccessToken, error) {
 	claim := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(token, claim, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] != signingMethod.Alg() {
@@ -127,7 +127,7 @@ func (ts *TokenService) parse(token string) (entity.AccessToken, error) {
 	}, nil
 }
 
-func (ts *TokenService) InsertToken(
+func (ts *Service) InsertToken(
 	ctx context.Context,
 	token entity.RefreshToken,
 ) error {
@@ -135,7 +135,7 @@ func (ts *TokenService) InsertToken(
 }
 
 // GetActivesTokenByUserID извлекает все активные токены обновления для конкретного пользователя.
-func (ts *TokenService) GetActivesTokenByUserID(
+func (ts *Service) GetActivesTokenByUserID(
 	ctx context.Context,
 	userID uint,
 ) ([]entity.RefreshToken, error) {
@@ -143,21 +143,21 @@ func (ts *TokenService) GetActivesTokenByUserID(
 }
 
 // RevokeActivesByUserID аннулирует все активные токены обновления для определенного пользователя.
-func (ts *TokenService) RevokeActivesByUserID(
+func (ts *Service) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
 	return ts.tokenRepository.RevokeActivesByUserID(ctx, userID)
 }
 
-func (ts *TokenService) GetByUUID(
+func (ts *Service) GetByUUID(
 	ctx context.Context,
 	uuid string,
 ) (entity.RefreshToken, error) {
 	return ts.tokenRepository.GetByUUID(ctx, uuid)
 }
 
-func (ts *TokenService) Update(
+func (ts *Service) Update(
 	ctx context.Context,
 	refresh entity.RefreshToken,
 ) (entity.RefreshToken, error) {

@@ -21,7 +21,7 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	testUser := User{
@@ -85,7 +85,7 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	email := "test@example.com"
@@ -218,7 +218,7 @@ func TestUserService_Refresh(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -344,7 +344,7 @@ func TestUserService_Logout(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -432,7 +432,7 @@ func TestUserService_GetUserByID(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	userID := uint(1)

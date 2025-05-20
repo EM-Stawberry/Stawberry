@@ -23,7 +23,7 @@ func TestNewTokenService(t *testing.T) {
 	refreshLife := 24 * time.Hour
 	accessLife := time.Hour
 
-	service := NewTokenService(repo, secret, refreshLife, accessLife)
+	service := NewService(repo, secret, refreshLife, accessLife)
 
 	assert.NotNil(t, service)
 	assert.Equal(t, repo, service.tokenRepository)
@@ -37,7 +37,7 @@ func TestTokenService_GenerateTokens(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := NewMockRepository(ctrl)
-	service := NewTokenService(repo, "test-secret", 24*time.Hour, time.Hour)
+	service := NewService(repo, "test-secret", 24*time.Hour, time.Hour)
 
 	tests := []struct {
 		name        string
@@ -77,7 +77,7 @@ func TestTokenService_ValidateToken(t *testing.T) {
 
 	repo := NewMockRepository(ctrl)
 	secret := "test-secret"
-	service := NewTokenService(repo, secret, 24*time.Hour, time.Hour)
+	service := NewService(repo, secret, 24*time.Hour, time.Hour)
 
 	validToken, err := generateJWT(1, secret, time.Hour)
 	require.NoError(t, err)
@@ -127,7 +127,7 @@ func TestTokenService_Repository_Methods(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := NewMockRepository(ctrl)
-	service := NewTokenService(repo, "test-secret", 24*time.Hour, time.Hour)
+	service := NewService(repo, "test-secret", 24*time.Hour, time.Hour)
 	ctx := context.Background()
 
 	refreshToken := entity.RefreshToken{
@@ -180,7 +180,7 @@ func TestTokenService_Parse(t *testing.T) {
 
 	repo := NewMockRepository(ctrl)
 	secret := "test-secret"
-	service := NewTokenService(repo, secret, 24*time.Hour, time.Hour)
+	service := NewService(repo, secret, 24*time.Hour, time.Hour)
 
 	tests := []struct {
 		name    string
