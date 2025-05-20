@@ -46,9 +46,18 @@ func (ts *TokenService) GenerateTokens(
 	fingerprint string,
 	userID uint,
 ) (string, entity.RefreshToken, error) {
+
+	if ctx.Err() != nil {
+		return "", entity.RefreshToken{}, ctx.Err()
+	}
+
 	accessToken, err := generateJWT(userID, ts.jwtSecret, ts.accessLife)
 	if err != nil {
 		return "", entity.RefreshToken{}, err
+	}
+
+	if ctx.Err() != nil {
+		return "", entity.RefreshToken{}, ctx.Err()
 	}
 
 	entityRefreshToken, err := generateRefresh(fingerprint, userID, ts.refreshLife)
@@ -64,6 +73,11 @@ func (ts *TokenService) ValidateToken(
 	ctx context.Context,
 	token string,
 ) (entity.AccessToken, error) {
+
+	if ctx.Err() != nil {
+		return entity.AccessToken{}, ctx.Err()
+	}
+
 	accessToken, err := ts.parse(token)
 	if err != nil {
 		return entity.AccessToken{}, err

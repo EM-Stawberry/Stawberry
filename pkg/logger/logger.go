@@ -27,6 +27,7 @@ type DisabledCore struct {
 
 // With overrides the With method to ignore all fields
 func (c DisabledCore) With(fields []zapcore.Field) zapcore.Core {
+	_ = fields
 	return c
 }
 
@@ -40,6 +41,7 @@ func (c DisabledCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 
 // Write overrides the Write method to ignore all fields
 func (c DisabledCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
+	_ = fields
 	return c.Core.Write(ent, nil)
 }
 

@@ -57,6 +57,11 @@ func SetupRouter(
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
 
+	// TODO: не забыть зарегистрировать роуты для продуктов, офферов и уведомлений
+	_ = productH
+	_ = offerH
+	_ = notificationH
+
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
 		secured.GET("/auth_required", func(c *gin.Context) {
