@@ -14,6 +14,29 @@ var (
 	EnvProd = "prod"
 )
 
+type DBConfig struct {
+	Host         string
+	User         string
+	Password     string
+	Name         string
+	Port         string
+	MaxOpenConns int
+	MaxIdleConns int
+}
+
+func (dbc *DBConfig) GetDBConnString() string {
+	return fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		dbc.Host, dbc.User, dbc.Password, dbc.Name, dbc.Port,
+	)
+}
+
+type ServerConfig struct {
+	Domain  string
+	Port    string
+	GinMode string
+}
+
 type TokenConfig struct {
 	Secret               string
 	AccessTokenDuration  time.Duration
@@ -21,19 +44,16 @@ type TokenConfig struct {
 }
 
 type Config struct {
-	DBHost        string
-	DBUser        string
-	DBPassword    string
-	DBName        string
-	DBPort        string
-	ServerPort    string
 	AccessKey     string
 	SecretKey     string
 	BucketName    string
 	URL           string
 	SigningRegion string
-	Token         TokenConfig
 	Environment   string
+
+	DB     DBConfig
+	Server ServerConfig
+	Token  TokenConfig
 }
 
 func LoadConfig() *Config {
@@ -46,19 +66,33 @@ func LoadConfig() *Config {
 		log.Printf("Config reading failed: %v", err)
 	}
 
+	// Дефолтные значения для конфига базы данных
+	viper.SetDefault("DB_PORT", 5432)
+	viper.SetDefault("DB_MAX_OPEN_CONNS", 25)
+	viper.SetDefault("DB_MAX_IDLE_CONNS", 10)
+	viper.SetDefault("SERVER_PORT", 8080)
+
 	config := &Config{
-		DBHost:        viper.GetString("DB_HOST"),
-		DBUser:        viper.GetString("DB_USER"),
-		DBPassword:    viper.GetString("DB_PASSWORD"),
-		DBName:        viper.GetString("DB_NAME"),
-		DBPort:        viper.GetString("DB_PORT"),
-		ServerPort:    viper.GetString("SERVER_PORT"),
 		AccessKey:     viper.GetString("ACCESS_KEY"),
 		SecretKey:     viper.GetString("SECRET_KEY"),
 		BucketName:    viper.GetString("BUCKET_NAME"),
 		URL:           viper.GetString("URL"),
 		SigningRegion: viper.GetString("SIGNING_REGION"),
 		Environment:   viper.GetString("ENVIRONMENT"),
+		DB: DBConfig{
+			Host:         viper.GetString("DB_HOST"),
+			User:         viper.GetString("DB_USER"),
+			Password:     viper.GetString("DB_PASSWORD"),
+			Name:         viper.GetString("DB_NAME"),
+			Port:         viper.GetString("DB_PORT"),
+			MaxOpenConns: viper.GetInt("DB_MAX_OPEN_CONNS"),
+			MaxIdleConns: viper.GetInt("DB_MAX_IDLE_CONNS"),
+		},
+		Server: ServerConfig{
+			Domain:  viper.GetString("SERVER_DOMAIN"),
+			Port:    viper.GetString("SERVER_PORT"),
+			GinMode: viper.GetString("GIN_MODE"),
+		},
 		Token: TokenConfig{
 			Secret:               viper.GetString("TOKEN_SECRET"),
 			AccessTokenDuration:  viper.GetDuration("TOKEN_ACCESS_DURATION"),
@@ -67,11 +101,4 @@ func LoadConfig() *Config {
 	}
 
 	return config
-}
-
-func (c *Config) GetDBConnString() string {
-	return fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		c.DBHost, c.DBUser, c.DBPassword, c.DBName, c.DBPort,
-	)
 }

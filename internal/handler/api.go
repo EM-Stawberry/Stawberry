@@ -12,7 +12,6 @@ import (
 
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
-	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -27,13 +26,13 @@ import (
 // @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
 // @Router /health [get]
 func SetupRouter(
-	productH productHandler,
-	offerH offerHandler,
-	userH userHandler,
-	notificationH notificationHandler,
+	healthH *healthHandler,
+	productH *productHandler,
+	offerH *offerHandler,
+	userH *userHandler,
+	notificationH *notificationHandler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
-	s3 *objectstorage.BucketBasics,
 	basePath string,
 	logger *zap.Logger,
 ) *gin.Engine {
@@ -44,27 +43,19 @@ func SetupRouter(
 	// Add custom middleware using zap
 	router.Use(middleware.ZapLogger(logger))
 	router.Use(middleware.ZapRecovery(logger))
+
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
-
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"time":   time.Now().Unix(),
-		})
-	})
 
 	// Swagger UI endpoint
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	healthH.RegisterRoutes(router)
+
 	base := router.Group(basePath)
+
 	auth := base.Group("/auth")
-	{
-		auth.POST("/reg", userH.Registration)
-		auth.POST("/login", userH.Login)
-		auth.POST("/logout", userH.Logout)
-		auth.POST("/refresh", userH.Refresh)
-	}
+	userH.RegisterRoutes(auth)
 
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
