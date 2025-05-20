@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/EM-Stawberry/Stawberry/config"
+
+	// Импорт драйвера для sqlx
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )

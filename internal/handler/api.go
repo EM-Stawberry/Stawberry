@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	swaggerFiles "github.com/swaggo/files"
