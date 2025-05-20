@@ -23,15 +23,15 @@ type ProductService interface {
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 }
 
-type productHandler struct {
+type ProductHandler struct {
 	productService ProductService
 }
 
-func NewProductHandler(productService ProductService) *productHandler {
-	return &productHandler{productService: productService}
+func NewProductHandler(productService ProductService) *ProductHandler {
+	return &ProductHandler{productService: productService}
 }
 
-func (h *productHandler) PostProduct(c *gin.Context) {
+func (h *ProductHandler) PostProduct(c *gin.Context) {
 	var postProductReq dto.PostProductReq
 
 	if err := c.ShouldBindJSON(&postProductReq); err != nil {
@@ -53,7 +53,7 @@ func (h *productHandler) PostProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
-func (h *productHandler) GetProduct(c *gin.Context) {
+func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
 
 	product, err := h.productService.GetProductByID(context.Background(), id)
@@ -65,7 +65,7 @@ func (h *productHandler) GetProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-func (h *productHandler) GetProducts(c *gin.Context) {
+func (h *ProductHandler) GetProducts(c *gin.Context) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -105,7 +105,7 @@ func (h *productHandler) GetProducts(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) GetStoreProducts(c *gin.Context) {
+func (h *ProductHandler) GetStoreProducts(c *gin.Context) {
 	id := c.Param("id")
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -147,7 +147,7 @@ func (h *productHandler) GetStoreProducts(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) PatchProduct(c *gin.Context) {
+func (h *ProductHandler) PatchProduct(c *gin.Context) {
 	id := c.Param("id")
 
 	var update dto.PatchProductReq

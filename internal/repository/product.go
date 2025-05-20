@@ -12,15 +12,15 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
-type productRepository struct {
+type ProductRepository struct {
 	db *sqlx.DB
 }
 
-func NewProductRepository(db *sqlx.DB) *productRepository {
-	return &productRepository{db: db}
+func NewProductRepository(db *sqlx.DB) *ProductRepository {
+	return &ProductRepository{db: db}
 }
 
-func (r *productRepository) InsertProduct(
+func (r *ProductRepository) InsertProduct(
 	ctx context.Context,
 	product product.Product,
 ) (uint, error) {
@@ -28,7 +28,7 @@ func (r *productRepository) InsertProduct(
 	return 0, nil
 }
 
-func (r *productRepository) GetProductByID(
+func (r *ProductRepository) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
@@ -38,7 +38,7 @@ func (r *productRepository) GetProductByID(
 	return model.ConvertProductToEntity(produnilctModel), nil
 }
 
-func (r *productRepository) SelectProducts(
+func (r *ProductRepository) SelectProducts(
 	ctx context.Context,
 	offset,
 	limit int,
@@ -47,7 +47,7 @@ func (r *productRepository) SelectProducts(
 	return nil, 0, nil
 }
 
-func (r *productRepository) SelectStoreProducts(
+func (r *ProductRepository) SelectStoreProducts(
 	ctx context.Context,
 	id string, offset, limit int,
 ) ([]entity.Product, int, error) {
@@ -55,7 +55,7 @@ func (r *productRepository) SelectStoreProducts(
 	return nil, 0, nil
 }
 
-func (r *productRepository) UpdateProduct(
+func (r *ProductRepository) UpdateProduct(
 	ctx context.Context,
 	id string,
 	update product.UpdateProduct,

@@ -14,29 +14,29 @@ type Repository interface {
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 }
 
-type productService struct {
+type ProductService struct {
 	productRepository Repository
 }
 
-func NewProductService(productRepo Repository) *productService {
-	return &productService{productRepository: productRepo}
+func NewProductService(productRepo Repository) *ProductService {
+	return &ProductService{productRepository: productRepo}
 }
 
-func (ps *productService) CreateProduct(
+func (ps *ProductService) CreateProduct(
 	ctx context.Context,
 	product Product,
 ) (uint, error) {
 	return ps.productRepository.InsertProduct(ctx, product)
 }
 
-func (ps *productService) GetProductByID(
+func (ps *ProductService) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
 	return ps.productRepository.GetProductByID(ctx, id)
 }
 
-func (ps *productService) GetProducts(
+func (ps *ProductService) GetProducts(
 	ctx context.Context,
 	offset,
 	limit int,
@@ -44,7 +44,7 @@ func (ps *productService) GetProducts(
 	return ps.productRepository.SelectProducts(ctx, offset, limit)
 }
 
-func (ps *productService) GetStoreProducts(
+func (ps *ProductService) GetStoreProducts(
 	ctx context.Context,
 	id string,
 	offset,
@@ -53,7 +53,7 @@ func (ps *productService) GetStoreProducts(
 	return ps.productRepository.SelectStoreProducts(ctx, id, offset, limit)
 }
 
-func (ps *productService) UpdateProduct(
+func (ps *ProductService) UpdateProduct(
 	ctx context.Context,
 	id string,
 	updateProduct UpdateProduct,

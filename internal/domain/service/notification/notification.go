@@ -6,14 +6,14 @@ type Repository interface {
 	SelectUserNotifications(id string, offset, limit int) ([]entity.Notification, int, error)
 }
 
-type notificationService struct {
+type NotificationService struct {
 	notificationRepository Repository
 }
 
-func NewNotificationService(notificationRepository Repository) *notificationService {
-	return &notificationService{notificationRepository}
+func NewNotificationService(notificationRepository Repository) *NotificationService {
+	return &NotificationService{notificationRepository}
 }
 
-func (ns *notificationService) GetNotification(id string, offset int, limit int) ([]entity.Notification, int, error) {
+func (ns *NotificationService) GetNotification(id string, offset int, limit int) ([]entity.Notification, int, error) {
 	return ns.notificationRepository.SelectUserNotifications(id, offset, limit)
 }

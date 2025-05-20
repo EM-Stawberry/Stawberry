@@ -15,16 +15,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type userRepository struct {
+type UserRepository struct {
 	db *sqlx.DB
 }
 
-func NewUserRepository(db *sqlx.DB) *userRepository {
-	return &userRepository{db: db}
+func NewUserRepository(db *sqlx.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 // InsertUser вставляет пользователя в БД
-func (r *userRepository) InsertUser(
+func (r *UserRepository) InsertUser(
 	ctx context.Context,
 	user user.User,
 ) (uint, error) {
@@ -51,7 +51,7 @@ func (r *userRepository) InsertUser(
 }
 
 // GetUser получает пользователя по почте
-func (r *userRepository) GetUser(
+func (r *UserRepository) GetUser(
 	ctx context.Context,
 	email string,
 ) (entity.User, error) {
@@ -76,7 +76,7 @@ func (r *userRepository) GetUser(
 }
 
 // GetUserByID получает пользователя по айди
-func (r *userRepository) GetUserByID(
+func (r *UserRepository) GetUserByID(
 	ctx context.Context,
 	id uint,
 ) (entity.User, error) {
