@@ -102,7 +102,7 @@ func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 }
 
 func (h *OfferHandler) GetOffer(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid non digit offer id"})
 		return
@@ -120,7 +120,7 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 }
 
 func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid nondigit offer id"})
 		return
@@ -151,7 +151,7 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 }
 
 func (h *OfferHandler) DeleteOffer(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid nondigit offer id"})
 		return
