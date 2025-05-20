@@ -28,8 +28,6 @@ func main() {
 
 	db, close := database.InitDB(&cfg.DB)
 	defer close()
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
