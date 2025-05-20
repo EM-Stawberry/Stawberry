@@ -3,13 +3,14 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/gin-gonic/gin"
