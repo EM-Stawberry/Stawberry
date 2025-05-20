@@ -3,10 +3,10 @@ package email
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sync"
 
 	"github.com/EM-Stawberry/Stawberry/config"
+	"go.uber.org/zap"
 	"gopkg.in/gomail.v2"
 )
 
@@ -28,41 +28,46 @@ type SmtpMailer struct {
 	wg      sync.WaitGroup
 	mutex   sync.Mutex
 	stopped bool
+	log     *zap.Logger
 }
 
-func NewMailer(emailCfg *config.EmailConfig) MailerService {
+func NewMailer(log *zap.Logger, emailCfg *config.EmailConfig) MailerService {
 	ctx, cancel := context.WithCancel(context.Background())
-
 	m := &SmtpMailer{
 		ctx:     ctx,
 		ctxCanc: cancel,
+		log:     log,
 	}
 
 	if !emailCfg.Enabled {
-		slog.Info("email notifications are disabled")
+		m.log.Info("email notifications are disabled")
 		return m
 	}
 
 	m.enabled = true
-	m.ctx = ctx
+
 	m.dialer = gomail.NewDialer(emailCfg.SmtpHost, emailCfg.SmtpPort, emailCfg.From, emailCfg.Password)
+
+	m.log.Info("creating email queue", zap.Int("size", emailCfg.QueueSize))
 	m.queue = make(chan *gomail.Message, emailCfg.QueueSize)
 
+	m.log.Info("starting mailer workers", zap.Int("pool size", emailCfg.WorkerPool))
 	m.wg.Add(emailCfg.WorkerPool)
 	for i := range emailCfg.WorkerPool {
 		go m.worker(i + 1)
 	}
 
-	slog.Info("email notifications are enabled")
+	m.log.Info("email notifications are enabled")
 
 	return m
 }
 
 func (m *SmtpMailer) Stop(ctx context.Context) {
 	if !m.enabled {
+		m.log.Info("mailer stop called, but email is disabled")
 		return
 	}
-	slog.Info("mailer is stopping")
+	m.log.Info("mailer is stopping")
 
 	m.mutex.Lock()
 	m.stopped = true
@@ -78,9 +83,9 @@ func (m *SmtpMailer) Stop(ctx context.Context) {
 
 	select {
 	case <-ctx.Done():
-		slog.Info("email workers forcefully stopped (timeout)")
+		m.log.Info("mailer workers forcefully stopped (timeout), messages that remained in queue are lost")
 	case <-workersDone:
-		slog.Info("email queue emptied, mailer workers stopped")
+		m.log.Info("email queue emptied, mailer workers stopped")
 	}
 }
 
@@ -91,7 +96,7 @@ func (m *SmtpMailer) worker(i int) {
 		case <-m.ctx.Done():
 			for msg := range m.queue {
 				if err := m.dialer.DialAndSend(msg); err != nil {
-					slog.Error("failed to send email", "error", err)
+					m.log.Error("failed to send email during shutdown", zap.Error(err))
 				}
 			}
 			return
@@ -101,7 +106,7 @@ func (m *SmtpMailer) worker(i int) {
 				return
 			}
 			if err := m.dialer.DialAndSend(msg); err != nil {
-				slog.Error("failed to send email", "error", err, "worker id", i)
+				m.log.Error("failed to send email", zap.Error(err))
 			}
 		}
 	}
@@ -111,13 +116,21 @@ func (m *SmtpMailer) enqueue(msg *gomail.Message) {
 	if !m.enabled {
 		return
 	}
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	if m.stopped {
-		slog.Info("failed to enqueue email, mailer is stopped", "email", msg.GetHeader("Subject"))
+		m.log.Info("failed to enqueue email, mailer is stopped",
+			zap.String("subject", msg.GetHeader("Subject")[0]))
 		return
 	}
-	m.queue <- msg
+
+	select {
+	case m.queue <- msg:
+	default:
+		m.log.Warn("email queue is full, message dropped",
+			zap.String("subject", msg.GetHeader("Subject")[0]))
+	}
 }
 
 func (m *SmtpMailer) StatusUpdate(offerID uint, status string, userMail string) {
@@ -129,7 +142,8 @@ func (m *SmtpMailer) StatusUpdate(offerID uint, status string, userMail string) 
 	msg.SetHeader("From", m.dialer.Username)
 	msg.SetHeader("To", userMail)
 	msg.SetHeader("Subject", fmt.Sprintf("Stawberry: Offer Status Update (ID %d)", offerID))
-	msg.SetBody("text/plain", fmt.Sprintf("The status of your offer (%d) has been changed to: %s", offerID, status))
+	msg.SetBody("text/plain",
+		fmt.Sprintf("The status of your offer (%d) has been changed to: %s", offerID, status))
 
 	m.enqueue(msg)
 }

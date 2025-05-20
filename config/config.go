@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/spf13/pflag"
+	flag "github.com/spf13/pflag"
 
 	"github.com/spf13/viper"
 )
@@ -79,7 +79,7 @@ func LoadConfig() *Config {
 		log.Printf("Config reading failed: %v", err)
 	}
 
-	if err := viper.BindPFlag("mail", pflag.Lookup("mail")); err != nil {
+	if err := viper.BindPFlag("mail", flag.Lookup("mail")); err != nil {
 		log.Printf("Binding mail flag failed: %v", err)
 	}
 
