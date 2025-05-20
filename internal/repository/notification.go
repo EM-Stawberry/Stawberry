@@ -20,5 +20,9 @@ func (r *NotificationRepository) SelectUserNotifications(
 ) ([]entity.Notification, int, error) {
 	var total int64
 
+	_ = id
+	_ = offset
+	_ = limit
+
 	return nil, int(total), nil
 }

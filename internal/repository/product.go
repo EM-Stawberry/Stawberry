@@ -25,6 +25,9 @@ func (r *ProductRepository) InsertProduct(
 	product product.Product,
 ) (uint, error) {
 
+	_ = ctx
+	_ = product
+
 	return 0, nil
 }
 
@@ -35,6 +38,9 @@ func (r *ProductRepository) GetProductByID(
 
 	var produnilctModel model.Product
 
+	_ = ctx
+	_ = id
+
 	return model.ConvertProductToEntity(produnilctModel), nil
 }
 
@@ -44,6 +50,10 @@ func (r *ProductRepository) SelectProducts(
 	limit int,
 ) ([]entity.Product, int, error) {
 
+	_ = ctx
+	_ = offset
+	_ = limit
+
 	return nil, 0, nil
 }
 
@@ -51,6 +61,11 @@ func (r *ProductRepository) SelectStoreProducts(
 	ctx context.Context,
 	id string, offset, limit int,
 ) ([]entity.Product, int, error) {
+
+	_ = ctx
+	_ = id
+	_ = limit
+	_ = offset
 
 	return nil, 0, nil
 }
@@ -60,6 +75,10 @@ func (r *ProductRepository) UpdateProduct(
 	id string,
 	update product.UpdateProduct,
 ) error {
+
+	_ = ctx
+	_ = id
+	_ = update
 
 	return nil
 }

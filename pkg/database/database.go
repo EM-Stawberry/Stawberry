@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/EM-Stawberry/Stawberry/config"
+
+	// Import pgx driver to enable database connection via database/sql
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )

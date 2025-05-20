@@ -22,6 +22,9 @@ func (r *OfferRepository) InsertOffer(
 	offer offer.Offer,
 ) (uint, error) {
 
+	_ = ctx
+	_ = offer
+
 	return offer.ID, nil
 }
 
@@ -30,6 +33,9 @@ func (r *OfferRepository) GetOfferByID(
 	offerID uint,
 ) (entity.Offer, error) {
 	var offer entity.Offer
+
+	_ = ctx
+	_ = offerID
 
 	return offer, nil
 }
@@ -43,6 +49,11 @@ func (r *OfferRepository) SelectUserOffers(
 
 	var offers []entity.Offer
 
+	_ = ctx
+	_ = userID
+	_ = limit
+	_ = offset
+
 	return offers, total, nil
 }
 
@@ -54,6 +65,10 @@ func (r *OfferRepository) UpdateOfferStatus(
 
 	var offer entity.Offer
 
+	_ = ctx
+	_ = offerID
+	_ = status
+
 	return offer, nil
 }
 
@@ -62,6 +77,9 @@ func (r *OfferRepository) DeleteOffer(
 	offerID uint,
 ) (entity.Offer, error) {
 	var offer entity.Offer
+
+	_ = ctx
+	_ = offerID
 
 	return offer, nil
 }
