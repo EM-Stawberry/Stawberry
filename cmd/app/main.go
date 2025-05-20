@@ -26,8 +26,8 @@ func main() {
 	log := logger.SetupLogger(cfg.Environment)
 	log.Info("Logger initialized")
 
-	db, close := database.InitDB(&cfg.DB)
-	defer close()
+	db, closer := database.InitDB(&cfg.DB)
+	defer closer()
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
