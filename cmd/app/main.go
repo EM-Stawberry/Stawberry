@@ -42,16 +42,17 @@ func main() {
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
-	router := initializeApp(cfg, db, log)
+	router, mailer := initializeApp(cfg, db, log)
 
-	if err := server.StartServer(router, &cfg.Server); err != nil {
+	if err := server.StartServer(router, mailer, &cfg.Server); err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}
 }
 
-func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
+func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engine, *email.MailerService) {
 
 	mailer := email.NewMailer(&cfg.Email)
+	log.Info("Mailer initialized")
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
@@ -80,7 +81,6 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
-
 	log.Info("Handlers initialized")
 
 	router := handler.SetupRouter(
@@ -95,5 +95,5 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 		log,
 	)
 
-	return router
+	return router, mailer
 }
