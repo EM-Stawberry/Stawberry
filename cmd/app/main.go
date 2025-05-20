@@ -49,7 +49,12 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 
 	productService := product.NewProductService(productRepository)
 	offerService := offer.NewOfferService(offerRepository)
-	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
+	tokenService := token.NewTokenService(
+		tokenRepository,
+		cfg.Token.Secret,
+		cfg.Token.AccessTokenDuration,
+		cfg.Token.RefreshTokenDuration,
+	)
 	userService := user.NewUserService(userRepository, tokenService)
 	notificationService := notification.NewNotificationService(notificationRepository)
 	log.Info("Services initialized")

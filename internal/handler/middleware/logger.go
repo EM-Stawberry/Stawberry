@@ -57,7 +57,9 @@ func statusCodeColor(code int) string {
 }
 
 // ginRoutesRegex matches Gin's debug route definitions
-var ginRoutesRegex = regexp.MustCompile(`(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)\s+(.+)\s+--> (.+) \((\d+) handlers\)`)
+var ginRoutesRegex = regexp.MustCompile(
+	`(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)` +
+		`\s+(.+)\s+--> (.+) \((\d+) handlers\)`)
 
 func formatGinDebugMessage(s string) string {
 	if matches := ginRoutesRegex.FindStringSubmatch(s); len(matches) == 5 {
@@ -78,7 +80,9 @@ func formatGinDebugMessage(s string) string {
 			padding = 1
 		}
 
-		return colorPink + "[Strawberry]" + colorPink + " " + prefix + path + strings.Repeat(" ", padding) + colorCyan + "→" + colorReset + " " + colorReset + shortHandler + colorReset
+		return colorPink + "[Strawberry]" +
+			colorPink + " " + prefix + path + strings.Repeat(" ", padding) +
+			colorCyan + "→" + colorReset + " " + colorReset + shortHandler + colorReset
 	}
 
 	s = strings.TrimPrefix(s, "[GIN-debug] ")
