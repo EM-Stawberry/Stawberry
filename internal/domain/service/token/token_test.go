@@ -195,7 +195,7 @@ func TestTokenService_Repository_Methods(t *testing.T) {
 	})
 
 	t.Run("RevokeActivesByUserID", func(t *testing.T) {
-		repo.EXPECT().RevokeActivesByUserID(ctx, uint(1), 5).Return(nil)
+		repo.EXPECT().RevokeActivesByUserID(ctx, uint(1), uint(5)).Return(nil)
 		err := service.RevokeActivesByUserID(ctx, 1)
 		assert.NoError(t, err)
 	})
