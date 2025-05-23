@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/EM-Stawberry/Stawberry/config"
 	"go.uber.org/zap"
@@ -125,11 +126,22 @@ func (m *SmtpMailer) enqueue(msg *gomail.Message) {
 		return
 	}
 
-	select {
-	case m.queue <- msg:
-	default:
-		m.log.Warn("email queue is full, message dropped",
-			zap.String("subject", msg.GetHeader("Subject")[0]))
+	const maxRetries = 5
+	const retryDelay = 200 * time.Millisecond
+
+	for i := 0; i < maxRetries; i++ {
+		select {
+		case m.queue <- msg:
+			return
+		default:
+			if i < maxRetries-1 {
+				m.log.Warn("email queue is full, retrying...",
+					zap.String("subject", msg.GetHeader("Subject")[0]),
+					zap.Int("attempt", i+1),
+					zap.Int("max_attempts", maxRetries))
+				time.Sleep(retryDelay)
+			}
+		}
 	}
 }
 
@@ -138,12 +150,9 @@ func (m *SmtpMailer) StatusUpdate(offerID uint, status string, userMail string) 
 		return
 	}
 
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", m.dialer.Username)
-	msg.SetHeader("To", userMail)
-	msg.SetHeader("Subject", fmt.Sprintf("Stawberry: Offer Status Update (ID %d)", offerID))
-	msg.SetBody("text/plain",
-		fmt.Sprintf("The status of your offer (%d) has been changed to: %s", offerID, status))
+	subject := fmt.Sprintf("Stawberry: Offer Status Update (ID %d)", offerID)
+	body := fmt.Sprintf("The status of your offer (%d) has been changed to: %s", offerID, status)
+	msg := m.createMessage(userMail, subject, body)
 
 	m.enqueue(msg)
 }
@@ -153,11 +162,9 @@ func (m *SmtpMailer) OfferReceived(offerID uint, userMail string) {
 		return
 	}
 
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", m.dialer.Username)
-	msg.SetHeader("To", userMail)
-	msg.SetHeader("Subject", fmt.Sprintf("Stawberry: New Offer Received (ID %d)", offerID))
-	msg.SetBody("text/plain", fmt.Sprintf("A new offer (%d) has been received", offerID))
+	subject := fmt.Sprintf("Stawberry: New Offer Received (ID %d)", offerID)
+	body := fmt.Sprintf("A new offer (%d) has been received", offerID)
+	msg := m.createMessage(userMail, subject, body)
 
 	m.enqueue(msg)
 }
@@ -167,11 +174,18 @@ func (m *SmtpMailer) Registered(userName string, userMail string) {
 		return
 	}
 
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", m.dialer.Username)
-	msg.SetHeader("To", userMail)
-	msg.SetHeader("Subject", "Welcome to Strawberry!")
-	msg.SetBody("text/plain", fmt.Sprintf("Thank you for registering, %s.", userName))
+	subject := "Welcome to Strawberry!"
+	body := fmt.Sprintf("Thank you for registering, %s.", userName)
+	msg := m.createMessage(userMail, subject, body)
 
 	m.enqueue(msg)
+}
+
+func (m *SmtpMailer) createMessage(to, subject, body string) *gomail.Message {
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", m.dialer.Username)
+	msg.SetHeader("To", to)
+	msg.SetHeader("Subject", subject)
+	msg.SetBody("text/plain", body)
+	return msg
 }
