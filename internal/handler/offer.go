@@ -110,14 +110,14 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 		return
 	}
 
-	offer, err := h.offerService.GetOffer(context.Background(), uint(id))
+	offerEntity, err := h.offerService.GetOffer(context.Background(), uint(id))
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": offer,
+		"data": offerEntity,
 	})
 }
 
@@ -140,17 +140,17 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("offerID"))
 	if err != nil {
-		c.Error(apperror.New(apperror.BadRequest, "offerID must be numeric", err))
+		_ = c.Error(apperror.New(apperror.BadRequest, "offerID must be numeric", err))
 		return
 	}
 	if id <= 0 {
-		c.Error(apperror.New(apperror.BadRequest, "offerID must be positive", nil))
+		_ = c.Error(apperror.New(apperror.BadRequest, "offerID must be positive", nil))
 		return
 	}
 
 	var req dto.PatchOfferStatusReq
 	if err = c.ShouldBindJSON(&req); err != nil {
-		c.Error(apperror.New(apperror.BadRequest, "status field not provided", err))
+		_ = c.Error(apperror.New(apperror.BadRequest, "status field not provided", err))
 		return
 	}
 
@@ -167,7 +167,7 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			"user id key not found in ctx", nil))
 	}
-	usrId := iid.(uint)
+	usrID := iid.(uint)
 
 	iisStore, ok := c.Get(helpers.UserIsStoreKey)
 	if !ok {
@@ -179,7 +179,7 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 	offerEntity := req.ConvertToEntity()
 	offerEntity.ID = uint(id)
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, offerEntity, usrId, usrIsStore)
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, offerEntity, usrID, usrIsStore)
 	if err != nil {
 		_ = c.Error(err)
 		return

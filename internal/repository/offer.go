@@ -84,7 +84,9 @@ func (r *OfferRepository) UpdateOfferStatus(
 	if err != nil {
 		return entity.Offer{}, apperror.New(apperror.DatabaseError, "failed to begin transaction", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	err = isPendingOffer(ctx, offer.ID, tx)
 	if err != nil {
