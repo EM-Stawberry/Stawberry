@@ -7,7 +7,7 @@ toolchain go1.23.2
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/gin-gonic/gin v1.10.0
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jmoiron/sqlx v1.4.0
@@ -18,13 +18,16 @@ require (
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/swaggo/files v1.0.1
-	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	go.uber.org/mock v0.5.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/tools v0.32.0 // indirect
+)
+
+require (
+	github.com/swaggo/files v1.0.1
+	github.com/swaggo/gin-swagger v1.6.0
 )
 
 require (

@@ -6,10 +6,12 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
 	"go.uber.org/zap"
 
+	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/EM-Stawberry/Stawberry/pkg/logger"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
+	"github.com/EM-Stawberry/Stawberry/pkg/security"
 	"github.com/EM-Stawberry/Stawberry/pkg/server"
 	"github.com/jmoiron/sqlx"
 
@@ -47,15 +49,18 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	tokenRepository := repository.NewTokenRepository(db)
 	log.Info("Repositories initialized")
 
+	passwordManager := security.NewArgon2idPasswordManager()
+	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
+
 	productService := product.NewService(productRepository)
 	offerService := offer.NewService(offerRepository)
 	tokenService := token.NewService(
 		tokenRepository,
-		cfg.Token.Secret,
-		cfg.Token.AccessTokenDuration,
+		jwtManager,
 		cfg.Token.RefreshTokenDuration,
+		cfg.Token.AccessTokenDuration,
 	)
-	userService := user.NewService(userRepository, tokenService)
+	userService := user.NewService(userRepository, tokenService, passwordManager)
 	notificationService := notification.NewService(notificationRepository)
 	log.Info("Services initialized")
 

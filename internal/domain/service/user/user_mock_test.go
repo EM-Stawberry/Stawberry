@@ -86,6 +86,60 @@ func (mr *MockRepositoryMockRecorder) InsertUser(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUser", reflect.TypeOf((*MockRepository)(nil).InsertUser), ctx, user)
 }
 
+// MockPasswordManager is a mock of PasswordManager interface.
+type MockPasswordManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockPasswordManagerMockRecorder
+	isgomock struct{}
+}
+
+// MockPasswordManagerMockRecorder is the mock recorder for MockPasswordManager.
+type MockPasswordManagerMockRecorder struct {
+	mock *MockPasswordManager
+}
+
+// NewMockPasswordManager creates a new mock instance.
+func NewMockPasswordManager(ctrl *gomock.Controller) *MockPasswordManager {
+	mock := &MockPasswordManager{ctrl: ctrl}
+	mock.recorder = &MockPasswordManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPasswordManager) EXPECT() *MockPasswordManagerMockRecorder {
+	return m.recorder
+}
+
+// Compare mocks base method.
+func (m *MockPasswordManager) Compare(password, hash string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compare", password, hash)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compare indicates an expected call of Compare.
+func (mr *MockPasswordManagerMockRecorder) Compare(password, hash any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compare", reflect.TypeOf((*MockPasswordManager)(nil).Compare), password, hash)
+}
+
+// Hash mocks base method.
+func (m *MockPasswordManager) Hash(password string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Hash", password)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Hash indicates an expected call of Hash.
+func (mr *MockPasswordManagerMockRecorder) Hash(password any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hash", reflect.TypeOf((*MockPasswordManager)(nil).Hash), password)
+}
+
 // MockTokenService is a mock of TokenService interface.
 type MockTokenService struct {
 	ctrl     *gomock.Controller
@@ -110,6 +164,20 @@ func (m *MockTokenService) EXPECT() *MockTokenServiceMockRecorder {
 	return m.recorder
 }
 
+// CleanUpExpiredByUserID mocks base method.
+func (m *MockTokenService) CleanUpExpiredByUserID(ctx context.Context, userID uint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanUpExpiredByUserID", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanUpExpiredByUserID indicates an expected call of CleanUpExpiredByUserID.
+func (mr *MockTokenServiceMockRecorder) CleanUpExpiredByUserID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpExpiredByUserID", reflect.TypeOf((*MockTokenService)(nil).CleanUpExpiredByUserID), ctx, userID)
+}
+
 // GenerateTokens mocks base method.
 func (m *MockTokenService) GenerateTokens(ctx context.Context, fingerprint string, userID uint) (string, entity.RefreshToken, error) {
 	m.ctrl.T.Helper()
@@ -124,21 +192,6 @@ func (m *MockTokenService) GenerateTokens(ctx context.Context, fingerprint strin
 func (mr *MockTokenServiceMockRecorder) GenerateTokens(ctx, fingerprint, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateTokens", reflect.TypeOf((*MockTokenService)(nil).GenerateTokens), ctx, fingerprint, userID)
-}
-
-// GetActivesTokenByUserID mocks base method.
-func (m *MockTokenService) GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetActivesTokenByUserID", ctx, userID)
-	ret0, _ := ret[0].([]entity.RefreshToken)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetActivesTokenByUserID indicates an expected call of GetActivesTokenByUserID.
-func (mr *MockTokenServiceMockRecorder) GetActivesTokenByUserID(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActivesTokenByUserID", reflect.TypeOf((*MockTokenService)(nil).GetActivesTokenByUserID), ctx, userID)
 }
 
 // GetByUUID mocks base method.

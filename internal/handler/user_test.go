@@ -118,6 +118,7 @@ func TestUserHandler_Registration_InvalidJSON(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.Errors())
 	router.POST("/register", h.Registration)
 
 	jsonData := []byte(`{"invalid json"`)

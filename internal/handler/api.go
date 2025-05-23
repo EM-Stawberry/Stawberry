@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
@@ -67,9 +68,24 @@ func SetupRouter(
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
 		secured.GET("/auth_required", func(c *gin.Context) {
+			userID, ok := helpers.UserIDContext(c)
+			var status string
+			if ok {
+				status = "UserID found"
+			} else {
+				status = "UserID not found"
+			}
+			isStore, ok := helpers.UserIsStoreContext(c)
+
+			if !ok {
+				logger.Warn("Missing isStore field in context")
+			}
+
 			c.JSON(http.StatusOK, gin.H{
-				"status": "ok",
-				"time":   time.Now().Unix(),
+				"userID":  userID,
+				"status":  status,
+				"isStore": isStore,
+				"time":    time.Now().Unix(),
 			})
 		})
 	}

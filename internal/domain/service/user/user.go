@@ -2,18 +2,14 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
-	"github.com/EM-Stawberry/Stawberry/pkg/security"
 )
 
 //go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=user Repository, TokenService
-
-const maxUsers = 5
 
 type Repository interface {
 	InsertUser(ctx context.Context, user User) (uint, error)
@@ -21,22 +17,36 @@ type Repository interface {
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
 }
 
+// PasswordManager выполняет операции с паролями, такие как хеширование и проверка
+type PasswordManager interface {
+	Hash(password string) (string, error)
+	Compare(password, hash string) (bool, error)
+}
+
 type TokenService interface {
 	GenerateTokens(ctx context.Context, fingerprint string, userID uint) (string, entity.RefreshToken, error)
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
-	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
 	RevokeActivesByUserID(ctx context.Context, userID uint) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
+	CleanUpExpiredByUserID(ctx context.Context, userID uint) error
 }
 
 type Service struct {
-	userRepository Repository
-	tokenService   TokenService
+	userRepository  Repository
+	tokenService    TokenService
+	passwordManager PasswordManager
 }
 
-func NewService(userRepo Repository, tokenService TokenService) *Service {
-	return &Service{userRepository: userRepo, tokenService: tokenService}
+func NewService(userRepo Repository,
+	tokenService TokenService,
+	passwordManager PasswordManager,
+) *Service {
+	return &Service{
+		userRepository:  userRepo,
+		tokenService:    tokenService,
+		passwordManager: passwordManager,
+	}
 }
 
 // CreateUser создает пользователя, хэшируя его пароль, используя HashArgon2id
@@ -46,7 +56,7 @@ func (us *Service) CreateUser(
 	user User,
 	fingerprint string,
 ) (string, string, error) {
-	hash, err := security.HashArgon2id(user.Password)
+	hash, err := us.passwordManager.Hash(user.Password)
 	if err != nil {
 		err := apperror.ErrFailedToGeneratePassword
 		err.WrappedErr = fmt.Errorf("failed to generate password %w", err)
@@ -83,25 +93,22 @@ func (us *Service) Authenticate(
 		return "", "", apperror.ErrUserNotFound
 	}
 
-	compared, err := security.ComparePasswordAndArgon2id(password, user.Password)
+	compared, err := us.passwordManager.Compare(password, user.Password)
 	if err != nil {
 		return "", "", err
 	}
 
 	if !compared {
-		return "", "", errors.New("invalid password")
+		return "", "", apperror.ErrIncorrectPassword
 	}
 
-	// проверяет количество токенов у пользователя
-	userActiveTokens, err := us.tokenService.GetActivesTokenByUserID(ctx, user.ID)
-	if err != nil {
+	if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {
 		return "", "", err
 	}
 
-	if len(userActiveTokens) >= maxUsers {
-		if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {
-			return "", "", err
-		}
+	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)
+	if err != nil {
+		return "", "", err
 	}
 
 	accessToken, refreshToken, err := us.tokenService.GenerateTokens(ctx, fingerprint, user.ID)
@@ -149,6 +156,11 @@ func (us *Service) Refresh(
 	}
 
 	access, refresh, err := us.tokenService.GenerateTokens(ctx, fingerprint, user.ID)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)
 	if err != nil {
 		return "", "", err
 	}

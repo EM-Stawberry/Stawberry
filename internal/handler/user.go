@@ -49,14 +49,20 @@ func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/refresh", h.Refresh)
 }
 
+// Registration godoc
+// @Summary Регистрация нового пользователя
+// @Description Регистрирует нового пользователя и возвращает токены доступа/обновления
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body dto.RegistrationUserReq true "Данные для регистрации пользователя"
+// @Success 200 {object} dto.RegistrationUserResp
+// @Failure 400 {object} apperror.AppError
+// @Router /auth/reg [post]
 func (h *UserHandler) Registration(c *gin.Context) {
 	var regUserDTO dto.RegistrationUserReq
 	if err := c.ShouldBindJSON(&regUserDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid user data",
-			"details": err.Error(),
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
 		return
 	}
 
@@ -79,14 +85,20 @@ func (h *UserHandler) Registration(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Login godoc
+// @Summary Аутентификация пользователя
+// @Description Аутентифицирует пользователя и возвращает токены access/refresh
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body dto.LoginUserReq true "Учетные данные пользователя"
+// @Success 200 {object} dto.LoginUserResp
+// @Failure 400 {object} apperror.AppError
+// @Router /auth/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var loginUserDTO dto.LoginUserReq
 	if err := c.ShouldBindJSON(&loginUserDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid user data",
-			"details": err.Error(),
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
 		return
 	}
 
@@ -112,25 +124,27 @@ func (h *UserHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Refresh godoc
+// @Summary Обновление токенов
+// @Description Обновляет токены access и refresh
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param refresh body dto.RefreshReq true "Данные токена refresh"
+// @Success 200 {object} dto.RefreshResp
+// @Failure 400 {object} apperror.AppError
+// @Router /auth/refresh [post]
 func (h *UserHandler) Refresh(c *gin.Context) {
 	var refreshDTO dto.RefreshReq
 	if err := c.ShouldBindJSON(&refreshDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid refresh data",
-			"details": err.Error(),
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 		return
 	}
 
 	if refreshDTO.RefreshToken == "" {
 		refresh, err := c.Cookie("refresh_token")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    apperror.BadRequest,
-				"message": "Invalid refresh data",
-				"details": err.Error(),
-			})
+			_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 			return
 		}
 		refreshDTO.RefreshToken = refresh
@@ -156,25 +170,27 @@ func (h *UserHandler) Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Logout godoc
+// @Summary Выход из системы
+// @Description Выход пользователя и инвалидация токена обновления
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param logout body dto.LogoutReq true "Данные для выхода"
+// @Success 200
+// @Failure 400 {object} apperror.AppError
+// @Router /auth/logout [post]
 func (h *UserHandler) Logout(c *gin.Context) {
 	var logoutDTO dto.LogoutReq
 	if err := c.ShouldBindJSON(&logoutDTO); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid refresh data",
-			"details": err.Error(),
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 		return
 	}
 
 	if logoutDTO.RefreshToken == "" {
 		refresh, err := c.Cookie("refresh_token")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    apperror.BadRequest,
-				"message": "Invalid refresh data",
-				"details": err.Error(),
-			})
+			_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 			return
 		}
 		logoutDTO.RefreshToken = refresh
