@@ -54,8 +54,8 @@ func NewMailer(log *zap.Logger, emailCfg *config.EmailConfig) MailerService {
 
 	m.log.Info("starting mailer workers", zap.Int("pool size", emailCfg.WorkerPool))
 	m.wg.Add(emailCfg.WorkerPool)
-	for i := range emailCfg.WorkerPool {
-		go m.worker(i + 1)
+	for range emailCfg.WorkerPool {
+		go m.worker()
 	}
 
 	m.log.Info("email notifications are enabled")
@@ -90,14 +90,34 @@ func (m *SmtpMailer) Stop(ctx context.Context) {
 	}
 }
 
-func (m *SmtpMailer) worker(i int) {
+func (m *SmtpMailer) sendEmailWithRetry(msg *gomail.Message) error {
+	const maxSendRetries = 3
+	const sendRetryDelay = time.Second
+
+	for i := 0; i < maxSendRetries; i++ {
+		if err := m.dialer.DialAndSend(msg); err == nil {
+			return nil
+		} else {
+			m.log.Error("failed to send email, retrying...",
+				zap.String("subject", msg.GetHeader("Subject")[0]),
+				zap.Int("attempt", i+1),
+				zap.Int("max_attempts", maxSendRetries),
+				zap.Error(err))
+			time.Sleep(sendRetryDelay)
+		}
+	}
+	return fmt.Errorf("failed to send email after %d attempts for subject: %s",
+		maxSendRetries, msg.GetHeader("Subject")[0])
+}
+
+func (m *SmtpMailer) worker() {
 	defer m.wg.Done()
 	for {
 		select {
 		case <-m.ctx.Done():
 			for msg := range m.queue {
-				if err := m.dialer.DialAndSend(msg); err != nil {
-					m.log.Error("failed to send email during shutdown", zap.Error(err))
+				if err := m.sendEmailWithRetry(msg); err != nil {
+					m.log.Error("failed to send email during shutdown after retries", zap.Error(err))
 				}
 			}
 			return
@@ -106,8 +126,8 @@ func (m *SmtpMailer) worker(i int) {
 			if !ok {
 				return
 			}
-			if err := m.dialer.DialAndSend(msg); err != nil {
-				m.log.Error("failed to send email", zap.Error(err))
+			if err := m.sendEmailWithRetry(msg); err != nil {
+				m.log.Error("failed to send email after retries", zap.Error(err))
 			}
 		}
 	}
