@@ -69,9 +69,9 @@ func (m *SmtpMailer) Stop(ctx context.Context) {
 	}
 	m.log.Info("mailer is stopping")
 
+	m.ctxCanc()
 	m.mutex.Lock()
 	m.stopped = true
-	m.ctxCanc()
 	close(m.queue)
 	m.mutex.Unlock()
 
