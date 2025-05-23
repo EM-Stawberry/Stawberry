@@ -14,16 +14,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type tokenRepository struct {
+type TokenRepository struct {
 	db *sqlx.DB
 }
 
-func NewTokenRepository(db *sqlx.DB) *tokenRepository {
-	return &tokenRepository{db: db}
+func NewTokenRepository(db *sqlx.DB) *TokenRepository {
+	return &TokenRepository{db: db}
 }
 
 // InsertToken добавляет новый refresh токен в БД.
-func (r *tokenRepository) InsertToken(
+func (r *TokenRepository) InsertToken(
 	ctx context.Context,
 	token entity.RefreshToken,
 ) error {
@@ -47,7 +47,7 @@ func (r *tokenRepository) InsertToken(
 }
 
 // GetActivesTokenByUserID получает список активных refresh токенов пользователя по userID.
-func (r *tokenRepository) GetActivesTokenByUserID(
+func (r *TokenRepository) GetActivesTokenByUserID(
 	ctx context.Context,
 	userID uint,
 ) ([]entity.RefreshToken, error) {
@@ -77,7 +77,7 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 }
 
 // RevokeActivesByUserID помечает все активные refresh токены пользователя как отозванные.
-func (r *tokenRepository) RevokeActivesByUserID(
+func (r *TokenRepository) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
@@ -107,7 +107,7 @@ func (r *tokenRepository) RevokeActivesByUserID(
 }
 
 // GetByUUID находит refresh токен по его UUID.
-func (r *tokenRepository) GetByUUID(
+func (r *TokenRepository) GetByUUID(
 	ctx context.Context,
 	uuid string,
 ) (entity.RefreshToken, error) {
@@ -131,7 +131,7 @@ func (r *tokenRepository) GetByUUID(
 }
 
 // Update обновляет refresh токен.
-func (r *tokenRepository) Update(
+func (r *TokenRepository) Update(
 	ctx context.Context,
 	refresh entity.RefreshToken,
 ) (entity.RefreshToken, error) {

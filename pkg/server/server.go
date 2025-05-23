@@ -16,8 +16,9 @@ import (
 
 func StartServer(router *gin.Engine, cfg *config.ServerConfig) error {
 	srv := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: router,
+		Addr:              ":" + cfg.Port,
+		Handler:           router,
+		ReadHeaderTimeout: 3 * time.Second,
 	}
 
 	switch cfg.GinMode {

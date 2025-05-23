@@ -13,17 +13,17 @@ type NotificationService interface {
 	GetNotification(id string, offset int, limit int) ([]entity.Notification, int, error)
 }
 
-type notificationHandler struct {
+type NotificationHandler struct {
 	offerService NotificationService
 }
 
-func NewNotificationHandler(notificationService NotificationService) *notificationHandler {
-	return &notificationHandler{offerService: notificationService}
+func NewNotificationHandler(notificationService NotificationService) *NotificationHandler {
+	return &NotificationHandler{offerService: notificationService}
 }
 
 // GetNotification обработчик уведомлений
 // получает все уведомления (одобрение или неодобрение заявки) авторизированного пользователя
-func (h *notificationHandler) GetNotification(c *gin.Context) {
+func (h *NotificationHandler) GetNotification(c *gin.Context) {
 	// сделать user, ok := c.Get("user")
 	// сейчас в контекст кладется userID, в будущем структура user
 	userID, ok := c.Get("userID")
@@ -55,7 +55,7 @@ func (h *notificationHandler) GetNotification(c *gin.Context) {
 	}
 	notifications, total, err := h.offerService.GetNotification(strconv.FormatUint(uint64(uid), 10), offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

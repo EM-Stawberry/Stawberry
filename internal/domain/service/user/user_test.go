@@ -21,7 +21,7 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	testUser := User{
@@ -54,7 +54,9 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	t.Run("token generation failure", func(t *testing.T) {
 		mockRepo.EXPECT().InsertUser(ctx, gomock.Any()).Return(uint(1), nil)
-		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, uint(1)).Return("", entity.RefreshToken{}, errors.New("token generation error"))
+		mockTokenService.EXPECT().
+			GenerateTokens(ctx, fingerprint, uint(1)).
+			Return("", entity.RefreshToken{}, errors.New("token generation error"))
 
 		accessToken, refreshToken, err := userService.CreateUser(ctx, testUser, fingerprint)
 
@@ -83,7 +85,7 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	email := "test@example.com"
@@ -101,8 +103,12 @@ func TestUserService_Authenticate(t *testing.T) {
 
 	t.Run("successful authentication", func(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
-		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return([]entity.RefreshToken{}, nil)
-		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().
+			GetActivesTokenByUserID(ctx, testUser.ID).
+			Return([]entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().
+			GenerateTokens(ctx, fingerprint, testUser.ID).
+			Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
 		accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
@@ -139,7 +145,9 @@ func TestUserService_Authenticate(t *testing.T) {
 		mockRepo.EXPECT().GetUser(ctx, email).Return(testUser, nil)
 		mockTokenService.EXPECT().GetActivesTokenByUserID(ctx, testUser.ID).Return(maxTokens, nil)
 		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
-		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().
+			GenerateTokens(ctx, fingerprint, testUser.ID).
+			Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
 		accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
@@ -210,7 +218,7 @@ func TestUserService_Refresh(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -228,7 +236,9 @@ func TestUserService_Refresh(t *testing.T) {
 		mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(validRefreshToken, nil)
 		mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
 		mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
-		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).Return("new-access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().
+			GenerateTokens(ctx, fingerprint, userID).
+			Return("new-access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
 		accessToken, newRefreshToken, err := userService.Refresh(ctx, refreshTokenStr, fingerprint)
@@ -334,7 +344,7 @@ func TestUserService_Logout(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -422,7 +432,7 @@ func TestUserService_GetUserByID(t *testing.T) {
 
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService)
+	userService := NewService(mockRepo, mockTokenService)
 
 	ctx := context.Background()
 	userID := uint(1)

@@ -6,19 +6,23 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
-type notificationRepository struct {
+type NotificationRepository struct {
 	db *sqlx.DB
 }
 
-func NewNotificationRepository(db *sqlx.DB) *notificationRepository {
-	return &notificationRepository{db: db}
+func NewNotificationRepository(db *sqlx.DB) *NotificationRepository {
+	return &NotificationRepository{db: db}
 }
 
-func (r *notificationRepository) SelectUserNotifications(
+func (r *NotificationRepository) SelectUserNotifications(
 	id string,
 	offset, limit int,
 ) ([]entity.Notification, int, error) {
 	var total int64
+
+	_ = id
+	_ = offset
+	_ = limit
 
 	return nil, int(total), nil
 }

@@ -26,8 +26,8 @@ func main() {
 	log := logger.SetupLogger(cfg.Environment)
 	log.Info("Logger initialized")
 
-	db, close := database.InitDB(&cfg.DB)
-	defer close()
+	db, closer := database.InitDB(&cfg.DB)
+	defer closer()
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
@@ -47,11 +47,16 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	tokenRepository := repository.NewTokenRepository(db)
 	log.Info("Repositories initialized")
 
-	productService := product.NewProductService(productRepository)
-	offerService := offer.NewOfferService(offerRepository)
-	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
-	userService := user.NewUserService(userRepository, tokenService)
-	notificationService := notification.NewNotificationService(notificationRepository)
+	productService := product.NewService(productRepository)
+	offerService := offer.NewService(offerRepository)
+	tokenService := token.NewService(
+		tokenRepository,
+		cfg.Token.Secret,
+		cfg.Token.AccessTokenDuration,
+		cfg.Token.RefreshTokenDuration,
+	)
+	userService := user.NewService(userRepository, tokenService)
+	notificationService := notification.NewService(notificationRepository)
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()

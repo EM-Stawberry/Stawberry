@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 
@@ -12,59 +11,73 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
-type productRepository struct {
+type ProductRepository struct {
 	db *sqlx.DB
 }
 
-func NewProductRepository(db *sqlx.DB) *productRepository {
-	return &productRepository{db: db}
+func NewProductRepository(db *sqlx.DB) *ProductRepository {
+	return &ProductRepository{db: db}
 }
 
-func (r *productRepository) InsertProduct(
+func (r *ProductRepository) InsertProduct(
 	ctx context.Context,
 	product product.Product,
 ) (uint, error) {
 
+	_ = ctx
+	_ = product
+
 	return 0, nil
 }
 
-func (r *productRepository) GetProductByID(
+func (r *ProductRepository) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
 
 	var produnilctModel model.Product
 
+	_ = ctx
+	_ = id
+
 	return model.ConvertProductToEntity(produnilctModel), nil
 }
 
-func (r *productRepository) SelectProducts(
+func (r *ProductRepository) SelectProducts(
 	ctx context.Context,
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
 
+	_ = ctx
+	_ = offset
+	_ = limit
+
 	return nil, 0, nil
 }
 
-func (r *productRepository) SelectStoreProducts(
+func (r *ProductRepository) SelectStoreProducts(
 	ctx context.Context,
 	id string, offset, limit int,
 ) ([]entity.Product, int, error) {
 
+	_ = ctx
+	_ = id
+	_ = limit
+	_ = offset
+
 	return nil, 0, nil
 }
 
-func (r *productRepository) UpdateProduct(
+func (r *ProductRepository) UpdateProduct(
 	ctx context.Context,
 	id string,
 	update product.UpdateProduct,
 ) error {
 
-	return nil
-}
+	_ = ctx
+	_ = id
+	_ = update
 
-func isDuplicateError(err error) bool {
-	return strings.Contains(err.Error(), "duplicate") ||
-		strings.Contains(err.Error(), "unique violation")
+	return nil
 }

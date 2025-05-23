@@ -22,15 +22,15 @@ type OfferService interface {
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
 
-type offerHandler struct {
+type OfferHandler struct {
 	offerService OfferService
 }
 
-func NewOfferHandler(offerService OfferService) *offerHandler {
-	return &offerHandler{offerService: offerService}
+func NewOfferHandler(offerService OfferService) *OfferHandler {
+	return &OfferHandler{offerService: offerService}
 }
 
-func (h *offerHandler) PostOffer(c *gin.Context) {
+func (h *OfferHandler) PostOffer(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
 	var offer dto.PostOfferReq
@@ -46,7 +46,7 @@ func (h *offerHandler) PostOffer(c *gin.Context) {
 	var response dto.PostOfferResp
 	var err error
 	if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToSvc()); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *offerHandler) PostOffer(c *gin.Context) {
 	c.JSON(http.StatusCreated, offer)
 }
 
-func (h *offerHandler) GetUserOffers(c *gin.Context) {
+func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 	userID, ok := c.Get("userID")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
@@ -84,7 +84,7 @@ func (h *offerHandler) GetUserOffers(c *gin.Context) {
 
 	offers, total, err := h.offerService.GetUserOffers(context.Background(), userID.(uint), offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -101,8 +101,8 @@ func (h *offerHandler) GetUserOffers(c *gin.Context) {
 	})
 }
 
-func (h *offerHandler) GetOffer(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+func (h *OfferHandler) GetOffer(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid non digit offer id"})
 		return
@@ -110,7 +110,7 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 
 	offer, err := h.offerService.GetOffer(context.Background(), uint(id))
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -119,8 +119,8 @@ func (h *offerHandler) GetOffer(c *gin.Context) {
 	})
 }
 
-func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid nondigit offer id"})
 		return
@@ -135,7 +135,7 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 
 	offer, err := h.offerService.UpdateOfferStatus(context.Background(), uint(id), req.Status)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -150,8 +150,8 @@ func (h *offerHandler) PatchOfferStatus(c *gin.Context) {
 	c.JSON(http.StatusCreated, offer)
 }
 
-func (h *offerHandler) DeleteOffer(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+func (h *OfferHandler) DeleteOffer(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid nondigit offer id"})
 		return
@@ -159,7 +159,7 @@ func (h *offerHandler) DeleteOffer(c *gin.Context) {
 
 	offer, err := h.offerService.DeleteOffer(context.Background(), uint(id))
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

@@ -9,32 +9,38 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
-type offerRepository struct {
+type OfferRepository struct {
 	db *sqlx.DB
 }
 
-func NewOfferRepository(db *sqlx.DB) *offerRepository {
-	return &offerRepository{db: db}
+func NewOfferRepository(db *sqlx.DB) *OfferRepository {
+	return &OfferRepository{db: db}
 }
 
-func (r *offerRepository) InsertOffer(
+func (r *OfferRepository) InsertOffer(
 	ctx context.Context,
 	offer offer.Offer,
 ) (uint, error) {
 
+	_ = ctx
+	_ = offer
+
 	return offer.ID, nil
 }
 
-func (r *offerRepository) GetOfferByID(
+func (r *OfferRepository) GetOfferByID(
 	ctx context.Context,
 	offerID uint,
 ) (entity.Offer, error) {
 	var offer entity.Offer
 
+	_ = ctx
+	_ = offerID
+
 	return offer, nil
 }
 
-func (r *offerRepository) SelectUserOffers(
+func (r *OfferRepository) SelectUserOffers(
 	ctx context.Context,
 	userID uint,
 	limit, offset int,
@@ -43,10 +49,15 @@ func (r *offerRepository) SelectUserOffers(
 
 	var offers []entity.Offer
 
+	_ = ctx
+	_ = userID
+	_ = limit
+	_ = offset
+
 	return offers, total, nil
 }
 
-func (r *offerRepository) UpdateOfferStatus(
+func (r *OfferRepository) UpdateOfferStatus(
 	ctx context.Context,
 	offerID uint,
 	status string,
@@ -54,14 +65,21 @@ func (r *offerRepository) UpdateOfferStatus(
 
 	var offer entity.Offer
 
+	_ = ctx
+	_ = offerID
+	_ = status
+
 	return offer, nil
 }
 
-func (r *offerRepository) DeleteOffer(
+func (r *OfferRepository) DeleteOffer(
 	ctx context.Context,
 	offerID uint,
 ) (entity.Offer, error) {
 	var offer entity.Offer
+
+	_ = ctx
+	_ = offerID
 
 	return offer, nil
 }

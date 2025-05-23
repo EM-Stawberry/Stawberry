@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	swaggerFiles "github.com/swaggo/files"
@@ -26,11 +27,11 @@ import (
 // @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
 // @Router /health [get]
 func SetupRouter(
-	healthH *healthHandler,
-	productH *productHandler,
-	offerH *offerHandler,
-	userH *userHandler,
-	notificationH *notificationHandler,
+	healthH *HealthHandler,
+	productH *ProductHandler,
+	offerH *OfferHandler,
+	userH *UserHandler,
+	notificationH *NotificationHandler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
 	basePath string,
@@ -56,6 +57,12 @@ func SetupRouter(
 
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
+
+	// Заглушки для нереализованных хендлеров.
+	// Не забудьте убрать их и добавить вызов .RegisterRoutes для каждого хендлера
+	_ = productH
+	_ = offerH
+	_ = notificationH
 
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{

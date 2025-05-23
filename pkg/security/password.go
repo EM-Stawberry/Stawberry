@@ -90,13 +90,23 @@ func decodeArgon2id(encodedHash string) (param, []byte, []byte, error) {
 	if err != nil {
 		return param{}, nil, nil, err
 	}
-	p.saltSize = uint32(len(salt))
+	saltLen := len(salt)
+	if saltLen > int(^uint32(0)) {
+		return param{}, nil, nil, errors.New("salt length exceeds maximum uint32 value")
+	}
+	p.saltSize = uint32(saltLen)
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(vals[5])
 	if err != nil {
 		return param{}, nil, nil, err
 	}
-	p.keyLen = uint32(len(hash))
+
+	hashLen := len(hash)
+	if hashLen > int(^uint32(0)) {
+		return param{}, nil, nil, errors.New("hash length exceeds maximum uint32 value")
+	}
+
+	p.keyLen = uint32(hashLen)
 
 	return p, salt, hash, nil
 }

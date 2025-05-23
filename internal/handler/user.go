@@ -22,7 +22,7 @@ type UserService interface {
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
 }
 
-type userHandler struct {
+type UserHandler struct {
 	userService UserService
 	refreshLife int
 	basePath    string
@@ -32,15 +32,15 @@ type userHandler struct {
 func NewUserHandler(
 	cfg *config.Config,
 	userService UserService,
-) *userHandler {
-	return &userHandler{
+) *UserHandler {
+	return &UserHandler{
 		userService: userService,
 		refreshLife: int(cfg.Token.RefreshTokenDuration),
 		domain:      cfg.Server.Domain,
 	}
 }
 
-func (h *userHandler) RegisterRoutes(group *gin.RouterGroup) {
+func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 	h.basePath = group.BasePath()
 
 	group.POST("/reg", h.Registration)
@@ -49,7 +49,7 @@ func (h *userHandler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/refresh", h.Refresh)
 }
 
-func (h *userHandler) Registration(c *gin.Context) {
+func (h *UserHandler) Registration(c *gin.Context) {
 	var regUserDTO dto.RegistrationUserReq
 	if err := c.ShouldBindJSON(&regUserDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -66,7 +66,7 @@ func (h *userHandler) Registration(c *gin.Context) {
 		regUserDTO.Fingerprint,
 	)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 	response := dto.RegistrationUserResp{
@@ -79,7 +79,7 @@ func (h *userHandler) Registration(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (h *userHandler) Login(c *gin.Context) {
+func (h *UserHandler) Login(c *gin.Context) {
 	var loginUserDTO dto.LoginUserReq
 	if err := c.ShouldBindJSON(&loginUserDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -98,7 +98,7 @@ func (h *userHandler) Login(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (h *userHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (h *userHandler) Refresh(c *gin.Context) {
+func (h *UserHandler) Refresh(c *gin.Context) {
 	var refreshDTO dto.RefreshReq
 	if err := c.ShouldBindJSON(&refreshDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -142,7 +142,7 @@ func (h *userHandler) Refresh(c *gin.Context) {
 		refreshDTO.Fingerprint,
 	)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h *userHandler) Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (h *userHandler) Logout(c *gin.Context) {
+func (h *UserHandler) Logout(c *gin.Context) {
 	var logoutDTO dto.LogoutReq
 	if err := c.ShouldBindJSON(&logoutDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -185,7 +185,7 @@ func (h *userHandler) Logout(c *gin.Context) {
 		logoutDTO.RefreshToken,
 		logoutDTO.Fingerprint,
 	); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

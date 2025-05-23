@@ -7,20 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type healthHandler struct {
+type HealthHandler struct {
 }
 
-func NewHealthHandler() *healthHandler {
-	return &healthHandler{}
+func NewHealthHandler() *HealthHandler {
+	return &HealthHandler{}
 }
 
-func (h *healthHandler) health(c *gin.Context) {
+func (h *HealthHandler) health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "ok",
 		"time":   time.Now().Unix(),
 	})
 }
 
-func (h *healthHandler) RegisterRoutes(group gin.IRoutes) {
+func (h *HealthHandler) RegisterRoutes(group gin.IRoutes) {
 	group.GET("/health", h.health)
 }
