@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
+
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
@@ -101,6 +103,8 @@ func mockAuthShopOwnerMiddleware() gin.HandlerFunc {
 			IsStore:  true,
 		}
 		c.Set("user", mockUser)
+		c.Set(helpers.UserIDKey, uint(1))
+		c.Set(helpers.UserIsStoreKey, true)
 		c.Next()
 	}
 }
@@ -116,6 +120,8 @@ func mockAuthBuyerMiddleware() gin.HandlerFunc {
 			IsStore:  false,
 		}
 		c.Set("user", mockUser)
+		c.Set(helpers.UserIDKey, uint(2))
+		c.Set(helpers.UserIsStoreKey, false)
 		c.Next()
 	}
 }
@@ -131,6 +137,8 @@ func mockAuthIncorrectShopOwnerMiddleware() gin.HandlerFunc {
 			IsStore:  true,
 		}
 		c.Set("user", mockUser)
+		c.Set(helpers.UserIDKey, uint(3))
+		c.Set(helpers.UserIsStoreKey, true)
 		c.Next()
 	}
 }
@@ -144,7 +152,7 @@ var _ = Describe("offer patch status handler", Ordered, func() {
 	}
 
 	offerRepo := repository.NewOfferRepository(db)
-	offerServ := offer.NewOfferService(offerRepo)
+	offerServ := offer.NewService(offerRepo)
 	offerHand := handler.NewOfferHandler(offerServ)
 
 	AfterAll(func() {

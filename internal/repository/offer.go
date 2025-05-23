@@ -144,7 +144,6 @@ func isUserShopOwner(ctx context.Context, offerID, userID uint, tx *sqlx.Tx) err
 		return apperror.New(apperror.Unauthorized, "unauthorized to update offer status", nil)
 	}
 
-	return offer, nil
 	return nil
 }
 

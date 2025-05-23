@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -43,15 +44,13 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 	}
 
 	offer.UserID = userID.(uint)
-	offer.Status = "pending"
-	offer.ExpiresAt = time.Now().Add(24 * time.Hour)
 
-	var response dto.PostOfferResp
-	var err error
-	if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToSvc()); err != nil {
-		_ = c.Error(err)
-		return
-	}
+	//var response dto.PostOfferResp
+	//var err error
+	//if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToEntity()); err != nil {
+	//	_ = c.Error(err)
+	//	return
+	//}
 
 	// Create notification for store
 	// notification := models.Notification{
@@ -122,8 +121,6 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 	})
 }
 
-func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 // @summary Update offer status
 // @tags offer
 // @accept json
@@ -138,7 +135,6 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 // @failure 500 {object} apperror.Error
 // @Router /offers/{offerID} [patch]
 func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
-	// TODO: zap debug coverage
 	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*10)
 	defer ctxCancel()
 
@@ -158,18 +154,32 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 		return
 	}
 
-	tmp, ok := c.Get("user")
-	usr := tmp.(entity.User)
+	//tmp, ok := c.Get("user")
+	//usr := tmp.(entity.User)
+	//if !ok {
+	//	c.Error(apperror.New(apperror.InternalError, "user context not found",
+	//		fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
+	//	return
+	//}
+
+	iid, ok := c.Get(helpers.UserIDKey)
 	if !ok {
-		c.Error(apperror.New(apperror.InternalError, "user context not found",
-			fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
-		return
+		_ = c.Error(apperror.New(apperror.InternalError,
+			"user id key not found in ctx", nil))
 	}
+	usrId := iid.(uint)
+
+	iisStore, ok := c.Get(helpers.UserIsStoreKey)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.InternalError,
+			"user isstore key not found in ctx", nil))
+	}
+	usrIsStore := iisStore.(bool)
 
 	offerEntity := req.ConvertToEntity()
 	offerEntity.ID = uint(id)
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, offerEntity, usr.ID, usr.IsStore)
+	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, offerEntity, usrId, usrIsStore)
 	if err != nil {
 		_ = c.Error(err)
 		return
