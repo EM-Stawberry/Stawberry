@@ -1,0 +1,23 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: Это API для управления сделаками по продуктам.
+  title: Stawberry API
+  version: "1.0"
+paths:
+  /health:
+    get:
+      description: Возвращает статус сервера и текущее время
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный ответ с данными
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Получить статус сервера
+      tags:
+      - health
+swagger: "2.0"

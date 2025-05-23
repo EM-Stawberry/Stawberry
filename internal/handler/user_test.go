@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
+	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
@@ -22,7 +22,9 @@ func TestUserHandler_Registration(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -111,7 +113,8 @@ func TestUserHandler_Registration_InvalidJSON(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -132,7 +135,8 @@ func TestUserHandler_Login(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -207,7 +211,8 @@ func TestUserHandler_Login_InvalidJSON(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -229,7 +234,8 @@ func TestUserHandler_Refresh(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -343,7 +349,8 @@ func TestUserHandler_Refresh_EmptyToken(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -427,7 +434,8 @@ func TestUserHandler_Refresh_InvalidJSON(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -449,7 +457,8 @@ func TestUserHandler_Logout(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -511,7 +520,8 @@ func TestUserHandler_Logout_EmptyToken(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -584,7 +594,8 @@ func TestUserHandler_Logout_InvalidJSON(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService := NewMockUserService(ctrl)
-	h := NewUserHandler(mockService, time.Hour, "/api", "example.com")
+	cfg := &config.Config{}
+	h := NewUserHandler(cfg, mockService)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

@@ -26,15 +26,15 @@ type JWTManager interface {
 	Parse(token string) (entity.AccessToken, error)
 }
 
-type tokenService struct {
+type Service struct {
 	tokenRepository Repository
 	jwtManager      JWTManager
 	refreshLife     time.Duration
 	accessLife      time.Duration
 }
 
-func NewTokenService(tokenRepo Repository, jwtManager JWTManager, refreshLife, accessLife time.Duration) *tokenService {
-	return &tokenService{
+func NewService(tokenRepo Repository, jwtManager JWTManager, refreshLife, accessLife time.Duration) *Service {
+	return &Service{
 		tokenRepository: tokenRepo,
 		jwtManager:      jwtManager,
 		refreshLife:     refreshLife,
@@ -43,14 +43,23 @@ func NewTokenService(tokenRepo Repository, jwtManager JWTManager, refreshLife, a
 }
 
 // GenerateTokens генерирует новый токен доступа и токен обновления для пользователя.
-func (ts *tokenService) GenerateTokens(
+func (ts *Service) GenerateTokens(
 	ctx context.Context,
 	fingerprint string,
 	userID uint,
 ) (string, entity.RefreshToken, error) {
+
+	if ctx.Err() != nil {
+		return "", entity.RefreshToken{}, ctx.Err()
+	}
+
 	accessToken, err := ts.jwtManager.Generate(userID, ts.accessLife)
 	if err != nil {
 		return "", entity.RefreshToken{}, err
+	}
+
+	if ctx.Err() != nil {
+		return "", entity.RefreshToken{}, ctx.Err()
 	}
 
 	entityRefreshToken, err := generateRefresh(fingerprint, userID, ts.refreshLife)
@@ -62,10 +71,15 @@ func (ts *tokenService) GenerateTokens(
 }
 
 // ValidateToken проверяет access токен и возвращает расшифрованную информацию, если она действительна.
-func (ts *tokenService) ValidateToken(
+func (ts *Service) ValidateToken(
 	ctx context.Context,
 	token string,
 ) (entity.AccessToken, error) {
+
+	if ctx.Err() != nil {
+		return entity.AccessToken{}, ctx.Err()
+	}
+
 	accessToken, err := ts.jwtManager.Parse(token)
 	if err != nil {
 		return entity.AccessToken{}, err
@@ -78,7 +92,7 @@ func (ts *tokenService) ValidateToken(
 	return accessToken, nil
 }
 
-func (ts *tokenService) InsertToken(
+func (ts *Service) InsertToken(
 	ctx context.Context,
 	token entity.RefreshToken,
 ) error {
@@ -86,7 +100,7 @@ func (ts *tokenService) InsertToken(
 }
 
 // GetActivesTokenByUserID извлекает все активные токены обновления для конкретного пользователя.
-func (ts *tokenService) GetActivesTokenByUserID(
+func (ts *Service) GetActivesTokenByUserID(
 	ctx context.Context,
 	userID uint,
 ) ([]entity.RefreshToken, error) {
@@ -97,7 +111,7 @@ func (ts *tokenService) GetActivesTokenByUserID(
 const retainActive = 5
 
 // RevokeActivesByUserID аннулирует все активные токены обновления для определенного пользователя.
-func (ts *tokenService) RevokeActivesByUserID(
+func (ts *Service) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
@@ -109,21 +123,21 @@ func (ts *tokenService) RevokeActivesByUserID(
 const retainExpired = 5
 
 // CleanExpiredByUserID удаляет все устаревшие и отозванные токены обновления для определённого пользователя
-func (ts *tokenService) CleanUpExpiredByUserID(
+func (ts *Service) CleanUpExpiredByUserID(
 	ctx context.Context,
 	userID uint,
 ) error {
 	return ts.tokenRepository.CleanExpired(ctx, userID, retainExpired)
 }
 
-func (ts *tokenService) GetByUUID(
+func (ts *Service) GetByUUID(
 	ctx context.Context,
 	uuid string,
 ) (entity.RefreshToken, error) {
 	return ts.tokenRepository.GetByUUID(ctx, uuid)
 }
 
-func (ts *tokenService) Update(
+func (ts *Service) Update(
 	ctx context.Context,
 	refresh entity.RefreshToken,
 ) (entity.RefreshToken, error) {

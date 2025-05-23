@@ -32,17 +32,17 @@ type TokenService interface {
 	CleanUpExpiredByUserID(ctx context.Context, userID uint) error
 }
 
-type userService struct {
+type Service struct {
 	userRepository  Repository
 	tokenService    TokenService
 	passwordManager PasswordManager
 }
 
-func NewUserService(userRepo Repository,
+func NewService(userRepo Repository,
 	tokenService TokenService,
 	passwordManager PasswordManager,
-) *userService {
-	return &userService{
+) *Service {
+	return &Service{
 		userRepository:  userRepo,
 		tokenService:    tokenService,
 		passwordManager: passwordManager,
@@ -51,7 +51,7 @@ func NewUserService(userRepo Repository,
 
 // CreateUser создает пользователя, хэшируя его пароль, используя HashArgon2id
 // генерирует access токен и uuid refresh uuid.
-func (us *userService) CreateUser(
+func (us *Service) CreateUser(
 	ctx context.Context,
 	user User,
 	fingerprint string,
@@ -82,7 +82,7 @@ func (us *userService) CreateUser(
 }
 
 // Authenticate аутентифицирует пользователя по email и паролю, создавая новые токены.
-func (us *userService) Authenticate(
+func (us *Service) Authenticate(
 	ctx context.Context,
 	email,
 	password,
@@ -124,7 +124,7 @@ func (us *userService) Authenticate(
 }
 
 // Refresh обновляет пару токенов аутентификации.
-func (us *userService) Refresh(
+func (us *Service) Refresh(
 	ctx context.Context,
 	refreshToken,
 	fingerprint string,
@@ -173,7 +173,7 @@ func (us *userService) Refresh(
 	return access, refresh.UUID.String(), nil
 }
 
-func (us *userService) Logout(
+func (us *Service) Logout(
 	ctx context.Context,
 	refreshToken,
 	fingerprint string,
@@ -202,6 +202,6 @@ func (us *userService) Logout(
 	return nil
 }
 
-func (us *userService) GetUserByID(ctx context.Context, id uint) (entity.User, error) {
+func (us *Service) GetUserByID(ctx context.Context, id uint) (entity.User, error) {
 	return us.userRepository.GetUserByID(ctx, id)
 }

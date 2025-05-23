@@ -22,7 +22,7 @@ func TestNewTokenService(t *testing.T) {
 	refreshLife := 24 * time.Hour
 	accessLife := time.Hour
 
-	service := NewTokenService(repo, jwtMananager, refreshLife, accessLife)
+	service := NewService(repo, jwtMananager, refreshLife, accessLife)
 
 	assert.NotNil(t, service)
 	assert.Equal(t, repo, service.tokenRepository)
@@ -40,7 +40,7 @@ func TestTokenService_GenerateTokens(t *testing.T) {
 
 	accessLife := time.Hour
 	refreshLife := 24 * time.Hour
-	service := NewTokenService(repo, jwtManager, refreshLife, accessLife)
+	service := NewService(repo, jwtManager, refreshLife, accessLife)
 
 	tests := []struct {
 		name        string
@@ -99,7 +99,7 @@ func TestTokenService_ValidateToken(t *testing.T) {
 
 	repo := NewMockRepository(ctrl)
 	jwtManager := NewMockJWTManager(ctrl)
-	service := NewTokenService(repo, jwtManager, 24*time.Hour, time.Hour)
+	service := NewService(repo, jwtManager, 24*time.Hour, time.Hour)
 
 	validToken := "valid-token"
 	expiredToken := "expired-token"
@@ -167,7 +167,7 @@ func TestTokenService_Repository_Methods(t *testing.T) {
 
 	repo := NewMockRepository(ctrl)
 	jwtManager := NewMockJWTManager(ctrl)
-	service := NewTokenService(repo, jwtManager, 24*time.Hour, time.Hour)
+	service := NewService(repo, jwtManager, 24*time.Hour, time.Hour)
 
 	ctx := context.Background()
 
