@@ -30,28 +30,28 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 	return func(c *gin.Context) {
 		authHead := c.GetHeader(authorizationHeader)
 		if authHead == "" {
-			c.Error(apperror.New(apperror.Unauthorized, "Authorization header is missing", nil))
+			_ = c.Error(apperror.New(apperror.Unauthorized, "Authorization header is missing", nil))
 			c.Abort()
 			return
 		}
 
 		parts := strings.Split(authHead, " ")
 		if len(parts) != 2 || parts[0] != bearerSchema {
-			c.Error(apperror.New(apperror.Unauthorized, "Invalid authorization format", nil))
+			_ = c.Error(apperror.New(apperror.Unauthorized, "Invalid authorization format", nil))
 			c.Abort()
 			return
 		}
 
 		access, err := validator.ValidateToken(c.Request.Context(), parts[1])
 		if err != nil {
-			c.Error(apperror.New(apperror.Unauthorized, "Invalid or expired token", err))
+			_ = c.Error(apperror.New(apperror.Unauthorized, "Invalid or expired token", err))
 			c.Abort()
 			return
 		}
 
 		user, err := userGetter.GetUserByID(c.Request.Context(), access.UserID)
 		if err != nil {
-			c.Error(apperror.New(apperror.Unauthorized, "User not found", err))
+			_ = c.Error(apperror.New(apperror.Unauthorized, "User not found", err))
 			c.Abort()
 			return
 		}
@@ -59,7 +59,6 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 		c.Set(helpers.UserIDKey, user.ID)
 		c.Set(helpers.UserIsStoreKey, user.IsStore)
 
-		// TODO: пробрасывать флаг админства после мёржа с веткой про работу админа
 		c.Set(helpers.UserIsAdminKey, false)
 		c.Next()
 	}

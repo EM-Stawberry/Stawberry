@@ -43,7 +43,7 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // CleanExpired mocks base method.
-func (m *MockRepository) CleanExpired(ctx context.Context, userID uint, retain int) error {
+func (m *MockRepository) CleanExpired(ctx context.Context, userID, retain uint) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CleanExpired", ctx, userID, retain)
 	ret0, _ := ret[0].(error)
@@ -101,7 +101,7 @@ func (mr *MockRepositoryMockRecorder) InsertToken(ctx, token any) *gomock.Call {
 }
 
 // RevokeActivesByUserID mocks base method.
-func (m *MockRepository) RevokeActivesByUserID(ctx context.Context, userID uint, retain int) error {
+func (m *MockRepository) RevokeActivesByUserID(ctx context.Context, userID, retain uint) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RevokeActivesByUserID", ctx, userID, retain)
 	ret0, _ := ret[0].(error)

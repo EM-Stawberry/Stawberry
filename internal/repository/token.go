@@ -80,7 +80,7 @@ func (r *TokenRepository) GetActivesTokenByUserID(
 func (r *TokenRepository) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
-	retain int,
+	retain uint,
 ) error {
 	substmt := sq.Select("uuid").
 		From("refresh_tokens").
@@ -166,7 +166,7 @@ func (r *TokenRepository) Update(
 
 // CleanExpired удаляет все отозванные и устаревшие токены пользователя за исключением
 // пяти самых последних
-func (r *TokenRepository) CleanExpired(ctx context.Context, userID uint, retain int) error {
+func (r *TokenRepository) CleanExpired(ctx context.Context, userID uint, retain uint) error {
 	substmt := sq.Select("uuid").
 		From("refresh_tokens").
 		Where(sq.Eq{"user_id": userID}).

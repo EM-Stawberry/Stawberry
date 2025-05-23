@@ -62,7 +62,7 @@ func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 func (h *UserHandler) Registration(c *gin.Context) {
 	var regUserDTO dto.RegistrationUserReq
 	if err := c.ShouldBindJSON(&regUserDTO); err != nil {
-		c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *UserHandler) Registration(c *gin.Context) {
 func (h *UserHandler) Login(c *gin.Context) {
 	var loginUserDTO dto.LoginUserReq
 	if err := c.ShouldBindJSON(&loginUserDTO); err != nil {
-		c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid user data", err))
 		return
 	}
 
@@ -137,14 +137,14 @@ func (h *UserHandler) Login(c *gin.Context) {
 func (h *UserHandler) Refresh(c *gin.Context) {
 	var refreshDTO dto.RefreshReq
 	if err := c.ShouldBindJSON(&refreshDTO); err != nil {
-		c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 		return
 	}
 
 	if refreshDTO.RefreshToken == "" {
 		refresh, err := c.Cookie("refresh_token")
 		if err != nil {
-			c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
+			_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 			return
 		}
 		refreshDTO.RefreshToken = refresh
@@ -183,14 +183,14 @@ func (h *UserHandler) Refresh(c *gin.Context) {
 func (h *UserHandler) Logout(c *gin.Context) {
 	var logoutDTO dto.LogoutReq
 	if err := c.ShouldBindJSON(&logoutDTO); err != nil {
-		c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 		return
 	}
 
 	if logoutDTO.RefreshToken == "" {
 		refresh, err := c.Cookie("refresh_token")
 		if err != nil {
-			c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
+			_ = c.Error(apperror.New(apperror.BadRequest, "Invalid refresh data", err))
 			return
 		}
 		logoutDTO.RefreshToken = refresh

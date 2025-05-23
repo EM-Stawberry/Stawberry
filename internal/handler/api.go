@@ -76,6 +76,11 @@ func SetupRouter(
 				status = "UserID not found"
 			}
 			isStore, ok := helpers.UserIsStoreContext(c)
+
+			if !ok {
+				logger.Warn("Missing isStore field in context")
+			}
+
 			c.JSON(http.StatusOK, gin.H{
 				"userID":  userID,
 				"status":  status,

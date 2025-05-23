@@ -119,7 +119,9 @@ func TestUserService_Authenticate(t *testing.T) {
 		mockPasswordManager.EXPECT().Compare(password, hashedPassword).Return(true, nil)
 		mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 		mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
-		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
+		mockTokenService.EXPECT().
+			GenerateTokens(ctx, fingerprint, testUser.ID).
+			Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
 		accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)

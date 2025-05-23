@@ -15,10 +15,10 @@ import (
 type Repository interface {
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
 	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
-	RevokeActivesByUserID(ctx context.Context, userID uint, retain int) error
+	RevokeActivesByUserID(ctx context.Context, userID uint, retain uint) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
-	CleanExpired(ctx context.Context, userID uint, retain int) error
+	CleanExpired(ctx context.Context, userID uint, retain uint) error
 }
 
 type JWTManager interface {
