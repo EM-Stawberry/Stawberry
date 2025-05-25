@@ -1,4 +1,4 @@
-package product
+package dto
 
 type PostProductReq struct {
 	Name        string  `json:"name"`

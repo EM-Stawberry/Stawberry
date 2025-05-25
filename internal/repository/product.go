@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
+	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
-	"github.com/zuzaaa-dev/stawberry/internal/repository/model"
 )
 
 type productRepository struct {
@@ -102,7 +102,10 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	return productModel.ID, nil
+	_ = ctx
+	_ = product
+
+	return 0, nil
 }
 
 func (pr *productRepository) GetProductByID(ctx context.Context, id uint) (*product.Product, error) {

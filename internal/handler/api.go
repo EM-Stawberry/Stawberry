@@ -1,168 +1,96 @@
+// @title Stawberry API
+// @version 1.0
+// @description Это API для управления сделаками по продуктам.
+// @host localhost:8080
+// @BasePath /
+
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/handler/middleware"
-	productHandler "github.com/zuzaaa-dev/stawberry/internal/handler/product"
-	objectstorage "github.com/zuzaaa-dev/stawberry/pkg/s3"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
+	// Импорт сваггер-генератора
+	_ "github.com/EM-Stawberry/Stawberry/docs"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
+// @Summary Получить статус сервера
+// @Description Возвращает статус сервера и текущее время
+// @Tags health
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
+// @Router /health [get]
 func SetupRouter(
-	productH productHandler.ProductHandler,
-	offerH offerHandler,
-	userH userHandler,
-	notificationH notificationHandler,
-	s3 *objectstorage.BucketBasics,
+	healthH *HealthHandler,
+	productH *ProductHandler,
+	offerH *OfferHandler,
+	userH *UserHandler,
+	notificationH *NotificationHandler,
+	userS middleware.UserGetter,
+	tokenS middleware.TokenValidator,
 	basePath string,
+	logger *zap.Logger,
 ) *gin.Engine {
 	router := gin.New()
 
-	// Add default middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-	router.Use(middleware.CORS())
+	// Add custom middleware using zap
+	router.Use(middleware.ZapLogger(logger))
+	router.Use(middleware.ZapRecovery(logger))
 
-	// Health check endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"time":   time.Now().Unix(),
-		})
-	})
+	router.Use(middleware.CORS())
+	router.Use(middleware.Errors())
+
+	// Swagger UI endpoint
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	healthH.RegisterRoutes(router)
 
 	base := router.Group(basePath)
+
 	auth := base.Group("/auth")
-	{
-		auth.POST("/reg", userH.Registration)
-		auth.POST("/login", userH.Login)
-		auth.POST("/logout", userH.Logout)
-		auth.POST("/refresh", userH.Refresh)
-	}
+	userH.RegisterRoutes(auth)
 
-	shop := base.Group("/shop")
+	// Заглушки для нереализованных хендлеров.
+	// Не забудьте убрать их и добавить вызов .RegisterRoutes для каждого хендлера
+	_ = productH
+	_ = offerH
+	_ = notificationH
 
+	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
 	{
-		shop.POST("/products", productH.PostProduct)
-		shop.GET("/products/:id", productH.GetProduct)
-		shop.GET("/products", productH.GetStoreProducts)
-		shop.PATCH("/products/:id", productH.PatchProduct)
-		shop.DELETE("/products/:id", productH.DeleteProduct)
+		secured.GET("/auth_required", func(c *gin.Context) {
+			userID, ok := helpers.UserIDContext(c)
+			var status string
+			if ok {
+				status = "UserID found"
+			} else {
+				status = "UserID not found"
+			}
+			isStore, ok := helpers.UserIsStoreContext(c)
+
+			if !ok {
+				logger.Warn("Missing isStore field in context")
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"userID":  userID,
+				"status":  status,
+				"isStore": isStore,
+				"time":    time.Now().Unix(),
+			})
+		})
+
+		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
 	}
 
 	return router
-}
-
-func handleProductError(c *gin.Context, err error) {
-	var productErr *apperror.ProductError
-	if errors.As(err, &productErr) {
-		status := http.StatusInternalServerError
-
-		switch productErr.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    productErr.Code,
-			"message": productErr.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}
-
-func handleOfferError(c *gin.Context, err error) {
-	var offerError *apperror.OfferError
-	if errors.As(err, &offerError) {
-		status := http.StatusInternalServerError
-
-		switch offerError.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    offerError.Code,
-			"message": offerError.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}
-
-func handleUserError(c *gin.Context, err error) {
-	var userError *apperror.UserError
-	if errors.As(err, &userError) {
-		status := http.StatusInternalServerError
-
-		switch userError.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    userError.Code,
-			"message": userError.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
-}
-
-func handleNotificationError(c *gin.Context, err error) {
-	var notificationErr *apperror.NotificationError
-	if errors.As(err, &notificationErr) {
-		status := http.StatusInternalServerError
-
-		// продумать логику ошибок
-		switch notificationErr.Code {
-		case apperror.NotFound:
-			status = http.StatusNotFound
-		case apperror.DuplicateError:
-			status = http.StatusConflict
-		case apperror.DatabaseError:
-			status = http.StatusInternalServerError
-		}
-
-		c.JSON(status, gin.H{
-			"code":    notificationErr.Code,
-			"message": notificationErr.Message,
-		})
-		return
-	}
-
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"code":    apperror.InternalError,
-		"message": "An unexpected error occurred",
-	})
 }

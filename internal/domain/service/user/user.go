@@ -2,54 +2,65 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/zuzaaa-dev/stawberry/internal/app/apperror"
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
-	"github.com/zuzaaa-dev/stawberry/pkg/security"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
-const maxUsers = 5
+//go:generate mockgen -source=$GOFILE -destination=user_mock_test.go -package=user Repository, TokenService
 
 type Repository interface {
 	InsertUser(ctx context.Context, user User) (uint, error)
 	GetUser(ctx context.Context, email string) (entity.User, error)
 	GetUserByID(ctx context.Context, id uint) (entity.User, error)
-	UpdateUser(ctx context.Context, user User) error
+}
+
+// PasswordManager выполняет операции с паролями, такие как хеширование и проверка
+type PasswordManager interface {
+	Hash(password string) (string, error)
+	Compare(password, hash string) (bool, error)
 }
 
 type TokenService interface {
 	GenerateTokens(ctx context.Context, fingerprint string, userID uint) (string, entity.RefreshToken, error)
 	InsertToken(ctx context.Context, token entity.RefreshToken) error
-	GetActivesTokenByUserID(ctx context.Context, userID uint) ([]entity.RefreshToken, error)
 	RevokeActivesByUserID(ctx context.Context, userID uint) error
 	GetByUUID(ctx context.Context, uuid string) (entity.RefreshToken, error)
 	Update(ctx context.Context, refresh entity.RefreshToken) (entity.RefreshToken, error)
+	CleanUpExpiredByUserID(ctx context.Context, userID uint) error
 }
 
-type userService struct {
-	userRepository Repository
-	tokenService   TokenService
+type Service struct {
+	userRepository  Repository
+	tokenService    TokenService
+	passwordManager PasswordManager
 }
 
-func NewUserService(userRepo Repository) *userService {
-	return &userService{userRepository: userRepo}
+func NewService(userRepo Repository,
+	tokenService TokenService,
+	passwordManager PasswordManager,
+) *Service {
+	return &Service{
+		userRepository:  userRepo,
+		tokenService:    tokenService,
+		passwordManager: passwordManager,
+	}
 }
 
 // CreateUser создает пользователя, хэшируя его пароль, используя HashArgon2id
 // генерирует access токен и uuid refresh uuid.
-func (us *userService) CreateUser(
+func (us *Service) CreateUser(
 	ctx context.Context,
 	user User,
 	fingerprint string,
 ) (string, string, error) {
-	hash, err := security.HashArgon2id(user.Password)
+	hash, err := us.passwordManager.Hash(user.Password)
 	if err != nil {
-		appError := apperror.ErrFailedToGeneratePassword
-		appError.Err = fmt.Errorf("failed to generate password %w, password = %s", err, user.Password)
-		return "", "", appError
+		err := apperror.ErrFailedToGeneratePassword
+		err.WrappedErr = fmt.Errorf("failed to generate password %w", err)
+		return "", "", err
 	}
 	user.Password = hash
 
@@ -71,7 +82,7 @@ func (us *userService) CreateUser(
 }
 
 // Authenticate аутентифицирует пользователя по email и паролю, создавая новые токены.
-func (us *userService) Authenticate(
+func (us *Service) Authenticate(
 	ctx context.Context,
 	email,
 	password,
@@ -82,25 +93,22 @@ func (us *userService) Authenticate(
 		return "", "", apperror.ErrUserNotFound
 	}
 
-	compared, err := security.ComparePasswordAndArgon2id(password, user.Password)
+	compared, err := us.passwordManager.Compare(password, user.Password)
 	if err != nil {
 		return "", "", err
 	}
 
 	if !compared {
-		return "", "", errors.New("invalid password")
+		return "", "", apperror.ErrIncorrectPassword
 	}
 
-	// проверяет количество токенов у пользователя
-	userActiveTokens, err := us.tokenService.GetActivesTokenByUserID(ctx, user.ID)
-	if err != nil {
+	if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {
 		return "", "", err
 	}
 
-	if len(userActiveTokens) >= maxUsers {
-		if err := us.tokenService.RevokeActivesByUserID(ctx, user.ID); err != nil {
-			return "", "", err
-		}
+	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)
+	if err != nil {
+		return "", "", err
 	}
 
 	accessToken, refreshToken, err := us.tokenService.GenerateTokens(ctx, fingerprint, user.ID)
@@ -116,7 +124,7 @@ func (us *userService) Authenticate(
 }
 
 // Refresh обновляет пару токенов аутентификации.
-func (us *userService) Refresh(
+func (us *Service) Refresh(
 	ctx context.Context,
 	refreshToken,
 	fingerprint string,
@@ -127,11 +135,11 @@ func (us *userService) Refresh(
 	}
 
 	if !refresh.IsValid() {
-		return "", "", errors.New("invalid refresh token")
+		return "", "", apperror.ErrInvalidToken
 	}
 
 	if refresh.Fingerprint != fingerprint {
-		return "", "", errors.New("invalid fingerprint")
+		return "", "", apperror.ErrInvalidFingerprint
 	}
 
 	now := time.Now()
@@ -152,6 +160,11 @@ func (us *userService) Refresh(
 		return "", "", err
 	}
 
+	err = us.tokenService.CleanUpExpiredByUserID(ctx, user.ID)
+	if err != nil {
+		return "", "", err
+	}
+
 	err = us.tokenService.InsertToken(ctx, refresh)
 	if err != nil {
 		return "", "", err
@@ -160,7 +173,7 @@ func (us *userService) Refresh(
 	return access, refresh.UUID.String(), nil
 }
 
-func (us *userService) Logout(
+func (us *Service) Logout(
 	ctx context.Context,
 	refreshToken,
 	fingerprint string,
@@ -175,7 +188,7 @@ func (us *userService) Logout(
 	}
 
 	if refresh.Fingerprint != fingerprint {
-		return errors.New("invalid fingerprint")
+		return apperror.ErrInvalidFingerprint
 	}
 
 	now := time.Now()
@@ -189,10 +202,6 @@ func (us *userService) Logout(
 	return nil
 }
 
-func (us *userService) GetUserByID(ctx context.Context, id uint) (entity.User, error) {
+func (us *Service) GetUserByID(ctx context.Context, id uint) (entity.User, error) {
 	return us.userRepository.GetUserByID(ctx, id)
-}
-
-func (us *userService) UpdateUser(ctx context.Context, id uint, updateUser UpdateUser) error {
-	panic("implement me")
 }

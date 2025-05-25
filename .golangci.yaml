@@ -1,13 +1,19 @@
+version: "2"
 linters:
-  disable-all: true
   enable:
+    - govet # Catches suspicious constructs
+    - staticcheck #  catches bugs, unused code, best practices
     - errcheck # checking for unchecked errors
     - unused # checks Go code for unused constants, variables, functions and types
     - prealloc # finds slice declarations that could potentially be pre-allocated
     - bodyclose # checks whether HTTP response body is closed successfully
     - cyclop # checks function and package cyclomatic complexity
+    - gocognit # checks function cognitive complexity
     - godox # tool for detection of F*IXME, T*ODO and other comment keywords
     - gofmt # checks if the code is formatted according to 'gofmt' command
     - goimports # Checks if the code and import statements are formatted according to the 'goimports' command
     - lll # reports long lines
     - rowserrcheck # checks whether Rows.Err of rows is checked successfully
+    - gosimple # Detects overly complex code that can be simplified
+    - revive # Enable after old code is removed
+    - gosec # Security linter. Enable later.

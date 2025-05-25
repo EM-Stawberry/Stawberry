@@ -1,4 +1,4 @@
-package product
+package handler
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/service/product"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,12 +25,12 @@ type ProductHandler struct {
 	productService ProductService
 }
 
-func NewProductHandler(productService ProductService) ProductHandler {
-	return ProductHandler{productService: productService}
+func NewProductHandler(productService ProductService) *ProductHandler {
+	return &ProductHandler{productService: productService}
 }
 
 func (h *ProductHandler) PostProduct(c *gin.Context) {
-	var postProductReq PostProductReq
+	var postProductReq dto.PostProductReq
 
 	if err := c.ShouldBindJSON(&postProductReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -57,7 +58,7 @@ func (h *ProductHandler) PostProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, PostProductResp{ID: id})
+	c.JSON(http.StatusCreated, dto.PostProductResp{ID: id})
 }
 
 func (h *ProductHandler) GetProduct(c *gin.Context) {
@@ -79,7 +80,7 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 		return
 	}
 
-	response := &GetProductResp{
+	response := &dto.GetProductResp{
 		ID:          product.ID,
 		Name:        product.Name,
 		Description: product.Description,
@@ -119,10 +120,10 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 		return
 	}
 
-	responce := make([]*GetProductResp, 0, len(products))
+	responce := make([]*dto.GetProductResp, 0, len(products))
 
 	for _, product := range products {
-		getProductResp := &GetProductResp{
+		getProductResp := &dto.GetProductResp{
 			ID:          product.ID,
 			Name:        product.Name,
 			Description: product.Description,
@@ -185,10 +186,10 @@ func (h *ProductHandler) GetStoreProducts(c *gin.Context) {
 		return
 	}
 
-	responce := make([]*GetProductResp, 0, len(products))
+	responce := make([]*dto.GetProductResp, 0, len(products))
 
 	for _, product := range products {
-		getProductResp := &GetProductResp{
+		getProductResp := &dto.GetProductResp{
 			ID:          product.ID,
 			Name:        product.Name,
 			Description: product.Description,
@@ -222,7 +223,7 @@ func (h *ProductHandler) PatchProduct(c *gin.Context) {
 		return
 	}
 
-	var updateReq PatchProductReq
+	var updateReq dto.PatchProductReq
 	if err := c.ShouldBindJSON(&updateReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid update data",

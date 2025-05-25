@@ -3,40 +3,47 @@ package offer
 import (
 	"context"
 
-	"github.com/zuzaaa-dev/stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type Repository interface {
 	InsertOffer(ctx context.Context, offer Offer) (uint, error)
 	GetOfferByID(ctx context.Context, offerID uint) (entity.Offer, error)
 	SelectUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
-	UpdateOfferStatus(ctx context.Context, offerID uint, status string) (entity.Offer, error)
+	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
 
-type offerService struct {
+const (
+	statusAccepted  = "accepted"
+	statusDeclined  = "declined"
+	statusCancelled = "cancelled"
+)
+
+type Service struct {
 	offerRepository Repository
 }
 
-func NewOfferService(offerRepository Repository) *offerService {
-	return &offerService{offerRepository: offerRepository}
+func NewService(offerRepository Repository) *Service {
+	return &Service{offerRepository: offerRepository}
 }
 
-func (os *offerService) CreateOffer(
+func (os *Service) CreateOffer(
 	ctx context.Context,
 	offer Offer,
 ) (uint, error) {
 	return os.offerRepository.InsertOffer(ctx, offer)
 }
 
-func (os *offerService) GetOffer(
+func (os *Service) GetOffer(
 	ctx context.Context,
 	offerID uint,
 ) (entity.Offer, error) {
 	return os.offerRepository.GetOfferByID(ctx, offerID)
 }
 
-func (os *offerService) GetUserOffers(
+func (os *Service) GetUserOffers(
 	ctx context.Context,
 	userID uint,
 	limit,
@@ -45,15 +52,36 @@ func (os *offerService) GetUserOffers(
 	return os.offerRepository.SelectUserOffers(ctx, userID, limit, offset)
 }
 
-func (os *offerService) UpdateOfferStatus(
+func (os *Service) UpdateOfferStatus(
 	ctx context.Context,
-	offerID uint,
-	status string,
+	offer entity.Offer,
+	userID uint,
+	isStore bool,
 ) (entity.Offer, error) {
-	return os.offerRepository.UpdateOfferStatus(ctx, offerID, status)
+	if isStore {
+		validStatusesShop := map[string]struct{}{
+			statusAccepted: {},
+			statusDeclined: {},
+		}
+		if _, ok := validStatusesShop[offer.Status]; !ok {
+			return entity.Offer{}, apperror.New(apperror.BadRequest, "invalid status field value", nil)
+		}
+
+	} else {
+		validStatusesBuyer := map[string]struct{}{
+			statusCancelled: {},
+		}
+		if _, ok := validStatusesBuyer[offer.Status]; !ok {
+			return entity.Offer{}, apperror.New(apperror.BadRequest, "invalid status field value", nil)
+		}
+	}
+
+	offerResp, err := os.offerRepository.UpdateOfferStatus(ctx, offer, userID, isStore)
+
+	return offerResp, err
 }
 
-func (os *offerService) DeleteOffer(
+func (os *Service) DeleteOffer(
 	ctx context.Context,
 	offerID uint,
 ) (entity.Offer, error) {
