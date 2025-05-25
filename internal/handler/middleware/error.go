@@ -55,6 +55,8 @@ func errorStatus(code string) int {
 		return http.StatusUnauthorized
 	case apperror.Conflict:
 		return http.StatusConflict
+	case apperror.Forbidden:
+		return http.StatusForbidden
 	case apperror.InternalError:
 		fallthrough
 

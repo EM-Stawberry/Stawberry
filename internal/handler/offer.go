@@ -12,14 +12,13 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
-	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 
 	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/gin-gonic/gin"
 )
 
 type OfferService interface {
-	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
+	CreateOffer(ctx context.Context, offer entity.Offer) (uint, error)
 	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
@@ -34,33 +33,59 @@ func NewOfferHandler(offerService OfferService) *OfferHandler {
 	return &OfferHandler{offerService: offerService}
 }
 
-func (h *OfferHandler) PostOffer(c *gin.Context) {
-	userID, _ := c.Get("userID")
+func (h *OfferHandler) RegisterRoutes(group gin.IRoutes) {
+	group.PATCH("offers/:offerID", h.PatchOfferStatus)
+	group.POST("offers", h.PostOffer)
+}
 
-	var offer dto.PostOfferReq
-	if err := c.ShouldBindJSON(&offer); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// @summary Create offer
+// @tags offer
+// @accept json
+// @produce json
+// @param body body dto.PostOfferReq true "Offer creation request"
+// @success 201 {object} dto.PostOfferResp
+// @failure 400 {object} apperror.Error
+// @failure 401 {object} apperror.Error
+// @failure 403 {object} apperror.Error
+// @failure 500 {object} apperror.Error
+// @Router /offers [post]
+func (h *OfferHandler) PostOffer(c *gin.Context) {
+	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*30)
+	defer ctxCancel()
+
+	store, ok := helpers.UserIsStoreContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.Unauthorized, "invalid credentials", nil))
+		return
+	}
+	if store {
+		_ = c.Error(apperror.New(apperror.Forbidden,
+			"store accounts are not allowed to create offer", nil))
 		return
 	}
 
-	offer.UserID = userID.(uint)
+	var offerPost dto.PostOfferReq
+	if err := c.ShouldBindJSON(&offerPost); err != nil {
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid offer data", err))
+		return
+	}
 
-	//var response dto.PostOfferResp
-	//var err error
-	//if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToEntity()); err != nil {
-	//	_ = c.Error(err)
-	//	return
-	//}
+	userID, ok := helpers.UserIDContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.Unauthorized, "invalid credentials", nil))
+		return
+	}
 
-	// Create notification for store
-	// notification := models.Notification{
-	// 	UserID:  offer.StoreID, // Store notification
-	// 	OfferID: offer.ID,
-	// 	Message: fmt.Sprintf("New offer received for product %d", offer.ProductID),
-	// }
-	// h.notifyRepo.Create(&notification)
+	offerEnt := offerPost.ConvertToEntity()
+	offerEnt.UserID = userID
 
-	c.JSON(http.StatusCreated, offer)
+	offerID, err := h.offerService.CreateOffer(ctx, offerEnt)
+	if err != nil {
+		_ = c.Error(apperror.New(apperror.InternalError, "Failed to create offer", err))
+		return
+	}
+
+	c.JSON(http.StatusCreated, dto.PostOfferResp{ID: offerID})
 }
 
 func (h *OfferHandler) GetUserOffers(c *gin.Context) {
@@ -135,7 +160,7 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 // @failure 500 {object} apperror.Error
 // @Router /offers/{offerID} [patch]
 func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
-	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*10)
+	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*30)
 	defer ctxCancel()
 
 	id, err := strconv.Atoi(c.Param("offerID"))
@@ -154,20 +179,11 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 		return
 	}
 
-	//tmp, ok := c.Get("user")
-	//usr := tmp.(entity.User)
-	//if !ok {
-	//	c.Error(apperror.New(apperror.InternalError, "user context not found",
-	//		fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
-	//	return
-	//}
-
-	iid, ok := c.Get(helpers.UserIDKey)
+	usrID, ok := helpers.UserIDContext(c)
 	if !ok {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			"user id key not found in ctx", nil))
 	}
-	usrID := iid.(uint)
 
 	iisStore, ok := c.Get(helpers.UserIsStoreKey)
 	if !ok {
@@ -184,14 +200,6 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 		_ = c.Error(err)
 		return
 	}
-
-	// Create notification for store
-	// notification := models.Notification{
-	// 	UserID:  offer.StoreID, // Store notification
-	// 	OfferID: offer.ID,
-	// 	Message: fmt.Sprintf("Offer %d has changed status to %s", offer.ID, offer.Status),
-	// }
-	// h.notifyRepo.Create(&notification)
 
 	c.JSON(http.StatusOK, dto.PatchOfferStatusResp{NewStatus: updatedOffer.Status})
 }
