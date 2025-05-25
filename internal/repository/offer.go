@@ -10,7 +10,6 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 	"github.com/Masterminds/squirrel"
 
-	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -26,13 +25,59 @@ func NewOfferRepository(db *sqlx.DB) *OfferRepository {
 
 func (r *OfferRepository) InsertOffer(
 	ctx context.Context,
-	offer offer.Offer,
+	offer entity.Offer,
 ) (uint, error) {
+	offerModel := model.ConvertOfferEntityToModel(offer)
 
-	_ = ctx
-	_ = offer
+	checkExistingOfferQuery, args := squirrel.Select("count(*)").
+		From("offers").
+		Where(squirrel.Eq{"status": "pending",
+			"product_id": offerModel.ProductID,
+			"shop_id":    offerModel.ShopID,
+			"user_id":    offerModel.UserID}).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return 0, apperror.New(apperror.DatabaseError, "failed to begin transaction", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
-	return offer.ID, nil
+	var existingOfferCount int
+	err = tx.QueryRowxContext(ctx, checkExistingOfferQuery, args...).Scan(&existingOfferCount)
+	if err != nil {
+		return 0, apperror.New(apperror.DatabaseError, "error checking existing offer", err)
+	}
+
+	if existingOfferCount > 0 {
+		return 0, apperror.New(apperror.Conflict,
+			"user already has an active offer for this product in this shop", nil)
+	}
+
+	insertOfferQuery, args := squirrel.Insert("offers").
+		Columns("offer_price", "currency", "status", "created_at", "updated_at", "expires_at",
+			"shop_id", "user_id", "product_id").
+		Values(offerModel.Price, offerModel.Currency, offerModel.Status,
+			offerModel.CreatedAt, offerModel.UpdatedAt, offerModel.ExpiresAt,
+			offerModel.ShopID, offerModel.UserID, offerModel.ProductID).
+		Suffix("returning id").
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	var offerID uint
+	err = tx.QueryRowxContext(ctx, insertOfferQuery, args...).Scan(&offerID)
+	if err != nil {
+		return 0, apperror.New(apperror.DatabaseError, "error inserting offer into database", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, apperror.New(apperror.DatabaseError, "failed to commit transaction", err)
+	}
+
+	return offerID, nil
 }
 
 func (r *OfferRepository) GetOfferByID(

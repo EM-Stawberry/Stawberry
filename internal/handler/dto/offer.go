@@ -7,11 +7,10 @@ import (
 )
 
 type PostOfferReq struct {
-	UserID    uint    `json:"user_id" binding:"required"`
 	ProductID uint    `json:"product_id" binding:"required"`
-	StoreID   uint    `json:"store_id" binding:"required"`
-	Price     float64 `json:"offer_price" binding:"required"`
-	Currency  string  `json:"currency" binding:"required"`
+	ShopID    uint    `json:"shop_id" binding:"required"`
+	Price     float64 `json:"price" binding:"required,gte=0"`
+	Currency  string  `json:"currency" binding:"required,iso4217"`
 }
 
 type PostOfferResp struct {
@@ -22,8 +21,7 @@ func (po *PostOfferReq) ConvertToEntity() entity.Offer {
 	return entity.Offer{
 		Price:     po.Price,
 		Currency:  po.Currency,
-		ShopID:    po.StoreID,
-		UserID:    po.UserID,
+		ShopID:    po.ShopID,
 		ProductID: po.ProductID,
 	}
 }

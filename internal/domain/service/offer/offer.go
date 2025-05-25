@@ -2,6 +2,7 @@ package offer
 
 import (
 	"context"
+	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -9,7 +10,7 @@ import (
 )
 
 type Repository interface {
-	InsertOffer(ctx context.Context, offer Offer) (uint, error)
+	InsertOffer(ctx context.Context, offer entity.Offer) (uint, error)
 	GetOfferByID(ctx context.Context, offerID uint) (entity.Offer, error)
 	SelectUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
@@ -20,6 +21,9 @@ const (
 	statusAccepted  = "accepted"
 	statusDeclined  = "declined"
 	statusCancelled = "cancelled"
+	statusPending   = "pending"
+
+	offerLifetime = 7 * 24 * time.Hour
 )
 
 type Service struct {
@@ -33,9 +37,24 @@ func NewService(offerRepository Repository, mailer email.MailerService) *Service
 
 func (os *Service) CreateOffer(
 	ctx context.Context,
-	offer Offer,
+	offer entity.Offer,
+	user entity.User,
 ) (uint, error) {
-	return os.offerRepository.InsertOffer(ctx, offer)
+
+	t := time.Now()
+	offer.Status = statusPending
+	offer.CreatedAt = t
+	offer.UpdatedAt = t
+	offer.ExpiresAt = t.Add(offerLifetime)
+
+	offerID, err := os.offerRepository.InsertOffer(ctx, offer)
+	if err != nil {
+		return 0, err
+	}
+
+	os.mailer.Registered(user.Name, user.Email)
+
+	return offerID, nil
 }
 
 func (os *Service) GetOffer(

@@ -6,6 +6,9 @@
 package handler
 
 import (
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"golang.org/x/text/currency"
 
 	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
@@ -39,6 +42,9 @@ func SetupRouter(
 	auditH *AuditHandler,
 ) *gin.Engine {
 	router := gin.New()
+
+	// Добавляет кастомные валидаторы для использования в json-тегах
+	setupValitators()
 
 	router.Use(auditMiddleware.Middleware())
 	router.Use(middleware.ZapLogger(logger))
@@ -84,6 +90,7 @@ func SetupRouter(
 	{
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
 		secured.GET("offers", offerH.GetUserOffers)
+		secured.POST("offers", offerH.PostOffer)
 	}
 
 	// эндпойнты отзывов
@@ -103,4 +110,19 @@ func SetupRouter(
 	_ = notificationH
 
 	return router
+}
+
+func setupValitators() {
+	// привязка валидатора кодов валюты (прим: USD, RUB и т.д.)
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		_ = v.RegisterValidation("iso4217", currencyValidator)
+	}
+
+}
+
+// реализация валидатора кодов валюты
+var currencyValidator validator.Func = func(fl validator.FieldLevel) bool {
+	currencyCode := fl.Field().String()
+	_, err := currency.ParseISO(currencyCode)
+	return err == nil
 }

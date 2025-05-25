@@ -14,6 +14,7 @@ const (
 	InvalidToken       = "INVALID_TOKEN"
 	InvalidFingerprint = "INVALID_FINGERPRINT"
 	Conflict           = "CONFLICT"
+	Forbidden          = "FORBIDDEN"
 )
 
 type AppError interface {

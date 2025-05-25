@@ -12,14 +12,13 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
-	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 
 	"github.com/EM-Stawberry/Stawberry/internal/handler/dto"
 	"github.com/gin-gonic/gin"
 )
 
 type OfferService interface {
-	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
+	CreateOffer(ctx context.Context, offer entity.Offer, usr entity.User) (uint, error)
 	GetUserOffers(ctx context.Context, userID uint, page, limit int) ([]entity.Offer, int, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
@@ -34,33 +33,66 @@ func NewOfferHandler(offerService OfferService) *OfferHandler {
 	return &OfferHandler{offerService: offerService}
 }
 
+// @summary Create offer
+// @tags offer
+// @accept json
+// @produce json
+// @param body body dto.PostOfferReq true "Offer creation request"
+// @success 201 {object} dto.PostOfferResp
+// @failure 400 {object} apperror.Error
+// @failure 401 {object} apperror.Error
+// @failure 403 {object} apperror.Error
+// @failure 500 {object} apperror.Error
+// @Router /offers [post]
 func (h *OfferHandler) PostOffer(c *gin.Context) {
-	userID, _ := c.Get("userID")
-
-	var offer dto.PostOfferReq
-	if err := c.ShouldBindJSON(&offer); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	store, ok := helpers.UserIsStoreContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.Unauthorized, "invalid credentials", nil))
+		return
+	}
+	if store {
+		_ = c.Error(apperror.New(apperror.Forbidden,
+			"store accounts are not allowed to create offer", nil))
 		return
 	}
 
-	offer.UserID = userID.(uint)
+	var offerPost dto.PostOfferReq
+	if err := c.ShouldBindJSON(&offerPost); err != nil {
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid offer data", err))
+		return
+	}
 
-	//var response dto.PostOfferResp
-	//var err error
-	//if response.ID, err = h.offerService.CreateOffer(context.Background(), offer.ConvertToEntity()); err != nil {
-	//	_ = c.Error(err)
-	//	return
-	//}
+	userID, ok := helpers.UserIDContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.Unauthorized, "invalid credentials", nil))
+		return
+	}
 
-	// Create notification for store
-	// notification := models.Notification{
-	// 	UserID:  offer.StoreID, // Store notification
-	// 	OfferID: offer.ID,
-	// 	Message: fmt.Sprintf("New offer received for product %d", offer.ProductID),
-	// }
-	// h.notifyRepo.Create(&notification)
+	var usr entity.User
+	usr.Name, ok = helpers.UserNameContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.InternalError,
+			"user name key not found in ctx", nil))
+		return
+	}
 
-	c.JSON(http.StatusCreated, offer)
+	usr.Email, ok = helpers.UserEmailContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.InternalError,
+			"user email key not found in ctx", nil))
+		return
+	}
+
+	offerEnt := offerPost.ConvertToEntity()
+	offerEnt.UserID = userID
+
+	offerID, err := h.offerService.CreateOffer(c.Request.Context(), offerEnt, usr)
+	if err != nil {
+		_ = c.Error(apperror.New(apperror.InternalError, "Failed to create offer", err))
+		return
+	}
+
+	c.JSON(http.StatusCreated, dto.PostOfferResp{ID: offerID})
 }
 
 // @summary Get user's offers
@@ -72,7 +104,7 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 // @success 200 {object} dto.GetUserOffersResp
 // @failure 400 {object} apperror.Error
 // @failure 500 {object} apperror.Error
-// @Router /offers/user [get]
+// @Router /offers [get]
 func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 	userID, ok := helpers.UserIDContext(c)
 	if !ok {
@@ -113,7 +145,7 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 		return
 	}
 
-	offerEntity, err := h.offerService.GetOffer(context.Background(), uint(id))
+	offerEntity, err := h.offerService.GetOffer(c.Request.Context(), uint(id))
 	if err != nil {
 		_ = c.Error(err)
 		return

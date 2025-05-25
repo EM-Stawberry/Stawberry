@@ -6,6 +6,8 @@ const (
 	UserIDKey      = "userID"
 	UserIsStoreKey = "userIsStore"
 	UserIsAdminKey = "userIsAdmin"
+	UserName       = "userName"
+	UserEmail      = "userEmail"
 )
 
 func UserIDContext(c *gin.Context) (uint, bool) {
@@ -42,4 +44,28 @@ func UserIsStoreContext(c *gin.Context) (bool, bool) {
 		return false, false
 	}
 	return isStoreValue, true
+}
+
+func UserNameContext(c *gin.Context) (string, bool) {
+	name, exists := c.Get(UserName)
+	if !exists {
+		return "", false
+	}
+	nameValue, ok := name.(string)
+	if !ok {
+		return "", false
+	}
+	return nameValue, true
+}
+
+func UserEmailContext(c *gin.Context) (string, bool) {
+	email, exists := c.Get(UserEmail)
+	if !exists {
+		return "", false
+	}
+	emailValue, ok := email.(string)
+	if !ok {
+		return "", false
+	}
+	return emailValue, true
 }
