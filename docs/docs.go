@@ -405,7 +405,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Stawberry API",
-	Description:      "Это API для управления сделаками по продуктам.",
+	Description:      "Это API для управления сделками по продуктам.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

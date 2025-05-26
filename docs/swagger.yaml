@@ -94,7 +94,7 @@ definitions:
 host: localhost:8080
 info:
   contact: {}
-  description: Это API для управления сделаками по продуктам.
+  description: Это API для управления сделками по продуктам.
   title: Stawberry API
   version: "1.0"
 paths:

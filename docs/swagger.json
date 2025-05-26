@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Это API для управления сделаками по продуктам.",
+        "description": "Это API для управления сделками по продуктам.",
         "title": "Stawberry API",
         "contact": {},
         "version": "1.0"
