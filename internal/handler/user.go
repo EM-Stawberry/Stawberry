@@ -41,6 +41,7 @@ func NewUserHandler(
 }
 
 // Registration godoc
+//
 //	@Summary		Регистрация нового пользователя
 //	@Description	Регистрирует нового пользователя и возвращает токены доступа/обновления
 //	@Tags			auth
@@ -77,6 +78,7 @@ func (h *UserHandler) Registration(c *gin.Context) {
 }
 
 // Login godoc
+//
 //	@Summary		Аутентификация пользователя
 //	@Description	Аутентифицирует пользователя и возвращает токены access/refresh
 //	@Tags			auth
@@ -116,6 +118,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 // Refresh godoc
+//
 //	@Summary		Обновление токенов
 //	@Description	Обновляет токены access и refresh
 //	@Tags			auth
@@ -162,6 +165,7 @@ func (h *UserHandler) Refresh(c *gin.Context) {
 }
 
 // Logout godoc
+//
 //	@Summary		Выход из системы
 //	@Description	Выход пользователя и инвалидация токена обновления
 //	@Tags			auth
