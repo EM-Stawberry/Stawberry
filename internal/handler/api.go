@@ -1,3 +1,6 @@
+// @title			Stawberry API
+// @version		1.0
+// @description	Это API для управления сделками по продуктам.
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
@@ -21,12 +24,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Получить статус сервера
-// @Description Возвращает статус сервера и текущее время
-// @Tags health
-// @Produce json
-// @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
-// @Router /health [get]
+// @Summary		Получить статус сервера
+// @Description	Возвращает статус сервера и текущее время
+// @Tags			health
+// @Produce		json
+// @Success		200	{object}	map[string]interface{}	"Успешный ответ с данными"
+// @Router			/health [get]
 func SetupRouter(
 	healthH *HealthHandler,
 	productH *ProductHandler,

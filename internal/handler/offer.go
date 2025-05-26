@@ -156,19 +156,19 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 	})
 }
 
-// @summary Update offer status
-// @tags offer
-// @accept json
-// @produce json
-// @param id path int true "Offer ID"
-// @param body body dto.PatchOfferStatusReq true "Offer status update request"
-// @success 200 {object} dto.PatchOfferStatusResp
-// @failure 400 {object} apperror.Error
-// @failure 401 {object} apperror.Error
-// @failure 404 {object} apperror.Error
-// @failure 409 {object} apperror.Error
-// @failure 500 {object} apperror.Error
-// @Router /offers/{offerID} [patch]
+//	@summary	Update offer status
+//	@tags		offer
+//	@accept		json
+//	@produce	json
+//	@param		id		path		int						true	"Offer ID"
+//	@param		body	body		dto.PatchOfferStatusReq	true	"Offer status update request"
+//	@success	200		{object}	dto.PatchOfferStatusResp
+//	@failure	400		{object}	apperror.Error
+//	@failure	401		{object}	apperror.Error
+//	@failure	404		{object}	apperror.Error
+//	@failure	409		{object}	apperror.Error
+//	@failure	500		{object}	apperror.Error
+//	@Router		/offers/{offerID} [patch]
 func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("offerID"))
 	if err != nil {
