@@ -7,15 +7,6 @@ gofmt:
 	gofumpt -l -w .
 	goimports -w .
 
-.PHONY: test
-test:
-	go test -v -coverprofile=cov.out ./...
-	go tool cover -func=cov.out
-
-coverage:
-	go tool cover -html=cov.out
-
-
 MOCKS_DESTINATION=tests/mocks
 .PHONY: mocks
 # put the files with interfaces you'd like to mock in prerequisites
@@ -37,11 +28,3 @@ test:
 
 coverage:
 	go tool cover -html=cov.out
-
-
-# Frontend
-npm-install:
-	cd frontend && npm install
-
-npm-run:
-	cd frontend && npm run dev
