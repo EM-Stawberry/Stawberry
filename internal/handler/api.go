@@ -1,8 +1,8 @@
-// @title Stawberry API
-// @version 1.0
-// @description Это API для управления сделаками по продуктам.
-// @host localhost:8080
-// @BasePath /
+//	@title			Stawberry API
+//	@version		1.0
+//	@description	Это API для управления сделками по продуктам.
+//	@host			localhost:8080
+//	@BasePath		/
 
 package handler
 
@@ -21,12 +21,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Получить статус сервера
-// @Description Возвращает статус сервера и текущее время
-// @Tags health
-// @Produce json
-// @Success 200 {object} map[string]interface{} "Успешный ответ с данными"
-// @Router /health [get]
+// @Summary		Получить статус сервера
+// @Description	Возвращает статус сервера и текущее время
+// @Tags			health
+// @Produce		json
+// @Success		200	{object}	map[string]interface{}	"Успешный ответ с данными"
+// @Router			/health [get]
 func SetupRouter(
 	healthH *HealthHandler,
 	productH *ProductHandler,

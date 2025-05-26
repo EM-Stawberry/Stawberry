@@ -50,15 +50,15 @@ func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 }
 
 // Registration godoc
-// @Summary Регистрация нового пользователя
-// @Description Регистрирует нового пользователя и возвращает токены доступа/обновления
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param user body dto.RegistrationUserReq true "Данные для регистрации пользователя"
-// @Success 200 {object} dto.RegistrationUserResp
-// @Failure 400 {object} apperror.AppError
-// @Router /auth/reg [post]
+//	@Summary		Регистрация нового пользователя
+//	@Description	Регистрирует нового пользователя и возвращает токены доступа/обновления
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		dto.RegistrationUserReq	true	"Данные для регистрации пользователя"
+//	@Success		200		{object}	dto.RegistrationUserResp
+//	@Failure		400		{object}	apperror.AppError
+//	@Router			/auth/reg [post]
 func (h *UserHandler) Registration(c *gin.Context) {
 	var regUserDTO dto.RegistrationUserReq
 	if err := c.ShouldBindJSON(&regUserDTO); err != nil {
@@ -86,15 +86,15 @@ func (h *UserHandler) Registration(c *gin.Context) {
 }
 
 // Login godoc
-// @Summary Аутентификация пользователя
-// @Description Аутентифицирует пользователя и возвращает токены access/refresh
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param user body dto.LoginUserReq true "Учетные данные пользователя"
-// @Success 200 {object} dto.LoginUserResp
-// @Failure 400 {object} apperror.AppError
-// @Router /auth/login [post]
+//	@Summary		Аутентификация пользователя
+//	@Description	Аутентифицирует пользователя и возвращает токены access/refresh
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		dto.LoginUserReq	true	"Учетные данные пользователя"
+//	@Success		200		{object}	dto.LoginUserResp
+//	@Failure		400		{object}	apperror.AppError
+//	@Router			/auth/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var loginUserDTO dto.LoginUserReq
 	if err := c.ShouldBindJSON(&loginUserDTO); err != nil {
@@ -125,15 +125,15 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 // Refresh godoc
-// @Summary Обновление токенов
-// @Description Обновляет токены access и refresh
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param refresh body dto.RefreshReq true "Данные токена refresh"
-// @Success 200 {object} dto.RefreshResp
-// @Failure 400 {object} apperror.AppError
-// @Router /auth/refresh [post]
+//	@Summary		Обновление токенов
+//	@Description	Обновляет токены access и refresh
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			refresh	body		dto.RefreshReq	true	"Данные токена refresh"
+//	@Success		200		{object}	dto.RefreshResp
+//	@Failure		400		{object}	apperror.AppError
+//	@Router			/auth/refresh [post]
 func (h *UserHandler) Refresh(c *gin.Context) {
 	var refreshDTO dto.RefreshReq
 	if err := c.ShouldBindJSON(&refreshDTO); err != nil {
@@ -171,15 +171,15 @@ func (h *UserHandler) Refresh(c *gin.Context) {
 }
 
 // Logout godoc
-// @Summary Выход из системы
-// @Description Выход пользователя и инвалидация токена обновления
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param logout body dto.LogoutReq true "Данные для выхода"
-// @Success 200
-// @Failure 400 {object} apperror.AppError
-// @Router /auth/logout [post]
+//	@Summary		Выход из системы
+//	@Description	Выход пользователя и инвалидация токена обновления
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			logout	body	dto.LogoutReq	true	"Данные для выхода"
+//	@Success		200
+//	@Failure		400	{object}	apperror.AppError
+//	@Router			/auth/logout [post]
 func (h *UserHandler) Logout(c *gin.Context) {
 	var logoutDTO dto.LogoutReq
 	if err := c.ShouldBindJSON(&logoutDTO); err != nil {
