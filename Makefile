@@ -48,7 +48,16 @@ npm-run:
 
 # Deploy
 docker-build:
-	docker build --platform linux/amd64 -t strawberry -f deploy/Dockerfile .
+	docker build --platform linux/amd64 -t localhost:5000/stawberry -f deploy/Dockerfile .
 
+docker-push:
+	docker push localhost:5000/stawberry
+
+.PHONY: deploy
 deploy:
-	kamal setup -c
+	kamal setup -c deploy/kamal.yml
+
+build-deploy:
+	docker-build
+	docker-push
+	deploy
