@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/pkg/email"
@@ -39,7 +38,7 @@ type Service struct {
 	userRepository  Repository
 	tokenService    TokenService
 	passwordManager PasswordManager
-	mailer         email.MailerService
+	mailer          email.MailerService
 }
 
 func NewService(userRepo Repository,
@@ -51,6 +50,7 @@ func NewService(userRepo Repository,
 		userRepository:  userRepo,
 		tokenService:    tokenService,
 		passwordManager: passwordManager,
+		mailer:          mailer,
 	}
 }
 

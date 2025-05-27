@@ -20,7 +20,7 @@ type MailerService interface {
 	Stop(ctx context.Context)
 }
 
-type SmtpMailer struct {
+type SMTPMailer struct {
 	enabled bool
 	ctx     context.Context
 	ctxCanc context.CancelFunc
@@ -34,7 +34,7 @@ type SmtpMailer struct {
 
 func NewMailer(log *zap.Logger, emailCfg *config.EmailConfig) MailerService {
 	ctx, cancel := context.WithCancel(context.Background())
-	m := &SmtpMailer{
+	m := &SMTPMailer{
 		ctx:     ctx,
 		ctxCanc: cancel,
 		log:     log,
@@ -47,7 +47,7 @@ func NewMailer(log *zap.Logger, emailCfg *config.EmailConfig) MailerService {
 
 	m.enabled = true
 
-	m.dialer = gomail.NewDialer(emailCfg.SmtpHost, emailCfg.SmtpPort, emailCfg.From, emailCfg.Password)
+	m.dialer = gomail.NewDialer(emailCfg.SMTPHost, emailCfg.SMTPPort, emailCfg.From, emailCfg.Password)
 
 	m.log.Info("creating email queue", zap.Int("size", emailCfg.QueueSize))
 	m.queue = make(chan *gomail.Message, emailCfg.QueueSize)
@@ -63,7 +63,7 @@ func NewMailer(log *zap.Logger, emailCfg *config.EmailConfig) MailerService {
 	return m
 }
 
-func (m *SmtpMailer) Stop(ctx context.Context) {
+func (m *SMTPMailer) Stop(ctx context.Context) {
 	if !m.enabled {
 		m.log.Info("mailer stop called, but email is disabled")
 		return
@@ -90,27 +90,27 @@ func (m *SmtpMailer) Stop(ctx context.Context) {
 	}
 }
 
-func (m *SmtpMailer) sendEmailWithRetry(msg *gomail.Message) error {
+func (m *SMTPMailer) sendEmailWithRetry(msg *gomail.Message) error {
 	const maxSendRetries = 3
 	const sendRetryDelay = time.Second
 
 	for i := 0; i < maxSendRetries; i++ {
-		if err := m.dialer.DialAndSend(msg); err == nil {
-			return nil
-		} else {
+		if err := m.dialer.DialAndSend(msg); err != nil {
 			m.log.Error("failed to send email, retrying...",
 				zap.String("subject", msg.GetHeader("Subject")[0]),
 				zap.Int("attempt", i+1),
 				zap.Int("max_attempts", maxSendRetries),
 				zap.Error(err))
 			time.Sleep(sendRetryDelay)
+			continue
 		}
+		return nil
 	}
 	return fmt.Errorf("failed to send email after %d attempts for subject: %s",
 		maxSendRetries, msg.GetHeader("Subject")[0])
 }
 
-func (m *SmtpMailer) worker() {
+func (m *SMTPMailer) worker() {
 	defer m.wg.Done()
 	for {
 		select {
@@ -133,7 +133,7 @@ func (m *SmtpMailer) worker() {
 	}
 }
 
-func (m *SmtpMailer) enqueue(msg *gomail.Message) {
+func (m *SMTPMailer) enqueue(msg *gomail.Message) {
 	if !m.enabled {
 		return
 	}
@@ -165,7 +165,7 @@ func (m *SmtpMailer) enqueue(msg *gomail.Message) {
 	}
 }
 
-func (m *SmtpMailer) StatusUpdate(offerID uint, status string, userMail string) {
+func (m *SMTPMailer) StatusUpdate(offerID uint, status string, userMail string) {
 	if !m.enabled {
 		return
 	}
@@ -177,7 +177,7 @@ func (m *SmtpMailer) StatusUpdate(offerID uint, status string, userMail string) 
 	m.enqueue(msg)
 }
 
-func (m *SmtpMailer) OfferReceived(offerID uint, userMail string) {
+func (m *SMTPMailer) OfferReceived(offerID uint, userMail string) {
 	if !m.enabled {
 		return
 	}
@@ -189,7 +189,7 @@ func (m *SmtpMailer) OfferReceived(offerID uint, userMail string) {
 	m.enqueue(msg)
 }
 
-func (m *SmtpMailer) Registered(userName string, userMail string) {
+func (m *SMTPMailer) Registered(userName string, userMail string) {
 	if !m.enabled {
 		return
 	}
@@ -201,7 +201,7 @@ func (m *SmtpMailer) Registered(userName string, userMail string) {
 	m.enqueue(msg)
 }
 
-func (m *SmtpMailer) createMessage(to, subject, body string) *gomail.Message {
+func (m *SMTPMailer) createMessage(to, subject, body string) *gomail.Message {
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", m.dialer.Username)
 	msg.SetHeader("To", to)

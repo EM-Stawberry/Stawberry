@@ -49,8 +49,8 @@ type EmailConfig struct {
 	Enabled    bool
 	From       string
 	Password   string
-	SmtpHost   string
-	SmtpPort   int
+	SMTPHost   string
+	SMTPPort   int
 	WorkerPool int
 	QueueSize  int
 }
@@ -119,8 +119,8 @@ func LoadConfig() *Config {
 			Enabled:    viper.GetBool("EMAIL_ENABLED") || viper.GetBool("mail"),
 			From:       viper.GetString("FROM_EMAIL"),
 			Password:   viper.GetString("FROM_PASSWORD"),
-			SmtpHost:   viper.GetString("SMTP_HOST"),
-			SmtpPort:   viper.GetInt("SMTP_PORT"),
+			SMTPHost:   viper.GetString("SMTP_HOST"),
+			SMTPPort:   viper.GetInt("SMTP_PORT"),
 			WorkerPool: viper.GetInt("EMAIL_WORKER_POOL"),
 			QueueSize:  viper.GetInt("EMAIL_QUEUE_SIZE"),
 		},

@@ -389,7 +389,7 @@ func TestUserService_Logout(t *testing.T) {
 	mockTokenService := NewMockTokenService(ctrl)
 	mockPasswordManager := NewMockPasswordManager(ctrl)
 	mockEmailService := mock_email.NewMockMailerService(ctrl)
-	userService := NewUserService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
+	userService := NewService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()

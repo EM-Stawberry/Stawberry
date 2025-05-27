@@ -152,7 +152,7 @@ var _ = ginkgo.Describe("offer patch status handler", ginkgo.Ordered, func() {
 	}
 
 	offerRepo := repository.NewOfferRepository(db)
-	offerServ := offer.NewService(offerRepo)
+	offerServ := offer.NewService(offerRepo, nil)
 	offerHand := handler.NewOfferHandler(offerServ)
 
 	ginkgo.AfterAll(func() {
