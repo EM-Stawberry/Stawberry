@@ -1,10 +1,11 @@
 package middleware
 
 import (
+	"net/http"
+	
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func CheckAdminRights() gin.HandlerFunc {
