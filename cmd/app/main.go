@@ -1,14 +1,10 @@
 package main
 
 import (
-	flag "github.com/spf13/pflag"
-
+	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
-	"go.uber.org/zap"
-
-	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/EM-Stawberry/Stawberry/pkg/email"
@@ -17,6 +13,8 @@ import (
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
 	"github.com/EM-Stawberry/Stawberry/pkg/server"
 	"github.com/jmoiron/sqlx"
+	flag "github.com/spf13/pflag"
+	"go.uber.org/zap"
 
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
@@ -42,6 +40,8 @@ func main() {
 	defer closer()
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
+
+	database.SeedDatabase(cfg, db, log)
 
 	router, mailer := initializeApp(cfg, db, log)
 

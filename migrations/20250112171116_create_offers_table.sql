@@ -14,6 +14,7 @@ CREATE TABLE offers (
     FOREIGN KEY (product_id, shop_id) REFERENCES shop_inventory(product_id, shop_id)
 );
 
+CREATE UNIQUE INDEX idx_offers_unique ON offers(shop_id, product_id, user_id);
 CREATE INDEX idx_offers_user_id ON offers(user_id);
 CREATE INDEX idx_offers_product_id ON offers(product_id);
 CREATE INDEX idx_offers_status_id ON offers(status) WHERE status = 'pending';
