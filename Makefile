@@ -28,3 +28,7 @@ test:
 
 coverage:
 	go tool cover -html=cov.out
+
+# Deploy
+docker-build:
+	docker build --platform linux/amd64 -t strawberry -f deploy/Dockerfile .
