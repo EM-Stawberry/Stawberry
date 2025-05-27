@@ -31,7 +31,7 @@ func (r *UserRepository) InsertUser(
 	userModel := model.ConvertUserFromSvc(user)
 
 	stmt := sq.Insert("users").
-		Columns("name", "email", "phone_number", "password_hash", "is_store").
+		Columns("name", "email", "phone_number", "password_hash", "is_store", "is_admin").
 		Values(user.Name, user.Email, user.Phone, user.Password, user.IsStore).
 		Suffix("RETURNING id").
 		PlaceholderFormat(sq.Dollar)
@@ -57,7 +57,7 @@ func (r *UserRepository) GetUser(
 ) (entity.User, error) {
 	var userModel model.User
 
-	stmt := sq.Select("id", "name", "email", "phone_number", "password_hash", "is_store").
+	stmt := sq.Select("id", "name", "email", "phone_number", "password_hash", "is_store", "is_admin").
 		From("users").
 		Where(sq.Eq{"email": email}).
 		PlaceholderFormat(sq.Dollar)
@@ -82,7 +82,7 @@ func (r *UserRepository) GetUserByID(
 ) (entity.User, error) {
 	var userModel model.User
 
-	stmt := sq.Select("id", "name", "email", "phone_number", "password_hash", "is_store").
+	stmt := sq.Select("id", "name", "email", "phone_number", "password_hash", "is_store", "is_admin").
 		From("users").
 		Where(sq.Eq{"id": id}).
 		PlaceholderFormat(sq.Dollar)
