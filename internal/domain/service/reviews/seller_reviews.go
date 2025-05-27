@@ -17,12 +17,18 @@ type SellerReviewRepository interface {
 	GetSellerByID(ctx context.Context, sellerID int) (entity.SellerReview, error)
 }
 
+// SellerReviewsService defines the interface for seller review business logic.
+type SellerReviewsService interface {
+	AddReview(ctx context.Context, sellerID int, userID int, rating int, review string) (int, error)
+	GetReviewsById(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
+}
+
 type SellerReviewService struct {
 	srs    SellerReviewRepository
 	logger *zap.Logger
 }
 
-func NewSellerReviewService(srr SellerReviewRepository, l *zap.Logger) *SellerReviewService {
+func NewSellerReviewService(srr SellerReviewRepository, l *zap.Logger) SellerReviewsService {
 	return &SellerReviewService{
 		srs:    srr,
 		logger: l,

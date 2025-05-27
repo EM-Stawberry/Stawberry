@@ -12,12 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// SellerReviewsRepository defines the interface for seller review data operations.
+type SellerReviewsRepository interface {
+	AddReview(ctx context.Context, sellerID int, userID int, rating int, review string) (int, error)
+	GetReviewsBySellerID(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
+	GetSellerByID(ctx context.Context, sellerID int) (entity.SellerReview, error)
+}
+
 type sellerReviewsRepository struct {
 	db     *sqlx.DB
 	logger *zap.Logger
 }
 
-func NewSellerReviewRepository(db *sqlx.DB, l *zap.Logger) *sellerReviewsRepository {
+func NewSellerReviewRepository(db *sqlx.DB, l *zap.Logger) SellerReviewsRepository {
 	return &sellerReviewsRepository{
 		db:     db,
 		logger: l,

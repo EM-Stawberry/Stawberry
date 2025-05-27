@@ -19,12 +19,18 @@ type ProductReviewRepository interface {
 	GetProductByID(ctx context.Context, productID int) (entity.Product, error)
 }
 
+// ProductReviewsService defines the interface for product review business logic.
+type ProductReviewsService interface {
+	AddReview(ctx context.Context, productID int, userID int, rating int, review string) (int, error)
+	GetReviewsByProductID(ctx context.Context, productID int) ([]entity.ProductReview, error)
+}
+
 type ProductReviewService struct {
 	prr    ProductReviewRepository
 	logger *zap.Logger
 }
 
-func NewProductReviewService(prr ProductReviewRepository, l *zap.Logger) *ProductReviewService {
+func NewProductReviewService(prr ProductReviewRepository, l *zap.Logger) ProductReviewsService {
 	return &ProductReviewService{
 		prr:    prr,
 		logger: l,

@@ -59,7 +59,7 @@ func (m *mockSellerReviewRepository) GetReviewsBySellerID(
 
 var _ = Describe("SellerReviewService", func() {
 	var (
-		service reviews.SellerReviewService
+		service reviews.SellerReviewsService
 		repo    *mockSellerReviewRepository
 		ctx     context.Context
 	)
@@ -67,7 +67,7 @@ var _ = Describe("SellerReviewService", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		repo = newMockSellerReviewRepository()
-		service = *reviews.NewSellerReviewService(repo, zap.NewNop())
+		service = reviews.NewSellerReviewService(repo, zap.NewNop())
 	})
 
 	Context("AddReview", func() {

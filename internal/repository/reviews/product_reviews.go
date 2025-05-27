@@ -12,12 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// ProductReviewRepository defines the interface for product review data operations.
+type ProductReviewRepository interface {
+	AddReview(ctx context.Context, productID int, userID int, rating int, review string) error
+	GetProductByID(ctx context.Context, productID int) (entity.Product, error)
+	GetReviewsByProductID(ctx context.Context, productID int) ([]entity.ProductReview, error)
+}
+
 type productReviewsRepository struct {
 	db     *sqlx.DB
 	logger *zap.Logger
 }
 
-func NewProductReviewRepository(db *sqlx.DB, l *zap.Logger) *productReviewsRepository {
+func NewProductReviewRepository(db *sqlx.DB, l *zap.Logger) ProductReviewRepository {
 	return &productReviewsRepository{
 		db:     db,
 		logger: l,
