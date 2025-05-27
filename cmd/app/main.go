@@ -64,10 +64,9 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
 	tokenRepository := repository.NewTokenRepository(db)
-	log.Info("Repositories initialized")
-	tokenRepository := repository.NewTokenRepository(db)
 	productReviewsRepository := repo.NewProductReviewRepository(db, log)
 	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
+	log.Info("Repositories initialized")
 
 	passwordManager := security.NewArgon2idPasswordManager()
 	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
@@ -101,10 +100,10 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 		offerHandler,
 		userHandler,
 		notificationHandler,
-		userService,
-		tokenService,
 		productReviewsHandler,
 		sellerReviewsHandler,
+		userService,
+		tokenService,
 		"api/v1",
 		log,
 	)

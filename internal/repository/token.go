@@ -30,14 +30,9 @@ func (r *TokenRepository) InsertToken(
 	stmt := sq.Insert("refresh_tokens").
 		Columns("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
 		Values(token.UUID, token.CreatedAt, token.ExpiresAt, token.RevokedAt, token.Fingerprint, token.UserID)
-	stmt := sq.Insert("refresh_tokens").
-		Columns("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
-		Values(token.UUID, token.CreatedAt, token.ExpiresAt, token.RevokedAt, token.Fingerprint, token.UserID)
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
 
-	_, err := r.db.ExecContext(ctx, query, args...)
 	_, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
@@ -61,13 +56,7 @@ func (r *TokenRepository) GetActivesTokenByUserID(
 		Where(sq.Eq{"user_id": userID})
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
-		From("refresh_tokens").
-		Where(sq.Eq{"user_id": userID})
 
-	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-
-	rows, err := r.db.QueryxContext(ctx, query, args...)
 	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		return nil, apperror.New(apperror.DatabaseError, "failed to fetch user tokens", err)
@@ -93,14 +82,21 @@ func (r *TokenRepository) RevokeActivesByUserID(
 	userID uint,
 	retain uint,
 ) error {
+	substmt := sq.Select("uuid").
+		From("refresh_tokens").
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Gt{"expires_at": "now()"}).
+		Where(sq.Eq{"revoked_at": nil}).
+		OrderBy("created_at DESC").
+		Offset(uint64(retain))
+
 	stmt := sq.Update("refresh_tokens").
 		Set("revoked_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"user_id": userID}).
-		Where(sq.Eq{"revoked_at": nil})
+		Where(sq.Expr("uuid in (?)", substmt))
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
 
-	res, err := r.db.ExecContext(ctx, query, args...)
+	_, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		return apperror.New(apperror.DatabaseError, "failed to revoke user tokens", err)
@@ -116,13 +112,6 @@ func (r *TokenRepository) GetByUUID(
 ) (entity.RefreshToken, error) {
 	var tokenModel model.RefreshToken
 
-	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
-		From("refresh_tokens").
-		Where(sq.Eq{"uuid": uuid})
-
-	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-
-	err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&tokenModel)
 	stmt := sq.Select("uuid", "created_at", "expires_at", "revoked_at", "fingerprint", "user_id").
 		From("refresh_tokens").
 		Where(sq.Eq{"uuid": uuid})
@@ -156,17 +145,7 @@ func (r *TokenRepository) Update(
 		Where(sq.Eq{"uuid": refresh.UUID})
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-	stmt := sq.Update("refresh_tokens").
-		Set("created_at", refresh.CreatedAt).
-		Set("expires_at", refresh.ExpiresAt).
-		Set("revoked_at", refresh.RevokedAt).
-		Set("fingerprint", refresh.Fingerprint).
-		Set("user_id", refresh.UserID).
-		Where(sq.Eq{"uuid": refresh.UUID})
 
-	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
-
-	res, err := r.db.ExecContext(ctx, query, args...)
 	res, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
