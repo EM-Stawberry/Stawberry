@@ -10,7 +10,8 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/EM-Stawberry/Stawberry/pkg/logger"
-	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
+
+	//"github.com/EM-Stawberry/Stawberry/pkg/migrator"
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
 	"github.com/EM-Stawberry/Stawberry/pkg/server"
 	"github.com/jmoiron/sqlx"
@@ -31,7 +32,7 @@ func main() {
 	db, closer := database.InitDB(&cfg.DB)
 	defer closer()
 
-	migrator.RunMigrationsWithZap(db, "migrations", log)
+	//migrator.RunMigrationsWithZap(db, "migrations", log)
 
 	router := initializeApp(cfg, db, log)
 
@@ -42,7 +43,7 @@ func main() {
 
 func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
 
-	productRepository := repository.NewProductRepository(db)
+	productRepository := repository.NewProductRepository(db, log)
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
@@ -65,7 +66,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()
-	productHandler := handler.NewProductHandler(productService)
+	productHandler := handler.NewProductHandler(productService, log)
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)

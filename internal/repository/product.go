@@ -8,14 +8,19 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 type productRepository struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	logger *zap.Logger
 }
 
-func NewProductRepository(db *sqlx.DB) *productRepository {
-	return &productRepository{db: db}
+func NewProductRepository(db *sqlx.DB, logger *zap.Logger) *productRepository {
+	return &productRepository{
+		db:     db,
+		logger: logger,
+	}
 }
 
 func (pr *productRepository) InsertProduct(ctx context.Context, product *product.Product) (uint, error) {
@@ -41,10 +46,12 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 		RunWith(pr.db).
 		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &id)
 	if err != nil && err.Error() != "sql: no rows in result set" {
+		pr.logger.Error("failed to check if product exists, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to check if product exists: %w", err)
 	}
 
 	if id != 0 {
+		pr.logger.Error("product already exists, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("product already exists")
 	}
 
@@ -52,6 +59,7 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 	//Начинаем транзакцию
 	tx, err := pr.db.Beginx()
 	if err != nil {
+		pr.logger.Error("failed to begin transaction, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
@@ -68,11 +76,13 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 		Values(productModel.Name, productModel.Description, productModel.CategoryID).PlaceholderFormat(sq.Dollar).
 		Suffix("RETURNING id").ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build insert product query, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
 	err = tx.QueryRowxContext(ctx, sql, args...).Scan(&productModel.ID)
 	if err != nil {
+		pr.logger.Error("failed to insert product, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to insert product: %w", err)
 	}
 
@@ -87,23 +97,23 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 			SPInventoryModel.Quantity).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build insert product query, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to build insert product query: %w", err)
 
 	}
 
 	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
+		pr.logger.Error("failed to insert product, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to insert product: %w", err)
 	}
 
 	//Подтверждаем транзакцию
 	err = tx.Commit()
 	if err != nil {
+		pr.logger.Error("failed to commit transaction, InsertProduct, productRepository", zap.Error(err))
 		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-
-	_ = ctx
-	_ = product
 
 	return 0, nil
 }
@@ -117,11 +127,13 @@ func (pr *productRepository) GetProductByID(ctx context.Context, id uint) (*prod
 		From("products").
 		Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build insert product query, GetProductByID, productRepository", zap.Error(err))
 		return nil, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
 	err = pr.db.QueryRowContext(ctx, sql, args...).Scan(&productModel.Name, &productModel.Description, &productModel.CategoryID)
 	if err != nil {
+		pr.logger.Error("failed to get product by id, GetProductByID, productRepository", zap.Error(err))
 		return nil, fmt.Errorf("failed to get product by id: %w", err)
 	}
 
@@ -144,11 +156,13 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 		Offset(uint64(offset)).Limit(uint64(limit)).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build insert product query, SelectProducts, productRepository", zap.Error(err))
 		return nil, 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
 	rows, err := pr.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
+		pr.logger.Error("failed to select products, SelectProducts, productRepository", zap.Error(err))
 		return nil, 0, fmt.Errorf("failed to select products: %w", err)
 	}
 	defer rows.Close()
@@ -157,6 +171,7 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 		var productModel model.Product
 		err = rows.StructScan(&productModel)
 		if err != nil {
+			pr.logger.Error("failed to scan product, SelectProducts, productRepository", zap.Error(err))
 			return nil, 0, fmt.Errorf("failed to scan product: %w", err)
 		}
 
@@ -184,11 +199,13 @@ func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, o
 		Offset(uint64(offset)).Limit(uint64(limit)).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build insert product query, SelectStoreProducts, productRepository", zap.Error(err))
 		return nil, 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
 	rows, err := pr.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
+		pr.logger.Error("failed to select products, SelectStoreProducts, productRepository", zap.Error(err))
 		return nil, 0, fmt.Errorf("failed to select products: %w", err)
 	}
 	defer rows.Close()
@@ -197,6 +214,7 @@ func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, o
 		var productModel model.Product
 		err = rows.StructScan(&productModel)
 		if err != nil {
+			pr.logger.Error("failed to scan product, SelectStoreProducts, productRepository", zap.Error(err))
 			return nil, 0, fmt.Errorf("failed to scan product: %w", err)
 		}
 
@@ -226,10 +244,12 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 		RunWith(pr.db).
 		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &existingId)
 	if err != nil && err.Error() != "sql: no rows in result set" {
+		pr.logger.Error("failed to check if product exists, UpdateProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to check if product exists: %w", err)
 	}
 
 	if existingId == 0 {
+		pr.logger.Error(fmt.Sprintf("product with id %d not found", id)+", UpdateProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("product with id %d not found", id)
 	}
 
@@ -237,6 +257,7 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 
 	tx, err := pr.db.Beginx()
 	if err != nil {
+		pr.logger.Error("failed to begin transaction, UpdateProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
@@ -261,11 +282,13 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 
 		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
 		if err != nil {
+			pr.logger.Error("failed to build update product query, UpdateProduct, productRepository", zap.Error(err))
 			return fmt.Errorf("failed to build update product query: %w", err)
 		}
 
 		_, err = tx.ExecContext(ctx, sql, args...)
 		if err != nil {
+			pr.logger.Error("failed to update product, UpdateProduct, productRepository", zap.Error(err))
 			return fmt.Errorf("failed to update product: %w", err)
 		}
 	}
@@ -281,17 +304,20 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 
 		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
 		if err != nil {
+			pr.logger.Error("failed to build update shop_point_inventory query, UpdateProduct, productRepository", zap.Error(err))
 			return fmt.Errorf("failed to build update shop_point_inventory query: %w", err)
 		}
 
 		_, err = tx.ExecContext(ctx, sql, args...)
 		if err != nil {
+			pr.logger.Error("failed to update shop_point_inventory, UpdateProduct, productRepository", zap.Error(err))
 			return fmt.Errorf("failed to update shop_point_inventory: %w", err)
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		pr.logger.Error("failed to commit transaction, UpdateProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -310,10 +336,12 @@ func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 		RunWith(pr.db).
 		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &existingId)
 	if err != nil && err.Error() != "sql: no rows in result set" {
+		pr.logger.Error("failed to check if product exists, DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to check if product exists: %w", err)
 	}
 
 	if existingId == 0 {
+		pr.logger.Error(fmt.Sprintf("product with id %d not found", id)+", DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("product with id %d not found", id)
 	}
 
@@ -321,11 +349,13 @@ func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 		Where(sq.Eq{"product_id": id}).
 		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build delete product query, DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to build delete product query: %w", err)
 	}
 
 	_, err = pr.db.ExecContext(ctx, sql, args...)
 	if err != nil {
+		pr.logger.Error("failed to delete product, DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to delete product: %w", err)
 	}
 
@@ -333,11 +363,13 @@ func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 		Where(sq.Eq{"id": id}).PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {
+		pr.logger.Error("failed to build delete product query, DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to build delete product query: %w", err)
 	}
 
 	_, err = pr.db.ExecContext(ctx, sql, args...)
 	if err != nil {
+		pr.logger.Error("failed to delete product, DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to delete product: %w", err)
 	}
 

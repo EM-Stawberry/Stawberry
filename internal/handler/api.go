@@ -59,9 +59,11 @@ func SetupRouter(
 	auth := base.Group("/auth")
 	userH.RegisterRoutes(auth)
 
+	products := base.Group("/products")
+	productH.RegisterRoutes(products)
+
 	// Заглушки для нереализованных хендлеров.
 	// Не забудьте убрать их и добавить вызов .RegisterRoutes для каждого хендлера
-	_ = productH
 	_ = offerH
 	_ = notificationH
 
@@ -90,6 +92,7 @@ func SetupRouter(
 		})
 
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+
 	}
 
 	return router

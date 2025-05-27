@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   apperror.Error:
     properties:
@@ -7,6 +6,46 @@ definitions:
       errMsg:
         type: string
       wrappedErr: {}
+    type: object
+  dto.GetProductResp:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.LoginUserReq:
+    properties:
+      email:
+        type: string
+      fingerprint:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - fingerprint
+    - password
+    type: object
+  dto.LoginUserResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.LogoutReq:
+    properties:
+      fingerprint:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - fingerprint
     type: object
   dto.PatchOfferStatusReq:
     properties:
@@ -20,13 +59,186 @@ definitions:
       new_status:
         type: string
     type: object
-host: localhost:8080
+  dto.PatchProductReq:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      shop_id:
+        type: integer
+      shop_point_id:
+        type: integer
+    type: object
+  dto.PostProductReq:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      shop_id:
+        type: integer
+    type: object
+  dto.PostProductResp:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.RefreshReq:
+    properties:
+      fingerprint:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - fingerprint
+    type: object
+  dto.RefreshResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.RegistrationUserReq:
+    properties:
+      email:
+        type: string
+      fingerprint:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - fingerprint
+    - name
+    - password
+    - phone
+    type: object
+  dto.RegistrationUserResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
 info:
   contact: {}
-  description: Это API для управления сделаками по продуктам.
-  title: Stawberry API
-  version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентифицирует пользователя и возвращает токены access/refresh
+      parameters:
+      - description: Учетные данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginUserResp'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Аутентификация пользователя
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Выход пользователя и инвалидация токена обновления
+      parameters:
+      - description: Данные для выхода
+        in: body
+        name: logout
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LogoutReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Выход из системы
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет токены access и refresh
+      parameters:
+      - description: Данные токена refresh
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RefreshResp'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Обновление токенов
+      tags:
+      - auth
+  /auth/reg:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя и возвращает токены доступа/обновления
+      parameters:
+      - description: Данные для регистрации пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegistrationUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegistrationUserResp'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
   /health:
     get:
       description: Возвращает статус сервера и текущее время
@@ -87,4 +299,221 @@ paths:
       summary: Update offer status
       tags:
       - offer
+  /products/:
+    get:
+      description: Возвращает список продуктов с пагинацией
+      parameters:
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Количество элементов на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  $ref: '#/definitions/dto.GetProductResp'
+                type: array
+              meta:
+                properties:
+                  current_page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total_items:
+                    type: integer
+                  total_pages:
+                    type: integer
+                type: object
+            type: object
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: object
+      summary: Получить список продуктов
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Создает новый продукт в системе
+      parameters:
+      - description: Данные продукта
+        in: body
+        name: productData
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PostProductReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.PostProductResp'
+        "400":
+          description: Неверные данные продукта
+          schema:
+            type: object
+        "500":
+          description: Ошибка создания
+          schema:
+            type: object
+      summary: Создать новый продукт
+      tags:
+      - products
+  /products/{product_id}:
+    delete:
+      description: Удаляет продукт по указанному ID
+      parameters:
+      - description: ID продукта
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Продукт удален
+          schema:
+            type: object
+        "400":
+          description: Неверный ID продукта
+          schema:
+            type: object
+        "500":
+          description: Ошибка удаления
+          schema:
+            type: object
+      summary: Удалить продукт
+      tags:
+      - products
+    get:
+      description: Возвращает продукт по указанному ID
+      parameters:
+      - description: ID продукта
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetProductResp'
+        "400":
+          description: Неверный ID продукта
+          schema:
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: object
+      summary: Получить продукт по ID
+      tags:
+      - products
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет информацию о продукте
+      parameters:
+      - description: ID продукта
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: updateData
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PatchProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Продукт обновлен
+          schema:
+            type: object
+        "400":
+          description: Неверные данные
+          schema:
+            type: object
+        "500":
+          description: Ошибка обновления
+          schema:
+            type: object
+      summary: Обновить продукт
+      tags:
+      - products
+  /products/shop/{shop_id}:
+    get:
+      description: Возвращает список продуктов для указанного магазина
+      parameters:
+      - description: ID магазина
+        in: path
+        name: shop_id
+        required: true
+        type: integer
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Количество элементов на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  $ref: '#/definitions/dto.GetProductResp'
+                type: array
+              meta:
+                properties:
+                  current_page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total_items:
+                    type: integer
+                  total_pages:
+                    type: integer
+                type: object
+            type: object
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: object
+      summary: Получить продукты магазина
+      tags:
+      - products
 swagger: "2.0"
