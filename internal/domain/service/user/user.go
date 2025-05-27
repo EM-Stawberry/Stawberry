@@ -83,6 +83,8 @@ func (us *Service) CreateUser(
 		return "", "", err
 	}
 
+	us.mailer.Registered(user.Name, user.Email)
+
 	return accessToken, refreshToken.UUID.String(), nil
 }
 
