@@ -10,11 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
+
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/gin-gonic/gin"
 )
 
-func StartServer(router *gin.Engine, cfg *config.ServerConfig) error {
+func StartServer(router *gin.Engine, mailer email.MailerService, cfg *config.ServerConfig) error {
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           router,
@@ -51,6 +53,8 @@ func StartServer(router *gin.Engine, cfg *config.ServerConfig) error {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
+
+		mailer.Stop(ctx)
 
 		if err := srv.Shutdown(ctx); err != nil {
 			srv.Close()

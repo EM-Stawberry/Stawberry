@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	flag "github.com/spf13/pflag"
+
 	"github.com/spf13/viper"
 )
 
@@ -43,6 +45,16 @@ type TokenConfig struct {
 	RefreshTokenDuration time.Duration
 }
 
+type EmailConfig struct {
+	Enabled    bool
+	From       string
+	Password   string
+	SMTPHost   string
+	SMTPPort   int
+	WorkerPool int
+	QueueSize  int
+}
+
 type Config struct {
 	AccessKey     string
 	SecretKey     string
@@ -54,6 +66,7 @@ type Config struct {
 	DB     DBConfig
 	Server ServerConfig
 	Token  TokenConfig
+	Email  EmailConfig
 }
 
 func LoadConfig() *Config {
@@ -64,6 +77,10 @@ func LoadConfig() *Config {
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Config reading failed: %v", err)
+	}
+
+	if err := viper.BindPFlag("mail", flag.Lookup("mail")); err != nil {
+		log.Printf("Binding mail flag failed: %v", err)
 	}
 
 	// Дефолтные значения для конфига базы данных
@@ -97,6 +114,15 @@ func LoadConfig() *Config {
 			Secret:               viper.GetString("TOKEN_SECRET"),
 			AccessTokenDuration:  viper.GetDuration("TOKEN_ACCESS_DURATION"),
 			RefreshTokenDuration: viper.GetDuration("TOKEN_REFRESH_DURATION"),
+		},
+		Email: EmailConfig{
+			Enabled:    viper.GetBool("EMAIL_ENABLED") || viper.GetBool("mail"),
+			From:       viper.GetString("FROM_EMAIL"),
+			Password:   viper.GetString("FROM_PASSWORD"),
+			SMTPHost:   viper.GetString("SMTP_HOST"),
+			SMTPPort:   viper.GetInt("SMTP_PORT"),
+			WorkerPool: viper.GetInt("EMAIL_WORKER_POOL"),
+			QueueSize:  viper.GetInt("EMAIL_QUEUE_SIZE"),
 		},
 	}
 

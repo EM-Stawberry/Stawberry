@@ -1,6 +1,8 @@
 package main
 
 import (
+	flag "github.com/spf13/pflag"
+
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
@@ -9,6 +11,7 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"github.com/EM-Stawberry/Stawberry/pkg/logger"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
 	"github.com/EM-Stawberry/Stawberry/pkg/security"
@@ -22,7 +25,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var enableMail bool
+
+func init() {
+	flag.BoolVarP(&enableMail, "mail", "m", false, "enable email notifications")
+}
+
 func main() {
+	flag.Parse()
 
 	cfg := config.LoadConfig()
 	log := logger.SetupLogger(cfg.Environment)
@@ -33,14 +43,16 @@ func main() {
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
-	router := initializeApp(cfg, db, log)
+	router, mailer := initializeApp(cfg, db, log)
 
-	if err := server.StartServer(router, &cfg.Server); err != nil {
+	if err := server.StartServer(router, mailer, &cfg.Server); err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}
 }
 
-func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
+func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engine, email.MailerService) {
+	mailer := email.NewMailer(log, &cfg.Email)
+	log.Info("Mailer initialized")
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
@@ -53,14 +65,14 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
 
 	productService := product.NewService(productRepository)
-	offerService := offer.NewService(offerRepository)
+	offerService := offer.NewService(offerRepository, mailer)
 	tokenService := token.NewService(
 		tokenRepository,
 		jwtManager,
 		cfg.Token.RefreshTokenDuration,
 		cfg.Token.AccessTokenDuration,
 	)
-	userService := user.NewService(userRepository, tokenService, passwordManager)
+	userService := user.NewService(userRepository, tokenService, passwordManager, mailer)
 	notificationService := notification.NewService(notificationRepository)
 	log.Info("Services initialized")
 
@@ -69,7 +81,6 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 	offerHandler := handler.NewOfferHandler(offerService)
 	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
-
 	log.Info("Handlers initialized")
 
 	router := handler.SetupRouter(
@@ -84,5 +95,5 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine
 		log,
 	)
 
-	return router
+	return router, mailer
 }
