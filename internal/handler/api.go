@@ -92,5 +92,16 @@ func SetupRouter(
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
 	}
 
+	admin := base.Group("/admin", middleware.AuthMiddleware(userS, tokenS), middleware.CheckAdminRights())
+	{
+		product := admin.Group("/products")
+		{
+			product.GET("/", productH.GetProducts)
+			product.GET("/:productID", productH.GetProduct)
+			product.POST("/", productH.PostProduct)
+			product.PATCH("/", productH.PatchProduct)
+		}
+	}
+
 	return router
 }

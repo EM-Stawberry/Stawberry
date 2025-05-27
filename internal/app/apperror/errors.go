@@ -14,6 +14,7 @@ const (
 	InvalidToken       = "INVALID_TOKEN"
 	InvalidFingerprint = "INVALID_FINGERPRINT"
 	Conflict           = "CONFLICT"
+	Forbidden          = "FORBIDDEN"
 )
 
 type AppError interface {
@@ -58,4 +59,6 @@ var (
 	ErrTokenNotFound = New(NotFound, "token not found", nil)
 
 	ErrNotificationNotFound = New(NotFound, "notification not found", nil)
+
+	ErrNoPermissions = New(Forbidden, "no permissions", nil)
 )
