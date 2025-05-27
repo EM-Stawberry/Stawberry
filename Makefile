@@ -45,3 +45,10 @@ npm-install:
 
 npm-run:
 	cd frontend && npm run dev
+
+# Deploy
+docker-build:
+	docker build --platform linux/amd64 -t strawberry -f deploy/Dockerfile .
+
+deploy:
+	kamal setup -c
