@@ -8,6 +8,35 @@ definitions:
         type: string
       wrappedErr: {}
     type: object
+  dto.LoginUserReq:
+    properties:
+      email:
+        type: string
+      fingerprint:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - fingerprint
+    - password
+    type: object
+  dto.LoginUserResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.LogoutReq:
+    properties:
+      fingerprint:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - fingerprint
+    type: object
   dto.PatchOfferStatusReq:
     properties:
       status:
@@ -20,13 +49,153 @@ definitions:
       new_status:
         type: string
     type: object
+  dto.RefreshReq:
+    properties:
+      fingerprint:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - fingerprint
+    type: object
+  dto.RefreshResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.RegistrationUserReq:
+    properties:
+      email:
+        type: string
+      fingerprint:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - fingerprint
+    - name
+    - password
+    - phone
+    type: object
+  dto.RegistrationUserResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: Это API для управления сделаками по продуктам.
+  description: Это API для управления сделками по продуктам.
   title: Stawberry API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентифицирует пользователя и возвращает токены access/refresh
+      parameters:
+      - description: Учетные данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginUserResp'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Аутентификация пользователя
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Выход пользователя и инвалидация токена обновления
+      parameters:
+      - description: Данные для выхода
+        in: body
+        name: logout
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LogoutReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Выход из системы
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет токены access и refresh
+      parameters:
+      - description: Данные токена refresh
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RefreshResp'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Обновление токенов
+      tags:
+      - auth
+  /auth/reg:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя и возвращает токены доступа/обновления
+      parameters:
+      - description: Данные для регистрации пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegistrationUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegistrationUserResp'
+        "400":
+          description: Bad Request
+          schema: {}
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
   /health:
     get:
       description: Возвращает статус сервера и текущее время
