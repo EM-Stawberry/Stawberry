@@ -7,15 +7,6 @@ gofmt:
 	gofumpt -l -w .
 	goimports -w .
 
-.PHONY: test
-test:
-	go test -v -coverprofile=cov.out ./...
-	go tool cover -func=cov.out
-
-coverage:
-	go tool cover -html=cov.out
-
-
 MOCKS_DESTINATION=tests/mocks
 .PHONY: mocks
 # put the files with interfaces you'd like to mock in prerequisites
@@ -45,3 +36,16 @@ npm-install:
 
 npm-run:
 	cd frontend && npm run dev
+
+# Deploy
+docker-build:
+	docker build --platform linux/amd64 -t localhost:5000/stawberry -f deploy/Dockerfile .
+
+docker-push:
+	docker push localhost:5000/stawberry
+
+compose-up:
+	docker-compose -f deploy/docker-compose.yml up -d
+
+compose-down:
+	docker-compose -f deploy/docker-compose.yml down
