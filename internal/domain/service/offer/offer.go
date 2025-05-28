@@ -38,6 +38,7 @@ func NewService(offerRepository Repository, mailer email.MailerService) *Service
 func (os *Service) CreateOffer(
 	ctx context.Context,
 	offer entity.Offer,
+	user entity.User,
 ) (uint, error) {
 
 	t := time.Now()
@@ -51,7 +52,7 @@ func (os *Service) CreateOffer(
 		return 0, err
 	}
 
-	// email?
+	os.mailer.Registered(user.Name, user.Email)
 
 	return offerID, nil
 }

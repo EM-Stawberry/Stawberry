@@ -18,7 +18,7 @@ import (
 )
 
 type OfferService interface {
-	CreateOffer(ctx context.Context, offer entity.Offer) (uint, error)
+	CreateOffer(ctx context.Context, offer entity.Offer, usr entity.User) (uint, error)
 	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
@@ -76,10 +76,25 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 		return
 	}
 
+	var usr entity.User
+	usr.Name, ok = helpers.UserNameContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.InternalError,
+			"user name key not found in ctx", nil))
+		return
+	}
+
+	usr.Email, ok = helpers.UserEmailContext(c)
+	if !ok {
+		_ = c.Error(apperror.New(apperror.InternalError,
+			"user email key not found in ctx", nil))
+		return
+	}
+
 	offerEnt := offerPost.ConvertToEntity()
 	offerEnt.UserID = userID
 
-	offerID, err := h.offerService.CreateOffer(ctx, offerEnt)
+	offerID, err := h.offerService.CreateOffer(ctx, offerEnt, usr)
 	if err != nil {
 		_ = c.Error(apperror.New(apperror.InternalError, "Failed to create offer", err))
 		return
