@@ -21,11 +21,11 @@ import (
 )
 
 type ProductRepository struct {
-	db *sqlx.DB
+	Db *sqlx.DB
 }
 
-func NewProductRepository(db *sqlx.DB) *ProductRepository {
-	return &ProductRepository{db: db}
+func NewProductRepository(Db *sqlx.DB) *ProductRepository {
+	return &ProductRepository{Db: Db}
 }
 
 func (r *ProductRepository) InsertProduct(
@@ -42,7 +42,7 @@ func (r *ProductRepository) GetProductByID(
 ) (entity.Product, error) {
 	var productModel model.Product
 	query := "SELECT id, name, description, category_id from products WHERE id = $1"
-	if err := r.db.GetContext(ctx, &productModel, query, id); err != nil {
+	if err := r.Db.GetContext(ctx, &productModel, query, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Product{}, apperror.ErrProductNotFound
 		}
@@ -60,12 +60,12 @@ func (r *ProductRepository) SelectProducts(
 	var total int
 	countQuery := "SELECT COUNT(*) FROM products"
 
-	if err := r.db.GetContext(ctx, &total, countQuery); err != nil {
+	if err := r.Db.GetContext(ctx, &total, countQuery); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
 	query := "SELECT * FROM products LIMIT $1 OFFSET $2"
 	var productModels []model.Product
-	if err := r.db.SelectContext(ctx, &productModels, query, limit, offset); err != nil {
+	if err := r.Db.SelectContext(ctx, &productModels, query, limit, offset); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
@@ -87,7 +87,7 @@ func (r *ProductRepository) SelectProductsByName(
 	countQuery := `
 		SELECT COUNT(*) FROM products 
 		WHERE name ILIKE '%' || $1 || '%'`
-	if err := r.db.GetContext(ctx, &total, countQuery, name); err != nil {
+	if err := r.Db.GetContext(ctx, &total, countQuery, name); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
 
@@ -96,7 +96,7 @@ func (r *ProductRepository) SelectProductsByName(
 		SELECT * FROM products 
 		WHERE name ILIKE '%' || $1 || '%' 
 		LIMIT $2 OFFSET $3`
-	if err := r.db.SelectContext(ctx, &models, searchQuery, name, limit, offset); err != nil {
+	if err := r.Db.SelectContext(ctx, &models, searchQuery, name, limit, offset); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
@@ -168,7 +168,7 @@ func (r *ProductRepository) SelectProductsByCategoryAndAttributes(
 
 	params = append(params, offset, limit)
 
-	err := r.db.SelectContext(ctx, &models, query, params...)
+	err := r.Db.SelectContext(ctx, &models, query, params...)
 	if err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
@@ -204,7 +204,7 @@ func (r *ProductRepository) SelectProductsByCategoryAndAttributes(
 		`
 	}
 
-	err = r.db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx-1]...)
+	err = r.Db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx-1]...)
 	if err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
@@ -224,7 +224,7 @@ func (r *ProductRepository) SelectShopProducts(
 		SELECT COUNT(*) FROM products p
 		JOIN shop_inventory si ON p.id = si.product_id 
 		WHERE si.shop_id = $1 `
-	if err := r.db.GetContext(ctx, &total, countQuery, shopID); err != nil {
+	if err := r.Db.GetContext(ctx, &total, countQuery, shopID); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
 	var models []model.Product
@@ -233,7 +233,7 @@ func (r *ProductRepository) SelectShopProducts(
 		JOIN shop_inventory si ON p.id = si.product_id 
 		WHERE si.shop_id = $1
 		LIMIT $2 OFFSET $3 `
-	if err := r.db.SelectContext(ctx, &models, searchQuery, shopID, limit, offset); err != nil {
+	if err := r.Db.SelectContext(ctx, &models, searchQuery, shopID, limit, offset); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
@@ -261,7 +261,7 @@ func (r *ProductRepository) GetProductAttributesByID(ctx context.Context, produc
 	var attributesJSONb []byte
 
 	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
-	err := r.db.GetContext(ctx, &attributesJSONb, query, productID)
+	err := r.Db.GetContext(ctx, &attributesJSONb, query, productID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -279,11 +279,11 @@ func (r *ProductRepository) GetProductAttributesByID(ctx context.Context, produc
 
 func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error) {
 	var priceRange struct {
-		Min sql.NullFloat64 `db:"min"`
-		Max sql.NullFloat64 `db:"max"`
+		Min sql.NullFloat64 `Db:"min"`
+		Max sql.NullFloat64 `Db:"max"`
 	}
 	query := `SELECT MIN(price) AS min, MAX(price) AS max FROM shop_inventory WHERE product_id = $1`
-	err := r.db.GetContext(ctx, &priceRange, query, productID)
+	err := r.Db.GetContext(ctx, &priceRange, query, productID)
 	if err != nil {
 		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate min/max price", err)
 	}
@@ -301,11 +301,11 @@ func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, produc
 
 func (r *ProductRepository) GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error) {
 	var reviewStats struct {
-		Average sql.NullFloat64 `db:"average"`
-		Count   sql.NullInt64   `db:"count"`
+		Average sql.NullFloat64 `Db:"average"`
+		Count   sql.NullInt64   `Db:"count"`
 	}
 	query := `SELECT AVG(rating) AS average, COUNT(*) AS count FROM product_reviews WHERE product_id = $1`
-	err := r.db.GetContext(ctx, &reviewStats, query, productID)
+	err := r.Db.GetContext(ctx, &reviewStats, query, productID)
 	if err != nil {
 		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate average rating/count of reviews", err)
 	}
