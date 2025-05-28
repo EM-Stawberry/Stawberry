@@ -20,7 +20,7 @@ import (
 
 type OfferService interface {
 	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
-	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
+	GetUserOffers(ctx context.Context, userID uint, page, limit int) ([]entity.Offer, int, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
@@ -64,7 +64,10 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 }
 
 func (h *OfferHandler) GetUserOffers(c *gin.Context) {
-	userID, ok := c.Get("userID")
+	ctx, canc := context.WithTimeout(c.Request.Context(), time.Second*30)
+	defer canc()
+
+	userID, ok := helpers.UserIDContext(c)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
 		return
@@ -82,25 +85,17 @@ func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 		return
 	}
 
-	offset := (page - 1) * limit
-
-	offers, total, err := h.offerService.GetUserOffers(context.Background(), userID.(uint), offset, limit)
+	offersEnt, total, err := h.offerService.GetUserOffers(ctx, userID, page, limit)
 	if err != nil {
-		_ = c.Error(err)
+		_ = c.Error(apperror.New(apperror.InternalError, "failed to get user offers", err))
 		return
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": offers,
-		"meta": gin.H{
-			"current_page": page,
-			"per_page":     limit,
-			"total_items":  total,
-			"total_pages":  totalPages,
-		},
-	})
+	offersResp := dto.FormUserOffers(offersEnt, page, limit, int(total), totalPages)
+
+	c.JSON(http.StatusOK, offersResp)
 }
 
 func (h *OfferHandler) GetOffer(c *gin.Context) {

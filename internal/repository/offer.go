@@ -51,15 +51,40 @@ func (r *OfferRepository) SelectUserOffers(
 	ctx context.Context,
 	userID uint,
 	limit, offset int,
-) ([]entity.Offer, int64, error) {
-	var total int64
+) ([]entity.Offer, int, error) {
+	var total int
+	offersModel := make([]model.Offer, 0, limit)
 
-	var offers []entity.Offer
+	countUserOffers, args := squirrel.Select("count(*)").
+		From("offers").
+		Where(squirrel.Eq{"status": "pending", "user_id": userID}).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
 
-	_ = ctx
-	_ = userID
-	_ = limit
-	_ = offset
+	err := r.db.SelectContext(ctx, &total, countUserOffers, args...)
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "error counting user offers", err)
+	}
+
+	selectUserOffersQuery, args := squirrel.Select("id, offer_price, currency, status, " +
+		"created_at, expires_at, shop_id, product_id").
+		From("offers").
+		Where(squirrel.Eq{"status": "pending", "user_id": userID}).
+		OrderBy("created_at desc").
+		Offset(uint64(offset)).
+		Limit(uint64(limit)).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	err = r.db.SelectContext(ctx, &offersModel, selectUserOffersQuery, args...)
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "error selecting user offers", err)
+	}
+
+	offers := make([]entity.Offer, len(offersModel))
+	for i, offerModel := range offersModel {
+		offers[i] = offerModel.ConvertToEntity()
+	}
 
 	return offers, total, nil
 }

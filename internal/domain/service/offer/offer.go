@@ -2,7 +2,6 @@ package offer
 
 import (
 	"context"
-
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/pkg/email"
@@ -11,7 +10,7 @@ import (
 type Repository interface {
 	InsertOffer(ctx context.Context, offer Offer) (uint, error)
 	GetOfferByID(ctx context.Context, offerID uint) (entity.Offer, error)
-	SelectUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
+	SelectUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 }
@@ -48,10 +47,15 @@ func (os *Service) GetOffer(
 func (os *Service) GetUserOffers(
 	ctx context.Context,
 	userID uint,
-	limit,
-	offset int,
-) ([]entity.Offer, int64, error) {
-	return os.offerRepository.SelectUserOffers(ctx, userID, limit, offset)
+	page,
+	limit int,
+) ([]entity.Offer, int, error) {
+	offset := (page - 1) * limit
+
+	offers, total, err := os.offerRepository.SelectUserOffers(ctx, userID, limit, offset)
+
+	return offers, total, err
+
 }
 
 func (os *Service) UpdateOfferStatus(
