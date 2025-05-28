@@ -148,7 +148,8 @@ var _ = Describe("SellerReviewsHandler", func() {
 			// Assert
 			Expect(w.Code).To(Equal(http.StatusOK))
 			var response []entity.SellerReview
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(response).To(HaveLen(1))
 			Expect(response[0].SellerID).To(Equal(1))
 			Expect(response[0].UserID).To(Equal(1))

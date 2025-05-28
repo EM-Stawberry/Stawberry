@@ -84,7 +84,7 @@ func SetupRouter(
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
 
-	// TODO: убрать заглушки
+	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH
 	_ = notificationH
 
