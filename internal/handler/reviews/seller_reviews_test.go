@@ -91,7 +91,8 @@ var _ = Describe("SellerReviewsHandler", func() {
 			// Assert
 			Expect(w.Code).To(Equal(http.StatusCreated))
 			var response map[string]string
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(response["message"]).To(Equal("review added successfully"))
 		})
 

@@ -91,7 +91,8 @@ var _ = Describe("ProductReviewsHandler", func() {
 			// Assert
 			Expect(w.Code).To(Equal(http.StatusCreated))
 			var response map[string]string
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(response["message"]).To(Equal("review added successfully"))
 		})
 
@@ -147,7 +148,8 @@ var _ = Describe("ProductReviewsHandler", func() {
 			// Assert
 			Expect(w.Code).To(Equal(http.StatusOK))
 			var response []entity.ProductReview
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(response).To(HaveLen(1))
 			Expect(response[0].ProductID).To(Equal(1))
 			Expect(response[0].UserID).To(Equal(1))
