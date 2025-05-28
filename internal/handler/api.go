@@ -48,7 +48,7 @@ func SetupRouter(
 		product.GET("/id", productH.GetProduct)
 		product.GET("/name", productH.SearchProductsByName)
 		product.GET("/filters", productH.SelectFilteredProducts)
-		product.GET("/stores", productH.SelectShopProducts)
+		product.GET("/shops", productH.SelectShopProducts)
 	}
 
 	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))

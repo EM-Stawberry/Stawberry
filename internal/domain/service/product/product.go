@@ -11,9 +11,11 @@ type Repository interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, offset, limit int) ([]entity.Product, int, error)
 	SelectShopProducts(ctx context.Context, shopID int, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
+	GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
+	GetPriceRangeByProductID(ctx context.Context, productID uint) (float64, float64, error)
 }
 
 type productService struct {
@@ -35,7 +37,19 @@ func (ps *productService) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
-	return ps.productRepository.GetProductByID(ctx, id)
+	product, err := ps.productRepository.GetProductByID(ctx, id)
+	if err != nil {
+		return entity.Product{}, err
+	}
+	attrs, err := ps.productRepository.GetProductAttributesByID(ctx, id)
+	if err != nil {
+		return entity.Product{}, err
+	}
+	product.Attributes = attrs
+	minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, product.ID)
+	product.Attributes["Minimal Price"] = minPrice
+	product.Attributes["Maximal Price"] = maxPrice
+	return product, nil
 }
 
 func (ps *productService) SelectProducts(
@@ -43,7 +57,18 @@ func (ps *productService) SelectProducts(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	return ps.productRepository.SelectProducts(ctx, offset, limit)
+	products, total, err := ps.productRepository.SelectProducts(ctx, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range products {
+		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
+		products[i].Attributes = map[string]interface{}{
+			"Minimal Price": minPrice,
+			"Maximal Price": maxPrice,
+		}
+	}
+	return products, total, nil
 }
 
 func (ps *productService) SelectProductsByName(
@@ -52,16 +77,38 @@ func (ps *productService) SelectProductsByName(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	return ps.productRepository.SelectProductsByName(ctx, name, offset, limit)
+	products, total, err := ps.productRepository.SelectProductsByName(ctx, name, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range products {
+		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
+		products[i].Attributes = map[string]interface{}{
+			"Minimal Price": minPrice,
+			"Maximal Price": maxPrice,
+		}
+	}
+	return products, total, nil
 }
 
 func (ps *productService) SelectProductsByCategoryAndAttributes(
 	ctx context.Context,
 	categoryID int,
 	filters map[string]interface{},
-	limit, offset int,
+	offset, limit int,
 ) ([]entity.Product, int, error) {
-	return ps.productRepository.SelectProductsByCategoryAndAttributes(ctx, categoryID, filters, limit, offset)
+	products, total, err := ps.productRepository.SelectProductsByCategoryAndAttributes(ctx, categoryID, filters, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range products {
+		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
+		products[i].Attributes = map[string]interface{}{
+			"Minimal Price": minPrice,
+			"Maximal Price": maxPrice,
+		}
+	}
+	return products, total, nil
 }
 
 func (ps *productService) SelectShopProducts(
@@ -70,7 +117,18 @@ func (ps *productService) SelectShopProducts(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	return ps.productRepository.SelectShopProducts(ctx, shopID, offset, limit)
+	products, total, err := ps.productRepository.SelectShopProducts(ctx, shopID, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range products {
+		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
+		products[i].Attributes = map[string]interface{}{
+			"Minimal Price": minPrice,
+			"Maximal Price": maxPrice,
+		}
+	}
+	return products, total, nil
 }
 
 func (ps *productService) UpdateProduct(
