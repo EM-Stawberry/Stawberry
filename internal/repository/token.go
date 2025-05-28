@@ -14,16 +14,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type tokenRepository struct {
+type TokenRepository struct {
 	db *sqlx.DB
 }
 
-func NewTokenRepository(db *sqlx.DB) *tokenRepository {
-	return &tokenRepository{db: db}
+func NewTokenRepository(db *sqlx.DB) *TokenRepository {
+	return &TokenRepository{db: db}
 }
 
 // InsertToken добавляет новый refresh токен в БД.
-func (r *tokenRepository) InsertToken(
+func (r *TokenRepository) InsertToken(
 	ctx context.Context,
 	token entity.RefreshToken,
 ) error {
@@ -47,7 +47,7 @@ func (r *tokenRepository) InsertToken(
 }
 
 // GetActivesTokenByUserID получает список активных refresh токенов пользователя по userID.
-func (r *tokenRepository) GetActivesTokenByUserID(
+func (r *TokenRepository) GetActivesTokenByUserID(
 	ctx context.Context,
 	userID uint,
 ) ([]entity.RefreshToken, error) {
@@ -77,37 +77,36 @@ func (r *tokenRepository) GetActivesTokenByUserID(
 }
 
 // RevokeActivesByUserID помечает все активные refresh токены пользователя как отозванные.
-func (r *tokenRepository) RevokeActivesByUserID(
+func (r *TokenRepository) RevokeActivesByUserID(
 	ctx context.Context,
 	userID uint,
+	retain uint,
 ) error {
+	substmt := sq.Select("uuid").
+		From("refresh_tokens").
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Gt{"expires_at": "now()"}).
+		Where(sq.Eq{"revoked_at": nil}).
+		OrderBy("created_at DESC").
+		Offset(uint64(retain))
+
 	stmt := sq.Update("refresh_tokens").
 		Set("revoked_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"user_id": userID}).
-		Where(sq.Eq{"revoked_at": nil})
+		Where(sq.Expr("uuid in (?)", substmt))
 
 	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
 
-	res, err := r.db.ExecContext(ctx, query, args...)
+	_, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		return apperror.New(apperror.DatabaseError, "failed to revoke user tokens", err)
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return apperror.New(apperror.DatabaseError, "failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return apperror.ErrTokenNotFound
 	}
 
 	return nil
 }
 
 // GetByUUID находит refresh токен по его UUID.
-func (r *tokenRepository) GetByUUID(
+func (r *TokenRepository) GetByUUID(
 	ctx context.Context,
 	uuid string,
 ) (entity.RefreshToken, error) {
@@ -131,7 +130,7 @@ func (r *tokenRepository) GetByUUID(
 }
 
 // Update обновляет refresh токен.
-func (r *tokenRepository) Update(
+func (r *TokenRepository) Update(
 	ctx context.Context,
 	refresh entity.RefreshToken,
 ) (entity.RefreshToken, error) {
@@ -163,4 +162,29 @@ func (r *tokenRepository) Update(
 	}
 
 	return model.ConvertTokenToEntity(refreshModel), nil
+}
+
+// CleanExpired удаляет все отозванные и устаревшие токены пользователя за исключением
+// пяти самых последних
+func (r *TokenRepository) CleanExpired(ctx context.Context, userID uint, retain uint) error {
+	substmt := sq.Select("uuid").
+		From("refresh_tokens").
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Or{
+			sq.LtOrEq{"expires_at": "now()"},
+			sq.LtOrEq{"revoked_at": "now()"},
+		}).
+		OrderBy("created_at DESC").
+		Offset(uint64(retain))
+
+	stmt := sq.Delete("refresh_tokens").
+		Where(sq.Expr("uuid IN (?)", substmt))
+
+	query, args := stmt.PlaceholderFormat(sq.Dollar).MustSql()
+
+	_, err := r.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return apperror.New(apperror.DatabaseError, "failed to clean expired tokens", err)
+	}
+	return nil
 }

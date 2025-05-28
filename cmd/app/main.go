@@ -1,87 +1,112 @@
 package main
 
 import (
-	"log"
-	"os"
-	"time"
-
+	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/reviews"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
-
+	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
+	"github.com/EM-Stawberry/Stawberry/pkg/database"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
+	"github.com/EM-Stawberry/Stawberry/pkg/logger"
 	"github.com/EM-Stawberry/Stawberry/pkg/migrator"
+	"github.com/EM-Stawberry/Stawberry/pkg/security"
+	"github.com/EM-Stawberry/Stawberry/pkg/server"
+	"github.com/jmoiron/sqlx"
+	flag "github.com/spf13/pflag"
+	"go.uber.org/zap"
 
 	"github.com/EM-Stawberry/Stawberry/config"
-	"github.com/EM-Stawberry/Stawberry/internal/app"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
-	objectstorage "github.com/EM-Stawberry/Stawberry/pkg/s3"
+	hdlr "github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	repo "github.com/EM-Stawberry/Stawberry/internal/repository/reviews"
 	"github.com/gin-gonic/gin"
 )
 
-// Global variables for application state
-var (
-	router *gin.Engine
-)
+var enableMail bool
+
+func init() {
+	flag.BoolVarP(&enableMail, "mail", "m", false, "enable email notifications")
+}
 
 func main() {
-	// Initialize application
-	if err := initializeApp(); err != nil {
-		log.Fatalf("Failed to initialize application: %v", err)
-	}
+	flag.Parse()
 
-	// Get port from environment variable or use default
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	cfg := config.LoadConfig()
+	log := logger.SetupLogger(cfg.Environment)
+	middleware.SetupGinWithZap(log)
+	log.Info("Logger initialized")
 
-	// Start server
-	if err := app.StartServer(router, port); err != nil {
-		log.Fatalf("Server error: %v", err)
+	db, closer := database.InitDB(&cfg.DB)
+	defer closer()
+
+	migrator.RunMigrationsWithZap(db, "migrations", log)
+
+	database.SeedDatabase(cfg, db, log)
+
+	router, mailer := initializeApp(cfg, db, log)
+
+	if err := server.StartServer(router, mailer, &cfg.Server); err != nil {
+		log.Fatal("Failed to start server", zap.Error(err))
 	}
 }
 
-// initializeApp initializes all application components
-func initializeApp() error {
-	// Load configuration
-	cfg := config.LoadConfig()
-
-	// Set Gin mode based on environment
-	if os.Getenv("GIN_MODE") == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	// Initialize database connection
-	db := repository.InitDB(cfg)
-
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
-
-	// Run migrations
-	migrator.RunMigrations(db, "../../migrations")
+func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engine, email.MailerService) {
+	mailer := email.NewMailer(log, &cfg.Email)
+	log.Info("Mailer initialized")
 
 	productRepository := repository.NewProductRepository(db)
 	offerRepository := repository.NewOfferRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	notificationRepository := repository.NewNotificationRepository(db)
 	tokenRepository := repository.NewTokenRepository(db)
+	productReviewsRepository := repo.NewProductReviewRepository(db, log)
+	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
+	log.Info("Repositories initialized")
 
-	productService := product.NewProductService(productRepository)
-	offerService := offer.NewOfferService(offerRepository)
-	tokenService := token.NewTokenService(tokenRepository, cfg.Token.Secret, cfg.Token.AccessTokenDuration, cfg.Token.RefreshTokenDuration)
-	userService := user.NewUserService(userRepository, tokenService)
-	notificationService := notification.NewNotificationService(notificationRepository)
+	passwordManager := security.NewArgon2idPasswordManager()
+	jwtManager := auth.NewJWTManager(cfg.Token.Secret)
 
+	productService := product.NewService(productRepository)
+	offerService := offer.NewService(offerRepository, mailer)
+	tokenService := token.NewService(
+		tokenRepository,
+		jwtManager,
+		cfg.Token.RefreshTokenDuration,
+		cfg.Token.AccessTokenDuration,
+	)
+	userService := user.NewService(userRepository, tokenService, passwordManager, mailer)
+	notificationService := notification.NewService(notificationRepository)
+	productReviewsService := reviews.NewProductReviewService(productReviewsRepository, log)
+	sellerReviewsService := reviews.NewSellerReviewService(sellerReviewsRepository, log)
+	log.Info("Services initialized")
+
+	healthHandler := handler.NewHealthHandler()
 	productHandler := handler.NewProductHandler(productService)
 	offerHandler := handler.NewOfferHandler(offerService)
-	userHandler := handler.NewUserHandler(userService, time.Hour, "api/v1", "")
+	userHandler := handler.NewUserHandler(cfg, userService)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
-	s3 := objectstorage.ObjectStorageConn(cfg)
+	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
+	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
+	log.Info("Handlers initialized")
 
-	router = handler.SetupRouter(productHandler, offerHandler, userHandler, notificationHandler, userService, tokenService, s3, "api/v1")
+	router := handler.SetupRouter(
+		healthHandler,
+		productHandler,
+		offerHandler,
+		userHandler,
+		notificationHandler,
+		productReviewsHandler,
+		sellerReviewsHandler,
+		userService,
+		tokenService,
+		"api/v1",
+		log,
+	)
 
-	return nil
+	return router, mailer
 }

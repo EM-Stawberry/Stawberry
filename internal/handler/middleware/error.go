@@ -19,10 +19,14 @@ func Errors() gin.HandlerFunc {
 			var appErr apperror.AppError
 			if errors.As(err, &appErr) {
 				statusCode := errorStatus(appErr.Code())
-				c.AbortWithStatusJSON(statusCode, gin.H{
+				resp := gin.H{
 					"code":    appErr.Code(),
 					"message": appErr.Message(),
-				})
+				}
+				if appErr.Code() == apperror.BadRequest {
+					resp["details"] = appErr.Error()
+				}
+				c.AbortWithStatusJSON(statusCode, resp)
 				return
 			}
 
@@ -49,8 +53,11 @@ func errorStatus(code string) int {
 		return http.StatusBadRequest
 	case apperror.Unauthorized, apperror.InvalidToken:
 		return http.StatusUnauthorized
+	case apperror.Conflict:
+		return http.StatusConflict
 	case apperror.InternalError:
 		fallthrough
+
 	default:
 		return http.StatusInternalServerError
 	}

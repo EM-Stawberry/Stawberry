@@ -25,12 +25,12 @@ type ProductService interface {
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 }
 
-type productHandler struct {
+type ProductHandler struct {
 	productService ProductService
 }
 
-func NewProductHandler(productService ProductService) productHandler {
-	return productHandler{productService: productService}
+func NewProductHandler(productService ProductService) *ProductHandler {
+	return &ProductHandler{productService: productService}
 }
 
 /*
@@ -49,7 +49,7 @@ func (h *productHandler) PostProduct(c *gin.Context) {
 	var response dto.PostProductResp
 	var err error
 	if response.ID, err = h.productService.CreateProduct(context.Background(), postProductReq.ConvertToSvc()); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *productHandler) GetProduct(c *gin.Context) {
 
 	product, err := h.productService.GetProductByID(context.Background(), id)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (h *productHandler) SelectProducts(c *gin.Context) {
 
 	products, total, err := h.productService.SelectProducts(context.Background(), offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -225,7 +225,7 @@ func (h *productHandler) SelectShopProducts(c *gin.Context) {
 
 	products, total, err := h.productService.SelectShopProducts(context.Background(), shopID, offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -242,7 +242,7 @@ func (h *productHandler) SelectShopProducts(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) PatchProduct(c *gin.Context) {
+func (h *ProductHandler) PatchProduct(c *gin.Context) {
 	id := c.Param("id")
 
 	var update dto.PatchProductReq
@@ -256,7 +256,7 @@ func (h *productHandler) PatchProduct(c *gin.Context) {
 	}
 
 	if err := h.productService.UpdateProduct(context.Background(), id, update.ConvertToSvc()); err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

@@ -18,22 +18,22 @@ type Repository interface {
 	GetPriceRangeByProductID(ctx context.Context, productID uint) (float64, float64, error)
 }
 
-type productService struct {
+type Service struct {
 	productRepository Repository
 }
 
-func NewProductService(productRepo Repository) *productService {
-	return &productService{productRepository: productRepo}
+func NewService(productRepo Repository) *Service {
+	return &Service{productRepository: productRepo}
 }
 
-func (ps *productService) CreateProduct(
+func (ps *Service) CreateProduct(
 	ctx context.Context,
 	product Product,
 ) (uint, error) {
 	return ps.productRepository.InsertProduct(ctx, product)
 }
 
-func (ps *productService) GetProductByID(
+func (ps *Service) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
@@ -131,7 +131,7 @@ func (ps *productService) SelectShopProducts(
 	return products, total, nil
 }
 
-func (ps *productService) UpdateProduct(
+func (ps *Service) UpdateProduct(
 	ctx context.Context,
 	id string,
 	updateProduct UpdateProduct,
