@@ -32,10 +32,13 @@ func ConvertProductFromSvc(p product.Product) Product {
 
 func ConvertProductToEntity(p Product) entity.Product {
 	return entity.Product{
-		ID:          p.ID,
-		Name:        p.Name,
-		Description: p.Description,
-		CategoryID:  p.CategoryID,
+		ID:           int(p.ID),
+		Name:         p.Name,
+		Description:  p.Description,
+		CategoryID:   p.CategoryID,
+		MinimalPrice: 0,
+		MaximalPrice: 0,
+		Attributes:   make(map[string]interface{}),
 	}
 }
 

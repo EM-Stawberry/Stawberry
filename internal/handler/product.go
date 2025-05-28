@@ -23,6 +23,7 @@ type ProductService interface {
 	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int) ([]entity.Product, int, error)
 	SelectShopProducts(ctx context.Context, storeID int, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
+	EnrichProducts(ctx context.Context, products []entity.Product) ([]entity.Product, error)
 }
 
 type ProductHandler struct {
@@ -56,7 +57,7 @@ func (h *productHandler) PostProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 } */
 
-func (h *productHandler) GetProduct(c *gin.Context) {
+func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Query("id")
 
 	product, err := h.productService.GetProductByID(context.Background(), id)
@@ -68,7 +69,7 @@ func (h *productHandler) GetProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-func (h *productHandler) SelectProducts(c *gin.Context) {
+func (h *ProductHandler) SelectProducts(c *gin.Context) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -108,7 +109,7 @@ func (h *productHandler) SelectProducts(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) SearchProductsByName(c *gin.Context) {
+func (h *ProductHandler) SearchProductsByName(c *gin.Context) {
 	name := c.Query("name")
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
@@ -148,7 +149,7 @@ func (h *productHandler) SearchProductsByName(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) SelectFilteredProducts(c *gin.Context) {
+func (h *ProductHandler) SelectFilteredProducts(c *gin.Context) {
 	categoryIDStr := c.Query("category_id")
 	if categoryIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "category_id is required"})
@@ -191,7 +192,7 @@ func (h *productHandler) SelectFilteredProducts(c *gin.Context) {
 	})
 }
 
-func (h *productHandler) SelectShopProducts(c *gin.Context) {
+func (h *ProductHandler) SelectShopProducts(c *gin.Context) {
 	shopIDStr := c.Query("shop_id")
 	if shopIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "shop_id is required"})

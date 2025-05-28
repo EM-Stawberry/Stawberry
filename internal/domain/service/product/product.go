@@ -15,7 +15,8 @@ type Repository interface {
 	SelectShopProducts(ctx context.Context, shopID int, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 	GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
-	GetPriceRangeByProductID(ctx context.Context, productID uint) (float64, float64, error)
+	GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error)
+	GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error)
 }
 
 type Service struct {
@@ -47,12 +48,12 @@ func (ps *Service) GetProductByID(
 	}
 	product.Attributes = attrs
 	minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, product.ID)
-	product.Attributes["Minimal Price"] = minPrice
-	product.Attributes["Maximal Price"] = maxPrice
+	product.MinimalPrice = minPrice
+	product.MaximalPrice = maxPrice
 	return product, nil
 }
 
-func (ps *productService) SelectProducts(
+func (ps *Service) SelectProducts(
 	ctx context.Context,
 	offset,
 	limit int,
@@ -61,17 +62,16 @@ func (ps *productService) SelectProducts(
 	if err != nil {
 		return nil, 0, err
 	}
-	for i := range products {
-		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
-		products[i].Attributes = map[string]interface{}{
-			"Minimal Price": minPrice,
-			"Maximal Price": maxPrice,
-		}
+
+	products, err = ps.EnrichProducts(ctx, products)
+	if err != nil {
+		return nil, 0, err
 	}
+
 	return products, total, nil
 }
 
-func (ps *productService) SelectProductsByName(
+func (ps *Service) SelectProductsByName(
 	ctx context.Context,
 	name string,
 	offset,
@@ -81,17 +81,16 @@ func (ps *productService) SelectProductsByName(
 	if err != nil {
 		return nil, 0, err
 	}
-	for i := range products {
-		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
-		products[i].Attributes = map[string]interface{}{
-			"Minimal Price": minPrice,
-			"Maximal Price": maxPrice,
-		}
+
+	products, err = ps.EnrichProducts(ctx, products)
+	if err != nil {
+		return nil, 0, err
 	}
+
 	return products, total, nil
 }
 
-func (ps *productService) SelectProductsByCategoryAndAttributes(
+func (ps *Service) SelectProductsByCategoryAndAttributes(
 	ctx context.Context,
 	categoryID int,
 	filters map[string]interface{},
@@ -101,17 +100,16 @@ func (ps *productService) SelectProductsByCategoryAndAttributes(
 	if err != nil {
 		return nil, 0, err
 	}
-	for i := range products {
-		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
-		products[i].Attributes = map[string]interface{}{
-			"Minimal Price": minPrice,
-			"Maximal Price": maxPrice,
-		}
+
+	products, err = ps.EnrichProducts(ctx, products)
+	if err != nil {
+		return nil, 0, err
 	}
+
 	return products, total, nil
 }
 
-func (ps *productService) SelectShopProducts(
+func (ps *Service) SelectShopProducts(
 	ctx context.Context,
 	shopID int,
 	offset,
@@ -121,13 +119,12 @@ func (ps *productService) SelectShopProducts(
 	if err != nil {
 		return nil, 0, err
 	}
-	for i := range products {
-		minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
-		products[i].Attributes = map[string]interface{}{
-			"Minimal Price": minPrice,
-			"Maximal Price": maxPrice,
-		}
+
+	products, err = ps.EnrichProducts(ctx, products)
+	if err != nil {
+		return nil, 0, err
 	}
+
 	return products, total, nil
 }
 
@@ -137,4 +134,27 @@ func (ps *Service) UpdateProduct(
 	updateProduct UpdateProduct,
 ) error {
 	return ps.productRepository.UpdateProduct(ctx, id, updateProduct)
+}
+
+func (ps *Service) EnrichProducts(
+	ctx context.Context,
+	products []entity.Product,
+) ([]entity.Product, error) {
+	for i := range products {
+		minPrice, maxPrice, err := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
+		if err != nil {
+			return nil, err
+		}
+
+		avgRating, countReviews, err := ps.productRepository.GetAverageRatingByProductID(ctx, products[i].ID)
+		if err != nil {
+			return nil, err
+		}
+
+		products[i].MinimalPrice = minPrice
+		products[i].MaximalPrice = maxPrice
+		products[i].AverageRating = avgRating
+		products[i].CountReviews = countReviews
+	}
+	return products, nil
 }

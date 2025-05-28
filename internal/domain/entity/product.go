@@ -1,11 +1,15 @@
 package entity
 
 type Product struct {
-	ID          uint                   `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	CategoryID  uint                   `json:"category_id"`
-	Attributes  map[string]interface{} `json:"product_attributes"`
+	ID            int                    `json:"id"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description"`
+	CategoryID    uint                   `json:"category_id"`
+	MinimalPrice  float64                `json:"minimal_price"`
+	MaximalPrice  float64                `json:"maximal_price"`
+	AverageRating float64                `json:"average_rating"`
+	CountReviews  int                    `json:"count_reviews"`
+	Attributes    map[string]interface{} `json:"product_attributes"`
 }
 
 type NewProduct struct {

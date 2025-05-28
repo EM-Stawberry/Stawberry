@@ -77,7 +77,7 @@ func (r *ProductRepository) SelectProducts(
 	return products, total, nil
 }
 
-func (r *productRepository) SelectProductsByName(
+func (r *ProductRepository) SelectProductsByName(
 	ctx context.Context,
 	name string,
 	offset,
@@ -107,7 +107,7 @@ func (r *productRepository) SelectProductsByName(
 	return products, int(total), nil
 }
 
-func (r *productRepository) SelectProductsByCategoryAndAttributes(
+func (r *ProductRepository) SelectProductsByCategoryAndAttributes(
 	ctx context.Context,
 	categoryID int,
 	filters map[string]interface{},
@@ -166,7 +166,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 		)
 	}
 
-	params = append(params, offset,limit )
+	params = append(params, offset, limit)
 
 	err := r.db.SelectContext(ctx, &models, query, params...)
 	if err != nil {
@@ -215,7 +215,7 @@ func (r *productRepository) SelectProductsByCategoryAndAttributes(
 	return products, totalCount, nil
 }
 
-func (r *productRepository) SelectShopProducts(
+func (r *ProductRepository) SelectShopProducts(
 	ctx context.Context,
 	shopID int, offset, limit int,
 ) ([]entity.Product, int, error) {
@@ -257,7 +257,7 @@ func (r *ProductRepository) UpdateProduct(
 	return nil
 }
 
-func (r *productRepository) GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
+func (r *ProductRepository) GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
 	var attributesJSONb []byte
 
 	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
@@ -277,30 +277,46 @@ func (r *productRepository) GetProductAttributesByID(ctx context.Context, produc
 	return attributes, nil
 }
 
-func (r *productRepository) GetPriceRangeByProductID(ctx context.Context, productID uint) (float64, float64, error) {
+func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error) {
 	var priceRange struct {
-	Min float64 `db:"min"`
-	Max float64 `db:"max"`
+		Min sql.NullFloat64 `db:"min"`
+		Max sql.NullFloat64 `db:"max"`
 	}
-	query := `SELECT MIN(price), MAX(price) FROM shop_inventory WHERE product_id = $1`
+	query := `SELECT MIN(price) AS min, MAX(price) AS max FROM shop_inventory WHERE product_id = $1`
 	err := r.db.GetContext(ctx, &priceRange, query, productID)
 	if err != nil {
-		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate average price", err)
+		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate min/max price", err)
+	}
+	min := 0.0
+	max := 0.0
+	if priceRange.Min.Valid {
+		min = priceRange.Min.Float64
+	}
+	if priceRange.Max.Valid {
+		max = priceRange.Max.Float64
 	}
 
-	return priceRange.Min, priceRange.Max, nil
+	return min, max, nil
 }
 
-func (r *productRepository) GetAverageRatingByProductID(ctx context.Context, productID uint) (float64, float64, error) {
-	var priceRange struct {
-	Min float64 `db:"min"`
-	Max float64 `db:"max"`
+func (r *ProductRepository) GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error) {
+	var reviewStats struct {
+		Average sql.NullFloat64 `db:"average"`
+		Count   sql.NullInt64   `db:"count"`
 	}
-	query := `SELECT MIN(price), MAX(price) FROM shop_inventory WHERE product_id = $1`
-	err := r.db.GetContext(ctx, &priceRange, query, productID)
+	query := `SELECT AVG(rating) AS average, COUNT(*) AS count FROM product_reviews WHERE product_id = $1`
+	err := r.db.GetContext(ctx, &reviewStats, query, productID)
 	if err != nil {
-		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate average price", err)
+		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate average rating/count of reviews", err)
+	}
+	avg := 0.0
+	count := 0
+	if reviewStats.Average.Valid {
+		avg = reviewStats.Average.Float64
+	}
+	if reviewStats.Count.Valid {
+		count = int(reviewStats.Count.Int64)
 	}
 
-	return priceRange.Min, priceRange.Max, nil
+	return avg, count, nil
 }
