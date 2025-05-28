@@ -15,7 +15,7 @@ import (
 
 type SellerReviewsService interface {
 	AddReview(ctx context.Context, sellerID int, userID int, rating int, review string) (int, error)
-	GetReviewsById(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
+	GetReviewsByID(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
 }
 
 type SellerReviewsHandler struct {
@@ -115,7 +115,7 @@ func (h *SellerReviewsHandler) GetReviews(c *gin.Context) {
 		return
 	}
 
-	reviews, err := h.srs.GetReviewsById(c.Request.Context(), sellerID)
+	reviews, err := h.srs.GetReviewsByID(c.Request.Context(), sellerID)
 	if err != nil {
 		var reviewErr *apperror.ReviewError
 		if errors.As(err, &reviewErr) {

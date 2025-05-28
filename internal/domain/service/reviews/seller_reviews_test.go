@@ -111,7 +111,7 @@ var _ = Describe("SellerReviewService", func() {
 		})
 	})
 
-	Context("GetReviewsById", func() {
+	Context("GetReviewsByID", func() {
 		It("should return reviews for existing seller", func() {
 			// Arrange
 			sellerID := 1
@@ -135,7 +135,7 @@ var _ = Describe("SellerReviewService", func() {
 			}
 
 			// Act
-			reviews, err := service.GetReviewsById(ctx, sellerID)
+			reviews, err := service.GetReviewsByID(ctx, sellerID)
 
 			// Assert
 			Expect(err).NotTo(HaveOccurred())
@@ -148,7 +148,7 @@ var _ = Describe("SellerReviewService", func() {
 
 		It("should return error for non-existent seller", func() {
 			// Act
-			_, err := service.GetReviewsById(ctx, 999)
+			_, err := service.GetReviewsByID(ctx, 999)
 
 			// Assert
 			Expect(err).To(HaveOccurred())

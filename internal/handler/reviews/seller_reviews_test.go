@@ -45,7 +45,7 @@ func (m *mockSellerReviewsService) AddReview(
 	return sellerID, nil
 }
 
-func (m *mockSellerReviewsService) GetReviewsById(
+func (m *mockSellerReviewsService) GetReviewsByID(
 	_ context.Context, sellerID int,
 ) ([]entity.SellerReview, error) {
 	if sellerID == 999 {
