@@ -64,6 +64,16 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 	c.JSON(http.StatusCreated, offer)
 }
 
+// @summary Get user's offers
+// @tags offer
+// @accept json
+// @produce json
+// @param page query int false "Page number for pagination" default(1)
+// @param limit query int false "Number of items per page (5-100)" default(10)
+// @success 200 {object} dto.GetUserOffersResp
+// @failure 400 {object} apperror.Error
+// @failure 500 {object} apperror.Error
+// @Router /offers/user [get]
 func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 	ctx, canc := context.WithTimeout(c.Request.Context(), time.Second*30)
 	defer canc()
