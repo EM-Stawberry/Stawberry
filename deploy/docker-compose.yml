@@ -46,7 +46,7 @@ services:
       - app-network
 
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.4
     ports:
       - "80:80"
     volumes:
