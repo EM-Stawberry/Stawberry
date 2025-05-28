@@ -64,7 +64,9 @@ var _ = Describe("SellerReviewsHandler", func() {
 	BeforeEach(func() {
 		service = newMockSellerReviewsService()
 		handler = reviews.NewSellerReviewsHandler(service, zap.NewNop())
-		router = gin.Default()
+		gin.SetMode(gin.ReleaseMode)
+		router = gin.New()
+
 		router.Use(func(c *gin.Context) {
 			c.Set("userID", 1)
 			c.Next()
