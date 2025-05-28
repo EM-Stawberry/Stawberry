@@ -29,7 +29,7 @@ func newMockSellerReviewsService() *mockSellerReviewsService {
 }
 
 func (m *mockSellerReviewsService) AddReview(
-	ctx context.Context, sellerID int, userID int, rating int, review string,
+	_ context.Context, sellerID int, userID int, rating int, review string,
 ) (int, error) {
 	if sellerID == 999 {
 		return 0, apperror.NewReviewError(apperror.NotFound, "seller not found")
@@ -46,7 +46,7 @@ func (m *mockSellerReviewsService) AddReview(
 }
 
 func (m *mockSellerReviewsService) GetReviewsById(
-	ctx context.Context, sellerID int,
+	_ context.Context, sellerID int,
 ) ([]entity.SellerReview, error) {
 	if sellerID == 999 {
 		return nil, apperror.NewReviewError(apperror.NotFound, "seller not found")

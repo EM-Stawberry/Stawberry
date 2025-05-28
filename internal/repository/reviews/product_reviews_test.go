@@ -25,7 +25,7 @@ func newMockProductReviewRepository() *mockProductReviewRepository {
 }
 
 func (m *mockProductReviewRepository) AddReview(
-	ctx context.Context, productID int, userID int, rating int, review string,
+	_ context.Context, productID int, userID int, rating int, review string,
 ) error {
 	if _, exists := m.products[productID]; !exists {
 		return apperror.NewReviewError(apperror.NotFound, "product not found")
@@ -42,7 +42,7 @@ func (m *mockProductReviewRepository) AddReview(
 }
 
 func (m *mockProductReviewRepository) GetProductByID(
-	ctx context.Context, productID int,
+	_ context.Context, productID int,
 ) (entity.Product, error) {
 	product, exists := m.products[productID]
 	if !exists {
@@ -52,7 +52,7 @@ func (m *mockProductReviewRepository) GetProductByID(
 }
 
 func (m *mockProductReviewRepository) GetReviewsByProductID(
-	ctx context.Context, productID int,
+	_ context.Context, productID int,
 ) ([]entity.ProductReview, error) {
 	return m.reviews[productID], nil
 }
