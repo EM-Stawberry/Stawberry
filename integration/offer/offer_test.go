@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -105,6 +106,8 @@ func mockAuthShopOwnerMiddleware() gin.HandlerFunc {
 		c.Set("user", mockUser)
 		c.Set(helpers.UserIDKey, uint(1))
 		c.Set(helpers.UserIsStoreKey, true)
+		c.Set(helpers.UserName, "user1")
+		c.Set(helpers.UserEmail, "user1email")
 		c.Next()
 	}
 }
@@ -122,6 +125,8 @@ func mockAuthBuyerMiddleware() gin.HandlerFunc {
 		c.Set("user", mockUser)
 		c.Set(helpers.UserIDKey, uint(2))
 		c.Set(helpers.UserIsStoreKey, false)
+		c.Set(helpers.UserName, "user2")
+		c.Set(helpers.UserEmail, "user2email")
 		c.Next()
 	}
 }
@@ -139,8 +144,32 @@ func mockAuthIncorrectShopOwnerMiddleware() gin.HandlerFunc {
 		c.Set("user", mockUser)
 		c.Set(helpers.UserIDKey, uint(3))
 		c.Set(helpers.UserIsStoreKey, true)
+		c.Set(helpers.UserName, "user3")
+		c.Set(helpers.UserEmail, "user3email")
 		c.Next()
 	}
+}
+
+type mockMailer struct{}
+
+func newMockMailer() email.MailerService {
+	return &mockMailer{}
+}
+
+func (m *mockMailer) Registered(userName string, userMail string) {
+	return
+}
+
+func (m *mockMailer) StatusUpdate(offerID uint, status string, userMail string) {
+	return
+}
+
+func (m *mockMailer) OfferReceived(offerID uint, userMail string) {
+	return
+}
+
+func (m *mockMailer) Stop(ctx context.Context) {
+	return
 }
 
 func setupRouter(authMiddleware gin.HandlerFunc, method, path string, handlerFunc gin.HandlerFunc) *gin.Engine {
@@ -177,9 +206,10 @@ var _ = ginkgo.Describe("offer handlers", ginkgo.Ordered, func() {
 			slog.Error(err.Error())
 			ginkgo.Fail("Failed to get database connection")
 		}
+		mailer := newMockMailer()
 
 		offerRepo = repository.NewOfferRepository(db)
-		offerServ = offer.NewService(offerRepo, nil)
+		offerServ = offer.NewService(offerRepo, mailer)
 		offerHand = handler.NewOfferHandler(offerServ)
 	})
 
