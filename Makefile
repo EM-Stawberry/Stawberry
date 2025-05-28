@@ -29,14 +29,6 @@ test:
 coverage:
 	go tool cover -html=cov.out
 
-
-# Frontend
-npm-install:
-	cd frontend && npm install
-
-npm-run:
-	cd frontend && npm run dev
-
 # Deploy
 docker-build:
 	docker build --platform linux/amd64 -t localhost:5000/stawberry -f deploy/Dockerfile .
