@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -69,31 +70,32 @@ func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 
 	userID, ok := helpers.UserIDContext(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
+		_ = c.Error(apperror.New(apperror.InternalError, "user ID not found in context", nil))
 		return
 	}
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		_ = c.Error(apperror.New(apperror.BadRequest, "invalid page number", err))
 		return
 	}
 
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if err != nil || limit < 1 || limit > 100 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit value"})
+	if err != nil || limit < 5 || limit > 100 {
+		_ = c.Error(apperror.New(apperror.BadRequest, "invalid limit value (must be 5-100)", err))
 		return
 	}
 
 	offersEnt, total, err := h.offerService.GetUserOffers(ctx, userID, page, limit)
 	if err != nil {
-		_ = c.Error(apperror.New(apperror.InternalError, "failed to get user offers", err))
+		_ = c.Error(apperror.New(apperror.InternalError,
+			fmt.Sprintf("failed to get user (userID: %d) offers", userID), err))
 		return
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	offersResp := dto.FormUserOffers(offersEnt, page, limit, int(total), totalPages)
+	offersResp := dto.FormUserOffers(offersEnt, page, limit, total, totalPages)
 
 	c.JSON(http.StatusOK, offersResp)
 }

@@ -47,27 +47,17 @@ func (r *OfferRepository) GetOfferByID(
 	return offer, nil
 }
 
+// Для предотвращения двух раундтрипов был сделан (и используется тут) OfferWithCount в repository/model/
 func (r *OfferRepository) SelectUserOffers(
 	ctx context.Context,
 	userID uint,
 	limit, offset int,
 ) ([]entity.Offer, int, error) {
 	var total int
-	offersModel := make([]model.Offer, 0, limit)
-
-	countUserOffers, args := squirrel.Select("count(*)").
-		From("offers").
-		Where(squirrel.Eq{"status": "pending", "user_id": userID}).
-		PlaceholderFormat(squirrel.Dollar).
-		MustSql()
-
-	err := r.db.SelectContext(ctx, &total, countUserOffers, args...)
-	if err != nil {
-		return nil, 0, apperror.New(apperror.DatabaseError, "error counting user offers", err)
-	}
 
 	selectUserOffersQuery, args := squirrel.Select("id, offer_price, currency, status, " +
-		"created_at, expires_at, shop_id, product_id").
+		"created_at, updated_at, expires_at, shop_id, product_id, user_id," +
+		"COUNT (*) OVER() as total_count").
 		From("offers").
 		Where(squirrel.Eq{"status": "pending", "user_id": userID}).
 		OrderBy("created_at desc").
@@ -76,13 +66,21 @@ func (r *OfferRepository) SelectUserOffers(
 		PlaceholderFormat(squirrel.Dollar).
 		MustSql()
 
-	err = r.db.SelectContext(ctx, &offersModel, selectUserOffersQuery, args...)
+	offersWithCount := make([]model.OfferWithCount, 0, limit)
+
+	err := r.db.SelectContext(ctx, &offersWithCount, selectUserOffersQuery, args...)
 	if err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "error selecting user offers", err)
 	}
 
-	offers := make([]entity.Offer, len(offersModel))
-	for i, offerModel := range offersModel {
+	if len(offersWithCount) == 0 {
+		return []entity.Offer{}, 0, nil
+	}
+
+	total = offersWithCount[0].TotalCount
+
+	offers := make([]entity.Offer, len(offersWithCount))
+	for i, offerModel := range offersWithCount {
 		offers[i] = offerModel.ConvertToEntity()
 	}
 

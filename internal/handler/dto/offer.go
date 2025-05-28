@@ -71,10 +71,10 @@ type GetUserOffersResp struct {
 }
 
 func FormUserOffers(ofrs []entity.Offer, page, limit, total, totalPages int) GetUserOffersResp {
-	data := make([]OfferResp, len(ofrs))
+	data := make([]OfferResp, 0, len(ofrs))
 
-	for i, ofr := range ofrs {
-		data[i] = OfferResp{
+	for _, ofr := range ofrs {
+		data = append(data, OfferResp{
 			ID:        ofr.ID,
 			Price:     ofr.Price,
 			Currency:  ofr.Currency,
@@ -83,7 +83,7 @@ func FormUserOffers(ofrs []entity.Offer, page, limit, total, totalPages int) Get
 			ExpiresAt: ofr.ExpiresAt,
 			ShopID:    ofr.ShopID,
 			ProductID: ofr.ProductID,
-		}
+		})
 	}
 
 	return GetUserOffersResp{
