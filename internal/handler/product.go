@@ -20,7 +20,8 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, limit, offset int) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{},
+		                                  limit, offset int) ([]entity.Product, int, error)
 	SelectShopProducts(ctx context.Context, storeID int, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, updateProduct product.UpdateProduct) error
 	EnrichProducts(ctx context.Context, products []entity.Product) ([]entity.Product, error)
@@ -132,7 +133,7 @@ func (h *ProductHandler) SearchProductsByName(c *gin.Context) {
 
 	products, total, err := h.productService.SelectProductsByName(c.Request.Context(), name, offset, limit)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -175,7 +176,7 @@ func (h *ProductHandler) SelectFilteredProducts(c *gin.Context) {
 
 	products, total, err := h.productService.SelectProductsByCategoryAndAttributes(c.Request.Context(), categoryID, filters, limit, offset)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 

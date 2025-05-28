@@ -11,7 +11,8 @@ type Repository interface {
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, 
+		                                 offset, limit int) ([]entity.Product, int, error)
 	SelectShopProducts(ctx context.Context, shopID int, offset, limit int) ([]entity.Product, int, error)
 	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
 	GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
@@ -34,6 +35,7 @@ func (ps *Service) CreateProduct(
 	return ps.ProductRepository.InsertProduct(ctx, product)
 }
 
+// GetProductByID получает продукт по его ID
 func (ps *Service) GetProductByID(
 	ctx context.Context,
 	id string,
@@ -52,7 +54,7 @@ func (ps *Service) GetProductByID(
 	product.MaximalPrice = maxPrice
 	return product, nil
 }
-
+// SelectProducts получает весь список продуктов
 func (ps *Service) SelectProducts(
 	ctx context.Context,
 	offset,
@@ -71,6 +73,7 @@ func (ps *Service) SelectProducts(
 	return products, total, nil
 }
 
+// SelectProductsByName выполняет поиск продукта по его имени
 func (ps *Service) SelectProductsByName(
 	ctx context.Context,
 	name string,
@@ -90,6 +93,7 @@ func (ps *Service) SelectProductsByName(
 	return products, total, nil
 }
 
+// SelectProductsByCategoryAndAttributes выполняет фильтрацию по ID категории и аттрибутам продукта
 func (ps *Service) SelectProductsByCategoryAndAttributes(
 	ctx context.Context,
 	categoryID int,
@@ -109,6 +113,7 @@ func (ps *Service) SelectProductsByCategoryAndAttributes(
 	return products, total, nil
 }
 
+// SelectShopProducts выполняет фильтрацию по ID магазина
 func (ps *Service) SelectShopProducts(
 	ctx context.Context,
 	shopID int,
@@ -136,6 +141,7 @@ func (ps *Service) UpdateProduct(
 	return ps.ProductRepository.UpdateProduct(ctx, id, updateProduct)
 }
 
+// EnrichProducts выполняет обогащение продукта информацией о диапазоне цены, средней оценке и количестве отзывов
 func (ps *Service) EnrichProducts(
 	ctx context.Context,
 	products []entity.Product,

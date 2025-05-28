@@ -36,6 +36,7 @@ func (r *ProductRepository) InsertProduct(
 	return productModel.ID, nil
 }
 
+// GetProductByID позволяет получить продукт по его ID
 func (r *ProductRepository) GetProductByID(
 	ctx context.Context,
 	id string,
@@ -52,6 +53,7 @@ func (r *ProductRepository) GetProductByID(
 	return model.ConvertProductToEntity(productModel), nil
 }
 
+// SelectProducts выводит весь список продуктов
 func (r *ProductRepository) SelectProducts(
 	ctx context.Context,
 	offset,
@@ -77,6 +79,7 @@ func (r *ProductRepository) SelectProducts(
 	return products, total, nil
 }
 
+// SelectProductsByName выполняет поиск по имени
 func (r *ProductRepository) SelectProductsByName(
 	ctx context.Context,
 	name string,
@@ -107,6 +110,7 @@ func (r *ProductRepository) SelectProductsByName(
 	return products, int(total), nil
 }
 
+// SelectProductsByCategoryAndAttributes выполняет фильтрацию по ID категории и аттрибутам продукта
 func (r *ProductRepository) SelectProductsByCategoryAndAttributes(
 	ctx context.Context,
 	categoryID int,
@@ -215,6 +219,7 @@ func (r *ProductRepository) SelectProductsByCategoryAndAttributes(
 	return products, totalCount, nil
 }
 
+// SelectShopProducts выполняет фильтрацию по ID магазина
 func (r *ProductRepository) SelectShopProducts(
 	ctx context.Context,
 	shopID int, offset, limit int,
@@ -257,6 +262,7 @@ func (r *ProductRepository) UpdateProduct(
 	return nil
 }
 
+// GetProductAttributesByID получает аттрибуты продукта по его ID
 func (r *ProductRepository) GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
 	var attributesJSONb []byte
 
@@ -277,6 +283,7 @@ func (r *ProductRepository) GetProductAttributesByID(ctx context.Context, produc
 	return attributes, nil
 }
 
+// GetPriceRangeByProductID получает минимальную и максимальную цену на продукт
 func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error) {
 	var priceRange struct {
 		Min sql.NullFloat64 `Db:"min"`
@@ -287,18 +294,19 @@ func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, produc
 	if err != nil {
 		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate min/max price", err)
 	}
-	min := 0.0
-	max := 0.0
+	minPrice := 0.0
+	maxPrice := 0.0
 	if priceRange.Min.Valid {
-		min = priceRange.Min.Float64
+		minPrice = priceRange.Min.Float64
 	}
 	if priceRange.Max.Valid {
-		max = priceRange.Max.Float64
+		maxPrice = priceRange.Max.Float64
 	}
 
-	return min, max, nil
+	return minPrice, maxPrice, nil
 }
 
+// GetAverageRatingByProductID получает средний рейтинг и количество отзывов на продукт
 func (r *ProductRepository) GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error) {
 	var reviewStats struct {
 		Average sql.NullFloat64 `Db:"average"`
