@@ -14,8 +14,9 @@ proxy:
 #   host: app.example.com
 
 registry:
-  username: my-user
   server: registry.orb.local
+  username:
+    - KAMAL_REGISTRY_PASSWORD
   password:
     - KAMAL_REGISTRY_PASSWORD
 
