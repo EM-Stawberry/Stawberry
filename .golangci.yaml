@@ -15,6 +15,9 @@ linters:
     - revive # Enable after old code is removed
     - gosec # Security linter. Enable later.
   settings:
+    errcheck:
+      exclude-functions:
+        - (*github.com/gin-gonic/gin.Context).Error
     revive:
       rules:
         - name: exported
