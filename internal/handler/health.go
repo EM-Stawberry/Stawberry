@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +22,21 @@ func (h *HealthHandler) health(c *gin.Context) {
 	})
 }
 
-func (h *HealthHandler) RegisterRoutes(group gin.IRoutes) {
-	group.GET("/health", h.health)
+func (h *HealthHandler) authCheck(c *gin.Context) {
+	userID, ok := helpers.UserIDContext(c)
+	var status string
+	if ok {
+		status = "UserID found"
+	} else {
+		status = "UserID not found"
+	}
+	isStore, ok := helpers.UserIsStoreContext(c)
+
+	c.JSON(http.StatusOK, gin.H{
+		"userID":       userID,
+		"status":       status,
+		"isStore":      isStore,
+		"isStoreFound": ok,
+		"time":         time.Now().Unix(),
+	})
 }
