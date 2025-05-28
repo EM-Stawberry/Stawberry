@@ -20,34 +20,34 @@ type Repository interface {
 }
 
 type Service struct {
-	productRepository Repository
+	ProductRepository Repository
 }
 
 func NewService(productRepo Repository) *Service {
-	return &Service{productRepository: productRepo}
+	return &Service{ProductRepository: productRepo}
 }
 
 func (ps *Service) CreateProduct(
 	ctx context.Context,
 	product Product,
 ) (uint, error) {
-	return ps.productRepository.InsertProduct(ctx, product)
+	return ps.ProductRepository.InsertProduct(ctx, product)
 }
 
 func (ps *Service) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
-	product, err := ps.productRepository.GetProductByID(ctx, id)
+	product, err := ps.ProductRepository.GetProductByID(ctx, id)
 	if err != nil {
 		return entity.Product{}, err
 	}
-	attrs, err := ps.productRepository.GetProductAttributesByID(ctx, id)
+	attrs, err := ps.ProductRepository.GetProductAttributesByID(ctx, id)
 	if err != nil {
 		return entity.Product{}, err
 	}
 	product.Attributes = attrs
-	minPrice, maxPrice, _ := ps.productRepository.GetPriceRangeByProductID(ctx, product.ID)
+	minPrice, maxPrice, _ := ps.ProductRepository.GetPriceRangeByProductID(ctx, product.ID)
 	product.MinimalPrice = minPrice
 	product.MaximalPrice = maxPrice
 	return product, nil
@@ -58,7 +58,7 @@ func (ps *Service) SelectProducts(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	products, total, err := ps.productRepository.SelectProducts(ctx, offset, limit)
+	products, total, err := ps.ProductRepository.SelectProducts(ctx, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -77,7 +77,7 @@ func (ps *Service) SelectProductsByName(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	products, total, err := ps.productRepository.SelectProductsByName(ctx, name, offset, limit)
+	products, total, err := ps.ProductRepository.SelectProductsByName(ctx, name, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -96,7 +96,7 @@ func (ps *Service) SelectProductsByCategoryAndAttributes(
 	filters map[string]interface{},
 	offset, limit int,
 ) ([]entity.Product, int, error) {
-	products, total, err := ps.productRepository.SelectProductsByCategoryAndAttributes(ctx, categoryID, filters, offset, limit)
+	products, total, err := ps.ProductRepository.SelectProductsByCategoryAndAttributes(ctx, categoryID, filters, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -115,7 +115,7 @@ func (ps *Service) SelectShopProducts(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	products, total, err := ps.productRepository.SelectShopProducts(ctx, shopID, offset, limit)
+	products, total, err := ps.ProductRepository.SelectShopProducts(ctx, shopID, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -133,7 +133,7 @@ func (ps *Service) UpdateProduct(
 	id string,
 	updateProduct UpdateProduct,
 ) error {
-	return ps.productRepository.UpdateProduct(ctx, id, updateProduct)
+	return ps.ProductRepository.UpdateProduct(ctx, id, updateProduct)
 }
 
 func (ps *Service) EnrichProducts(
@@ -141,12 +141,12 @@ func (ps *Service) EnrichProducts(
 	products []entity.Product,
 ) ([]entity.Product, error) {
 	for i := range products {
-		minPrice, maxPrice, err := ps.productRepository.GetPriceRangeByProductID(ctx, products[i].ID)
+		minPrice, maxPrice, err := ps.ProductRepository.GetPriceRangeByProductID(ctx, products[i].ID)
 		if err != nil {
 			return nil, err
 		}
 
-		avgRating, countReviews, err := ps.productRepository.GetAverageRatingByProductID(ctx, products[i].ID)
+		avgRating, countReviews, err := ps.ProductRepository.GetAverageRatingByProductID(ctx, products[i].ID)
 		if err != nil {
 			return nil, err
 		}
