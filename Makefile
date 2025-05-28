@@ -53,11 +53,8 @@ docker-build:
 docker-push:
 	docker push localhost:5000/stawberry
 
-.PHONY: deploy
-deploy:
-	kamal setup -c deploy/kamal.yml
+compose-up:
+	docker-compose -f deploy/docker-compose.yml up -d
 
-build-deploy:
-	docker-build
-	docker-push
-	deploy
+compose-down:
+	docker-compose -f deploy/docker-compose.yml down
