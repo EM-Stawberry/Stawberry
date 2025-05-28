@@ -31,10 +31,10 @@ func (r *OfferRepository) InsertOffer(
 
 	checkExistingOfferQuery, args := squirrel.Select("count(*)").
 		From("offers").
-		Where(squirrel.Eq{"status": "pending"},
-			squirrel.Eq{"product_id": offerModel.ProductID},
-			squirrel.Eq{"shop_id": offerModel.ShopID},
-			squirrel.Eq{"user_id": offerModel.UserID}).
+		Where(squirrel.Eq{"status": "pending",
+			"product_id": offerModel.ProductID,
+			"shop_id":    offerModel.ShopID,
+			"user_id":    offerModel.UserID}).
 		PlaceholderFormat(squirrel.Dollar).
 		MustSql()
 	tx, err := r.db.BeginTxx(ctx, nil)

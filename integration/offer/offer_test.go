@@ -179,7 +179,7 @@ var _ = ginkgo.Describe("offer handlers", ginkgo.Ordered, func() {
 		}
 
 		offerRepo = repository.NewOfferRepository(db)
-		offerServ = offer.NewService(offerRepo)
+		offerServ = offer.NewService(offerRepo, nil)
 		offerHand = handler.NewOfferHandler(offerServ)
 	})
 
