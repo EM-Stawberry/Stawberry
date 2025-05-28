@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -62,7 +63,11 @@ func (r *TokenRepository) GetActivesTokenByUserID(
 		return nil, apperror.New(apperror.DatabaseError, "failed to fetch user tokens", err)
 	}
 
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			slog.Warn("Failed to close DB rows", "error", err)
+		}
+	}()
 
 	tokens := make([]entity.RefreshToken, 0)
 	for rows.Next() {

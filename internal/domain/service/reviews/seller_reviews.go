@@ -20,7 +20,7 @@ type SellerReviewRepository interface {
 // SellerReviewsService defines the interface for seller review business logic.
 type SellerReviewsService interface {
 	AddReview(ctx context.Context, sellerID int, userID int, rating int, review string) (int, error)
-	GetReviewsById(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
+	GetReviewsByID(ctx context.Context, sellerID int) ([]entity.SellerReview, error)
 }
 
 type SellerReviewService struct {
@@ -64,7 +64,7 @@ func (s *SellerReviewService) AddReview(
 	return sellerID, nil
 }
 
-func (s *SellerReviewService) GetReviewsById(
+func (s *SellerReviewService) GetReviewsByID(
 	ctx context.Context, sellerID int,
 ) (
 	[]entity.SellerReview, error,

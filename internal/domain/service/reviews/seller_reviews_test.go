@@ -25,7 +25,7 @@ func newMockSellerReviewRepository() *mockSellerReviewRepository {
 }
 
 func (m *mockSellerReviewRepository) AddReview(
-	ctx context.Context, sellerID int, userID int, rating int, review string,
+	_ context.Context, sellerID int, userID int, rating int, review string,
 ) (int, error) {
 	if _, exists := m.sellers[sellerID]; !exists {
 		return 0, apperror.NewReviewError(apperror.NotFound, "seller not found")
@@ -42,7 +42,7 @@ func (m *mockSellerReviewRepository) AddReview(
 }
 
 func (m *mockSellerReviewRepository) GetSellerByID(
-	ctx context.Context, sellerID int,
+	_ context.Context, sellerID int,
 ) (entity.SellerReview, error) {
 	seller, exists := m.sellers[sellerID]
 	if !exists {
@@ -52,7 +52,7 @@ func (m *mockSellerReviewRepository) GetSellerByID(
 }
 
 func (m *mockSellerReviewRepository) GetReviewsBySellerID(
-	ctx context.Context, sellerID int,
+	_ context.Context, sellerID int,
 ) ([]entity.SellerReview, error) {
 	return m.reviews[sellerID], nil
 }
@@ -111,7 +111,7 @@ var _ = Describe("SellerReviewService", func() {
 		})
 	})
 
-	Context("GetReviewsById", func() {
+	Context("GetReviewsByID", func() {
 		It("should return reviews for existing seller", func() {
 			// Arrange
 			sellerID := 1
@@ -135,7 +135,7 @@ var _ = Describe("SellerReviewService", func() {
 			}
 
 			// Act
-			reviews, err := service.GetReviewsById(ctx, sellerID)
+			reviews, err := service.GetReviewsByID(ctx, sellerID)
 
 			// Assert
 			Expect(err).NotTo(HaveOccurred())
@@ -148,7 +148,7 @@ var _ = Describe("SellerReviewService", func() {
 
 		It("should return error for non-existent seller", func() {
 			// Act
-			_, err := service.GetReviewsById(ctx, 999)
+			_, err := service.GetReviewsByID(ctx, 999)
 
 			// Assert
 			Expect(err).To(HaveOccurred())

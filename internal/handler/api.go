@@ -6,10 +6,7 @@
 package handler
 
 import (
-	"net/http"
-	"time"
 
-	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
@@ -42,29 +39,31 @@ func SetupRouter(
 ) *gin.Engine {
 	router := gin.New()
 
-	// router.Use(gin.Logger())
-	// router.Use(gin.Recovery())
-
-	// Add custom middleware using zap
 	router.Use(middleware.ZapLogger(logger))
 	router.Use(middleware.ZapRecovery(logger))
-
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
-
-	// Эндпоинт для проверки здоровья сервиса
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"time":   time.Now().Unix(),
-		})
-	})
 
 	// Swagger UI эндпоинт
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// base это эндпойнты без префикса версии
 	base := router.Group(basePath)
-	auth := base.Group("/auth")
+
+	// public это эндпойнты с префиксом версии
+	public := base.Group("/")
+
+	// secured это эндпойнты, которые не сработают без авторизационного токера
+	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
+
+	// healtcheck эндпойнты
+	{
+		base.GET("/health", healthH.health)
+		secured.GET("/auth_required", healthH.authCheck)
+	}
+
+	// эндпойнты регистрации-авторизации
+	auth := public.Group("/auth")
 	{
 		auth.POST("/reg", userH.Registration)
 		auth.POST("/login", userH.Login)
@@ -72,43 +71,22 @@ func SetupRouter(
 		auth.POST("/refresh", userH.Refresh)
 	}
 
-	public := base.Group("/")
+	// эндпойнты запросов на покупку
+	{
+		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+	}
+
+	// эндпойнты отзывов
 	{
 		public.GET("/products/:id/reviews", productReviewH.GetReviews)
 		public.GET("/sellers/:id/reviews", sellerReviewH.GetReviews)
-	}
-
-	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
-	{
-		// Тестовый эндпоинт для проверки аутентификации
-		secured.GET("/auth_required", func(c *gin.Context) {
-			userID, ok := helpers.UserIDContext(c)
-			var status string
-			if ok {
-				status = "UserID found"
-			} else {
-				status = "UserID not found"
-			}
-			isStore, ok := helpers.UserIsStoreContext(c)
-
-			if !ok {
-				logger.Warn("Missing isStore field in context")
-			}
-
-			c.JSON(http.StatusOK, gin.H{
-				"userID":  userID,
-				"status":  status,
-				"isStore": isStore,
-				"time":    time.Now().Unix(),
-			})
-		})
-
-		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
-
-		// Эндпоинты для добавления отзывов
 		secured.POST("/products/:id/reviews", productReviewH.AddReview)
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
+
+	// Эти заглушки можно убрать после реализации соответствующих хендлеров
+	_ = productH
+	_ = notificationH
 
 	return router
 }

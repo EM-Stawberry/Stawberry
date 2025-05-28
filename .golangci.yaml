@@ -10,10 +10,23 @@ linters:
     - cyclop # checks function and package cyclomatic complexity
     - gocognit # checks function cognitive complexity
     - godox # tool for detection of F*IXME, T*ODO and other comment keywords
-    - gofmt # checks if the code is formatted according to 'gofmt' command
-    - goimports # Checks if the code and import statements are formatted according to the 'goimports' command
     - lll # reports long lines
     - rowserrcheck # checks whether Rows.Err of rows is checked successfully
-    - gosimple # Detects overly complex code that can be simplified
     - revive # Enable after old code is removed
     - gosec # Security linter. Enable later.
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*github.com/gin-gonic/gin.Context).Error
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+    gosec:
+      excludes:
+        - G115
+
+formatters:
+  enable:
+    - gofmt # checks if the code is formatted according to 'gofmt' command
+    - goimports # Checks if the code and import statements are formatted according to the 'goimports' command

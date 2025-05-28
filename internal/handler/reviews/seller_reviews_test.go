@@ -29,7 +29,7 @@ func newMockSellerReviewsService() *mockSellerReviewsService {
 }
 
 func (m *mockSellerReviewsService) AddReview(
-	ctx context.Context, sellerID int, userID int, rating int, review string,
+	_ context.Context, sellerID int, userID int, rating int, review string,
 ) (int, error) {
 	if sellerID == 999 {
 		return 0, apperror.NewReviewError(apperror.NotFound, "seller not found")
@@ -45,8 +45,8 @@ func (m *mockSellerReviewsService) AddReview(
 	return sellerID, nil
 }
 
-func (m *mockSellerReviewsService) GetReviewsById(
-	ctx context.Context, sellerID int,
+func (m *mockSellerReviewsService) GetReviewsByID(
+	_ context.Context, sellerID int,
 ) ([]entity.SellerReview, error) {
 	if sellerID == 999 {
 		return nil, apperror.NewReviewError(apperror.NotFound, "seller not found")
@@ -64,7 +64,9 @@ var _ = Describe("SellerReviewsHandler", func() {
 	BeforeEach(func() {
 		service = newMockSellerReviewsService()
 		handler = reviews.NewSellerReviewsHandler(service, zap.NewNop())
-		router = gin.Default()
+		gin.SetMode(gin.ReleaseMode)
+		router = gin.New()
+
 		router.Use(func(c *gin.Context) {
 			c.Set("userID", 1)
 			c.Next()
@@ -91,7 +93,8 @@ var _ = Describe("SellerReviewsHandler", func() {
 			// Assert
 			Expect(w.Code).To(Equal(http.StatusCreated))
 			var response map[string]string
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(response["message"]).To(Equal("review added successfully"))
 		})
 
@@ -147,7 +150,8 @@ var _ = Describe("SellerReviewsHandler", func() {
 			// Assert
 			Expect(w.Code).To(Equal(http.StatusOK))
 			var response []entity.SellerReview
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(response).To(HaveLen(1))
 			Expect(response[0].SellerID).To(Equal(1))
 			Expect(response[0].UserID).To(Equal(1))

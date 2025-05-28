@@ -57,7 +57,7 @@ func StartServer(router *gin.Engine, mailer email.MailerService, cfg *config.Ser
 		mailer.Stop(ctx)
 
 		if err := srv.Shutdown(ctx); err != nil {
-			srv.Close()
+			_ = srv.Close()
 			return fmt.Errorf("could not stop server gracefully: %w", err)
 		}
 	}
