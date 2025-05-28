@@ -16,7 +16,7 @@ services:
       - TOKEN_SECRET=${TOKEN_SECRET}
       - TOKEN_ACCESS_DURATION=15m
       - TOKEN_REFRESH_DURATION=24h
-      - ENVIRONMENT=dev
+      - ENVIRONMENT=production
     depends_on:
       - db
     networks:
@@ -46,7 +46,7 @@ services:
       - app-network
 
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.4
     ports:
       - "443:443"
     volumes:
