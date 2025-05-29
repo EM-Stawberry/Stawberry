@@ -8,6 +8,7 @@ import (
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews/dto"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -62,19 +63,14 @@ func (h *ProductReviewsHandler) AddReview(c *gin.Context) {
 		return
 	}
 
-	userID, ok := c.Get("userID")
+	userID, ok := helpers.UserIDContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
 		log.Warn("Failed to get userID from context", zap.Error(err))
 		return
 	}
 
-	uid, ok := userID.(int)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid userID type"})
-		log.Warn("Invalid userID type")
-		return
-	}
+	uid := int(userID)
 
 	id, err := h.prs.AddReview(c.Request.Context(), productID, uid, addReview.Rating, addReview.Review)
 	if err != nil {

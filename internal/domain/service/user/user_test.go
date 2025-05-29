@@ -38,6 +38,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, uint(1)).Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 		mockPasswordManager.EXPECT().Hash(testUser.Password).Return(hashedPassword, nil)
+		mockEmailService.EXPECT().Registered(testUser.Name, testUser.Email)
 
 		accessToken, refreshToken, err := userService.CreateUser(ctx, testUser, fingerprint)
 

@@ -162,7 +162,8 @@ var _ = ginkgo.Describe("offer patch status handler", ginkgo.Ordered, func() {
 
 	ginkgo.Context("when the user is the shop owner", func() {
 
-		router := gin.Default()
+		gin.SetMode(gin.ReleaseMode)
+		router := gin.New()
 		router.Use(middleware.Errors())
 		router.Use(mockAuthShopOwnerMiddleware())
 		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
@@ -309,7 +310,8 @@ var _ = ginkgo.Describe("offer patch status handler", ginkgo.Ordered, func() {
 
 	ginkgo.Context("when the user is an owner of a different shop", func() {
 
-		router := gin.Default()
+		router := gin.New()
+		gin.SetMode(gin.ReleaseMode)
 		router.Use(middleware.Errors())
 		router.Use(mockAuthIncorrectShopOwnerMiddleware())
 		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
@@ -338,7 +340,9 @@ var _ = ginkgo.Describe("offer patch status handler", ginkgo.Ordered, func() {
 
 	ginkgo.Context("when a user is the creator of an offer", func() {
 
-		router := gin.Default()
+		gin.SetMode(gin.ReleaseMode)
+		router := gin.New()
+
 		router.Use(middleware.Errors())
 		router.Use(mockAuthBuyerMiddleware())
 		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)
@@ -390,7 +394,9 @@ var _ = ginkgo.Describe("offer patch status handler", ginkgo.Ordered, func() {
 
 	ginkgo.Context("when a user is NOT the creator of an offer", func() {
 
-		router := gin.Default()
+		gin.SetMode(gin.ReleaseMode)
+		router := gin.New()
+
 		router.Use(middleware.Errors())
 		router.Use(mockAuthBuyerMiddleware())
 		router.PATCH("/api/test/offers/:offerID/status-update", offerHand.PatchOfferStatus)

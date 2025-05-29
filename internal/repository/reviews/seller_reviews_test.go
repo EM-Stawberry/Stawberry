@@ -25,7 +25,7 @@ func newMockSellerReviewRepository() *mockSellerReviewRepository {
 }
 
 func (m *mockSellerReviewRepository) AddReview(
-	ctx context.Context, sellerID int, userID int, rating int, review string,
+	_ context.Context, sellerID int, userID int, rating int, review string,
 ) (int, error) {
 	reviewEntity := entity.SellerReview{
 		ID:       m.nextID,
@@ -40,13 +40,13 @@ func (m *mockSellerReviewRepository) AddReview(
 }
 
 func (m *mockSellerReviewRepository) GetReviewsBySellerID(
-	ctx context.Context, sellerID int,
+	_ context.Context, sellerID int,
 ) ([]entity.SellerReview, error) {
 	return m.reviews[sellerID], nil
 }
 
 func (m *mockSellerReviewRepository) GetSellerByID(
-	ctx context.Context, sellerID int,
+	_ context.Context, sellerID int,
 ) (entity.SellerReview, error) {
 	reviews, exists := m.reviews[sellerID]
 	if !exists || len(reviews) == 0 {
