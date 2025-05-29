@@ -1,8 +1,9 @@
 package dto
 
 import (
-	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
 type PostOfferReq struct {
