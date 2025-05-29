@@ -3,7 +3,6 @@ package reviews_test
 import (
 	"context"
 	"errors"
-	"testing"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -152,8 +151,3 @@ var _ = Describe("SellerReviewsRepository", func() {
 		})
 	})
 })
-
-func TestSellerReviews(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "SellerReviews Repository Suite")
-}
