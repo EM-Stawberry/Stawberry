@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -184,8 +183,3 @@ var _ = Describe("SellerReviewsHandler", func() {
 		})
 	})
 })
-
-func TestSellerReviewsHandler(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "SellerReviews Handler Suite")
-}
