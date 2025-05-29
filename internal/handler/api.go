@@ -6,12 +6,10 @@
 package handler
 
 import (
-
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/text/currency"
 
-	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
@@ -44,10 +42,8 @@ func SetupRouter(
 ) *gin.Engine {
 	router := gin.New()
 
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		_ = v.RegisterValidation("iso4217", currencyValidator)
-	}
-
+	// Добавляет кастомные валидаторы для использования в json-тегах
+	setupValitators()
 
 	// Add custom middleware using zap
 	router.Use(middleware.ZapLogger(logger))
@@ -82,44 +78,18 @@ func SetupRouter(
 		auth.POST("/refresh", userH.Refresh)
 	}
 
-	public := base.Group("/")
+	// эндпойнты отзывов
 	{
-
 		public.GET("/products/:id/reviews", productReviewH.GetReviews)
 		public.GET("/sellers/:id/reviews", sellerReviewH.GetReviews)
-	}
-
-	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
-	{
-		// Тестовый эндпоинт для проверки аутентификации
-		secured.GET("/auth_required", func(c *gin.Context) {
-			userID, ok := helpers.UserIDContext(c)
-			var status string
-			if ok {
-				status = "UserID found"
-			} else {
-				status = "UserID not found"
-			}
-			isStore, ok := helpers.UserIsStoreContext(c)
-
-			if !ok {
-				logger.Warn("Missing isStore field in context")
-			}
-
-			c.JSON(http.StatusOK, gin.H{
-				"userID":  userID,
-				"status":  status,
-				"isStore": isStore,
-				"time":    time.Now().Unix(),
-			})
-		})
-
-		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
-		secured.POST("offers", offerH.PostOffer)
-
-		// Эндпоинты для добавления отзывов
 		secured.POST("/products/:id/reviews", productReviewH.AddReview)
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
+	}
+
+	// эндпойнты запросов на покупку
+	{
+		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+		secured.POST("offers", offerH.PostOffer)
 	}
 
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
@@ -129,6 +99,15 @@ func SetupRouter(
 	return router
 }
 
+func setupValitators() {
+	// привязка валидатора кодов валюты (прим: USD, RUB и т.д.)
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		_ = v.RegisterValidation("iso4217", currencyValidator)
+	}
+
+}
+
+// реализация валидатора кодов валюты
 var currencyValidator validator.Func = func(fl validator.FieldLevel) bool {
 	currencyCode := fl.Field().String()
 	_, err := currency.ParseISO(currencyCode)

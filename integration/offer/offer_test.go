@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"time"
+
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
 	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 
@@ -157,19 +158,15 @@ func newMockMailer() email.MailerService {
 }
 
 func (m *mockMailer) Registered(userName string, userMail string) {
-	return
 }
 
 func (m *mockMailer) StatusUpdate(offerID uint, status string, userMail string) {
-	return
 }
 
 func (m *mockMailer) OfferReceived(offerID uint, userMail string) {
-	return
 }
 
 func (m *mockMailer) Stop(ctx context.Context) {
-	return
 }
 
 func setupRouter(authMiddleware gin.HandlerFunc, method, path string, handlerFunc gin.HandlerFunc) *gin.Engine {
