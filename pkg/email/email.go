@@ -11,13 +11,14 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-//go:generate mockgen -source=$GOFILE -destination=mock_email/mock_email.go -package=mock_email
+//go:generate go.uber.org/mock/mockgen -source=$GOFILE -destination=mock_email/mock_email.go -package=mock_email
 
 type MailerService interface {
 	Registered(userName string, userMail string)
 	StatusUpdate(offerID uint, status string, userMail string)
 	OfferReceived(offerID uint, userMail string)
 	Stop(ctx context.Context)
+	SendGuestOfferNotification(email string, subject string, body string)
 }
 
 type SMTPMailer struct {
@@ -208,4 +209,13 @@ func (m *SMTPMailer) createMessage(to, subject, body string) *gomail.Message {
 	msg.SetHeader("Subject", subject)
 	msg.SetBody("text/plain", body)
 	return msg
+}
+
+func (m *SMTPMailer) SendGuestOfferNotification(email string, subject string, body string) {
+	if !m.enabled {
+		return
+	}
+
+	msg := m.createMessage(email, subject, body)
+	m.enqueue(msg)
 }
