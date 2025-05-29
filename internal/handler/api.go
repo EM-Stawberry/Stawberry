@@ -16,6 +16,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	guesthandler "github.com/EM-Stawberry/Stawberry/internal/handler/guestoffer"
 )
 
 // @Summary Получить статус сервера
@@ -32,6 +34,7 @@ func SetupRouter(
 	notificationH *NotificationHandler,
 	productReviewH *reviews.ProductReviewsHandler,
 	sellerReviewH *reviews.SellerReviewsHandler,
+	guestOfferH *guesthandler.Handler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
 	basePath string,
@@ -69,6 +72,11 @@ func SetupRouter(
 		auth.POST("/login", userH.Login)
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
+	}
+
+	// эндпойнты для гостевых заявок
+	{
+		public.POST("/guest/offers", guestOfferH.PostGuestOffer)
 	}
 
 	// эндпойнты запросов на покупку
