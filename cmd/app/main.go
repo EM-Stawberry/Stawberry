@@ -20,10 +20,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/EM-Stawberry/Stawberry/config"
+	guestofferservice "github.com/EM-Stawberry/Stawberry/internal/domain/service/guestoffer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
+	guesthandler "github.com/EM-Stawberry/Stawberry/internal/handler/guestoffer"
 	hdlr "github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	guestofferrepo "github.com/EM-Stawberry/Stawberry/internal/repository/guestoffer"
 	repo "github.com/EM-Stawberry/Stawberry/internal/repository/reviews"
 	"github.com/gin-gonic/gin"
 )
@@ -79,6 +82,7 @@ func initializeApp(
 	productReviewsRepository := repo.NewProductReviewRepository(db, log)
 	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
 	auditRepository := repository.NewAuditRepository(db)
+	guestOfferRepository := guestofferrepo.NewRepository(db)
 	log.Info("Repositories initialized")
 
 	passwordManager := security.NewArgon2idPasswordManager()
@@ -97,6 +101,7 @@ func initializeApp(
 	productReviewsService := reviews.NewProductReviewService(productReviewsRepository, log)
 	sellerReviewsService := reviews.NewSellerReviewService(sellerReviewsRepository, log)
 	auditService := audit.NewAuditService(auditRepository)
+	guestOfferService := guestofferservice.NewService(guestOfferRepository, mailer, log)
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()
@@ -107,6 +112,7 @@ func initializeApp(
 	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
 	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
 	auditHandler := handler.NewAuditHandler(auditService)
+	guestOfferHandler := guesthandler.NewHandler(guestOfferService, log)
 	log.Info("Handlers initialized")
 
 	auditMiddleware := middleware.NewAuditMiddleware(&cfg.Audit, auditService, log)
@@ -119,6 +125,7 @@ func initializeApp(
 		notificationHandler,
 		productReviewsHandler,
 		sellerReviewsHandler,
+		guestOfferHandler,
 		userService,
 		tokenService,
 		basePath,

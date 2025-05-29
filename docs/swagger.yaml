@@ -213,6 +213,31 @@ definitions:
       user_id:
         type: integer
     type: object
+  guestoffer.GuestPostOfferReq:
+    properties:
+      currency:
+        type: string
+      guest_email:
+        type: string
+      guest_name:
+        type: string
+      guest_phone:
+        type: string
+      offer_price:
+        type: number
+      product_id:
+        type: integer
+      store_id:
+        type: integer
+    required:
+    - currency
+    - guest_email
+    - guest_name
+    - guest_phone
+    - offer_price
+    - product_id
+    - store_id
+    type: object
 info:
   contact: {}
   description: Это API для управления сделками по продуктам.
@@ -365,6 +390,42 @@ paths:
       summary: Регистрация нового пользователя
       tags:
       - auth
+  /guest/offers:
+    post:
+      consumes:
+      - application/json
+      description: Allows sending an offer for a product on behalf of a guest
+      parameters:
+      - description: Guest offer data
+        in: body
+        name: offer
+        required: true
+        schema:
+          $ref: '#/definitions/guestoffer.GuestPostOfferReq'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Offer accepted and forwarded
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid guest offer data
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "404":
+          description: Store or product not found
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Send a guest offer
+      tags:
+      - guest
   /health:
     get:
       description: Возвращает статус сервера и текущее время

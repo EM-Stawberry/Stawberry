@@ -225,6 +225,61 @@
                 }
             }
         },
+        "/guest/offers": {
+            "post": {
+                "description": "Allows sending an offer for a product on behalf of a guest",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guest"
+                ],
+                "summary": "Send a guest offer",
+                "parameters": [
+                    {
+                        "description": "Guest offer data",
+                        "name": "offer",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/guestoffer.GuestPostOfferReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Offer accepted and forwarded",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid guest offer data",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Store or product not found",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Возвращает статус сервера и текущее время",
@@ -1138,6 +1193,41 @@
                     "type": "integer"
                 },
                 "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "guestoffer.GuestPostOfferReq": {
+            "type": "object",
+            "required": [
+                "currency",
+                "guest_email",
+                "guest_name",
+                "guest_phone",
+                "offer_price",
+                "product_id",
+                "store_id"
+            ],
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "guest_email": {
+                    "type": "string"
+                },
+                "guest_name": {
+                    "type": "string"
+                },
+                "guest_phone": {
+                    "type": "string"
+                },
+                "offer_price": {
+                    "type": "number"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "store_id": {
                     "type": "integer"
                 }
             }

@@ -22,6 +22,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
+
+	guesthandler "github.com/EM-Stawberry/Stawberry/internal/handler/guestoffer"
 )
 
 // @Summary		Получить статус сервера
@@ -38,6 +40,7 @@ func SetupRouter(
 	notificationH *NotificationHandler,
 	productReviewH *reviews.ProductReviewsHandler,
 	sellerReviewH *reviews.SellerReviewsHandler,
+	guestOfferH *guesthandler.Handler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
 	basePath string,
@@ -89,6 +92,11 @@ func SetupRouter(
 	{
 		public.GET("/products", productH.GetProducts)
 		public.GET("/products/:id", productH.GetProductByID)
+	}
+
+	// эндпойнты для гостевых заявок
+	{
+		public.POST("/guest/offers", guestOfferH.PostGuestOffer)
 	}
 
 	// эндпойнты запросов на покупку
