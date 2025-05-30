@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
-	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"math"
 	"net/http"
 	"strconv"
+
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
