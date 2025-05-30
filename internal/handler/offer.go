@@ -2,12 +2,10 @@ package handler
 
 import (
 	"context"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"math"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -135,9 +133,6 @@ func (h *OfferHandler) GetOffer(c *gin.Context) {
 // @failure 500 {object} apperror.Error
 // @Router /offers/{offerID} [patch]
 func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
-	ctx, ctxCancel := context.WithTimeout(c.Request.Context(), time.Second*10)
-	defer ctxCancel()
-
 	id, err := strconv.Atoi(c.Param("offerID"))
 	if err != nil {
 		_ = c.Error(apperror.New(apperror.BadRequest, "offerID must be numeric", err))
@@ -154,44 +149,26 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 		return
 	}
 
-	//tmp, ok := c.Get("user")
-	//usr := tmp.(entity.User)
-	//if !ok {
-	//	c.Error(apperror.New(apperror.InternalError, "user context not found",
-	//		fmt.Errorf("if we're here - someone changed the key at the bottom of auth middleware")))
-	//	return
-	//}
-
-	iid, ok := c.Get(helpers.UserIDKey)
+	usrID, ok := helpers.UserIDContext(c)
 	if !ok {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			"user id key not found in ctx", nil))
 	}
-	usrID := iid.(uint)
 
-	iisStore, ok := c.Get(helpers.UserIsStoreKey)
+	usrIsStore, ok := helpers.UserIsStoreContext(c)
 	if !ok {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			"user isstore key not found in ctx", nil))
 	}
-	usrIsStore := iisStore.(bool)
 
 	offerEntity := req.ConvertToEntity()
 	offerEntity.ID = uint(id)
 
-	updatedOffer, err := h.offerService.UpdateOfferStatus(ctx, offerEntity, usrID, usrIsStore)
+	updatedOffer, err := h.offerService.UpdateOfferStatus(c.Request.Context(), offerEntity, usrID, usrIsStore)
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-
-	// Create notification for store
-	// notification := models.Notification{
-	// 	UserID:  offer.StoreID, // Store notification
-	// 	OfferID: offer.ID,
-	// 	Message: fmt.Sprintf("Offer %d has changed status to %s", offer.ID, offer.Status),
-	// }
-	// h.notifyRepo.Create(&notification)
 
 	c.JSON(http.StatusOK, dto.PatchOfferStatusResp{NewStatus: updatedOffer.Status})
 }
