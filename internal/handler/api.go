@@ -74,6 +74,7 @@ func SetupRouter(
 	// эндпойнты запросов на покупку
 	{
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+		secured.GET("offers", offerH.GetUserOffers)
 	}
 
 	// эндпойнты отзывов

@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
 
@@ -46,4 +48,57 @@ func (p *PatchOfferStatusReq) ConvertToEntity() entity.Offer {
 
 func ConvertToPatchOfferStatusResp(o entity.Offer) PatchOfferStatusResp {
 	return PatchOfferStatusResp{NewStatus: o.Status}
+}
+
+type OfferResp struct {
+	ID        uint
+	Price     float64
+	Currency  string
+	Status    string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	ShopID    uint
+	ProductID uint
+}
+
+type GetUserOffersResp struct {
+	Data []OfferResp `json:"data"`
+	Meta struct {
+		CurrentPage int `json:"current_page"`
+		PerPage     int `json:"per_page"`
+		TotalItems  int `json:"total_items"`
+		TotalPages  int `json:"total_pages"`
+	}
+}
+
+func FormUserOffers(ofrs []entity.Offer, page, limit, total, totalPages int) GetUserOffersResp {
+	data := make([]OfferResp, 0, len(ofrs))
+
+	for _, ofr := range ofrs {
+		data = append(data, OfferResp{
+			ID:        ofr.ID,
+			Price:     ofr.Price,
+			Currency:  ofr.Currency,
+			Status:    ofr.Status,
+			CreatedAt: ofr.CreatedAt,
+			ExpiresAt: ofr.ExpiresAt,
+			ShopID:    ofr.ShopID,
+			ProductID: ofr.ProductID,
+		})
+	}
+
+	return GetUserOffersResp{
+		Data: data,
+		Meta: struct {
+			CurrentPage int `json:"current_page"`
+			PerPage     int `json:"per_page"`
+			TotalItems  int `json:"total_items"`
+			TotalPages  int `json:"total_pages"`
+		}{
+			CurrentPage: page,
+			PerPage:     limit,
+			TotalItems:  total,
+			TotalPages:  totalPages,
+		},
+	}
 }

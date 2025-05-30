@@ -19,6 +19,11 @@ type Offer struct {
 	ProductID uint      `db:"product_id"`
 }
 
+type OfferWithCount struct {
+	Offer
+	TotalCount int `db:"total_count"`
+}
+
 func (o *Offer) ConvertToEntity() entity.Offer {
 	return entity.Offer{
 		ID:        o.ID,
