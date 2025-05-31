@@ -349,10 +349,6 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 	return nil
 }
 
-func updateProductsTable() error {
-	return nil
-}
-
 func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 
 	//Проверяем что продукт есть в бд
