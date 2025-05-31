@@ -42,7 +42,9 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 
 	err := sq.Select("id").
 		From("products").
-		Where(sq.Eq{"name": productModel.Name, "description": productModel.Description, "category_id": productModel.CategoryID}).
+		Where(sq.Eq{"name": productModel.Name,
+			"description": productModel.Description,
+			"category_id": productModel.CategoryID}).
 		RunWith(pr.db).
 		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &id)
 	if err != nil && err.Error() != "sql: no rows in result set" {
@@ -66,7 +68,10 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 	//Отменяем транзакцию если получили ошибку или панику до завершения коммита
 	defer func() {
 		if r := recover(); r != nil || err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				pr.logger.Error("failed to rollback transaction, UpdateProduct, productRepository", zap.Error(err))
+			}
 		}
 	}()
 
@@ -131,7 +136,9 @@ func (pr *productRepository) GetProductByID(ctx context.Context, id uint) (*prod
 		return nil, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
-	err = pr.db.QueryRowContext(ctx, sql, args...).Scan(&productModel.Name, &productModel.Description, &productModel.CategoryID)
+	err = pr.db.QueryRowContext(ctx, sql, args...).Scan(&productModel.Name,
+		&productModel.Description,
+		&productModel.CategoryID)
 	if err != nil {
 		pr.logger.Error("failed to get product by id, GetProductByID, productRepository", zap.Error(err))
 		return nil, fmt.Errorf("failed to get product by id: %w", err)
@@ -165,7 +172,12 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 		pr.logger.Error("failed to select products, SelectProducts, productRepository", zap.Error(err))
 		return nil, 0, fmt.Errorf("failed to select products: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			pr.logger.Error("failed to close rows, SelectProducts, productRepository", zap.Error(err))
+		}
+	}()
 
 	for rows.Next() {
 		var productModel model.Product
@@ -189,7 +201,10 @@ func (pr *productRepository) SelectProducts(ctx context.Context, offset, limit i
 	return products, len(products), nil
 }
 
-func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, offset, limit int) ([]*product.Product, int, error) {
+func (pr *productRepository) SelectStoreProducts(
+	ctx context.Context,
+	id uint,
+	offset, limit int) ([]*product.Product, int, error) {
 	products := make([]*product.Product, 0, limit)
 
 	sql, args, err := sq.Select("id", "name", "description", "category_id").
@@ -208,7 +223,12 @@ func (pr *productRepository) SelectStoreProducts(ctx context.Context, id uint, o
 		pr.logger.Error("failed to select products, SelectStoreProducts, productRepository", zap.Error(err))
 		return nil, 0, fmt.Errorf("failed to select products: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			pr.logger.Error("failed to close rows, SelectProducts, productRepository", zap.Error(err))
+		}
+	}()
 
 	for rows.Next() {
 		var productModel model.Product
@@ -263,7 +283,10 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 
 	defer func() {
 		if r := recover(); r != nil || err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				pr.logger.Error("failed to rollback transaction, UpdateProduct, productRepository", zap.Error(err))
+			}
 		}
 	}()
 
@@ -304,7 +327,9 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 
 		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
 		if err != nil {
-			pr.logger.Error("failed to build update shop_point_inventory query, UpdateProduct, productRepository", zap.Error(err))
+			pr.logger.Error(
+				"failed to build update shop_point_inventory query, UpdateProduct, productRepository",
+				zap.Error(err))
 			return fmt.Errorf("failed to build update shop_point_inventory query: %w", err)
 		}
 
@@ -321,6 +346,10 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	return nil
+}
+
+func updateProductsTable() error {
 	return nil
 }
 

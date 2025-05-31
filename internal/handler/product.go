@@ -25,7 +25,6 @@ type ProductService interface {
 type ProductHandler struct {
 	productService ProductService
 	logger         *zap.Logger
-	basePath       string
 }
 
 func NewProductHandler(productService ProductService, logger *zap.Logger) *ProductHandler {
@@ -128,7 +127,8 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Номер страницы" default(1)
 // @Param limit query int false "Количество элементов на странице" default(10)
-// @Success 200 {object} object{data=[]dto.GetProductResp,meta=object{current_page=int,per_page=int,total_items=int,total_pages=int}}
+// @Success 200 {object} object{data=[]dto.GetProductResp,meta=object{current_page=int,
+// per_page=int,total_items=int,total_pages=int}}
 // @Failure 400 {object} object "Неверные параметры запроса"
 // @Failure 500 {object} object "Ошибка сервера"
 // @Router /products/ [get]
@@ -200,7 +200,8 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 // @Param shop_id path int true "ID магазина"
 // @Param page query int false "Номер страницы" default(1)
 // @Param limit query int false "Количество элементов на странице" default(10)
-// @Success 200 {object} object{data=[]dto.GetProductResp,meta=object{current_page=int,per_page=int,total_items=int,total_pages=int}}
+// @Success 200 {object} object{data=[]dto.GetProductResp,meta=object{current_page=int,
+// per_page=int,total_items=int,total_pages=int}}
 // @Failure 400 {object} object "Неверные параметры запроса"
 // @Failure 500 {object} object "Ошибка сервера"
 // @Router /products/shop/{shop_id} [get]
