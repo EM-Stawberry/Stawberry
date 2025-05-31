@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
+
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 )
@@ -36,16 +38,19 @@ type Service struct {
 	userRepository  Repository
 	tokenService    TokenService
 	passwordManager PasswordManager
+	mailer          email.MailerService
 }
 
 func NewService(userRepo Repository,
 	tokenService TokenService,
 	passwordManager PasswordManager,
+	mailer email.MailerService,
 ) *Service {
 	return &Service{
 		userRepository:  userRepo,
 		tokenService:    tokenService,
 		passwordManager: passwordManager,
+		mailer:          mailer,
 	}
 }
 
@@ -77,6 +82,8 @@ func (us *Service) CreateUser(
 	if err = us.tokenService.InsertToken(ctx, refreshToken); err != nil {
 		return "", "", err
 	}
+
+	us.mailer.Registered(user.Name, user.Email)
 
 	return accessToken, refreshToken.UUID.String(), nil
 }

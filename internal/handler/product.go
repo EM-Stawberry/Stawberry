@@ -35,18 +35,6 @@ func NewProductHandler(productService ProductService, logger *zap.Logger) *Produ
 	}
 }
 
-func (h *ProductHandler) RegisterRoutes(group *gin.RouterGroup) {
-	h.basePath = group.BasePath()
-
-	group.POST("/", h.PatchProduct)
-	group.GET("/", h.GetProducts)
-	group.GET("/shop/:shop_id", h.GetStoreProducts)
-	group.GET("/:product_id", h.GetProduct)
-	group.DELETE("/:product_id", h.DeleteProduct)
-	group.PATCH("/product_id", h.PatchProduct)
-
-}
-
 // PostProduct godoc
 // @Summary Создать новый продукт
 // @Description Создает новый продукт в системе

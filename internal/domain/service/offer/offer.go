@@ -5,6 +5,7 @@ import (
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	"github.com/EM-Stawberry/Stawberry/pkg/email"
 )
 
 type Repository interface {
@@ -23,10 +24,11 @@ const (
 
 type Service struct {
 	offerRepository Repository
+	mailer          email.MailerService
 }
 
-func NewService(offerRepository Repository) *Service {
-	return &Service{offerRepository: offerRepository}
+func NewService(offerRepository Repository, mailer email.MailerService) *Service {
+	return &Service{offerRepository: offerRepository, mailer: mailer}
 }
 
 func (os *Service) CreateOffer(

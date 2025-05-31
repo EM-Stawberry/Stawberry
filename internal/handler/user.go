@@ -40,15 +40,6 @@ func NewUserHandler(
 	}
 }
 
-func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
-	h.basePath = group.BasePath()
-
-	group.POST("/reg", h.Registration)
-	group.POST("/login", h.Login)
-	group.POST("/logout", h.Logout)
-	group.POST("/refresh", h.Refresh)
-}
-
 // Registration godoc
 // @Summary Регистрация нового пользователя
 // @Description Регистрирует нового пользователя и возвращает токены доступа/обновления

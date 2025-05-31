@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/EM-Stawberry/Stawberry/pkg/email/mock_email"
+
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/google/uuid"
@@ -20,7 +22,8 @@ func TestUserService_CreateUser(t *testing.T) {
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
 	mockPasswordManager := NewMockPasswordManager(ctrl)
-	userService := NewService(mockRepo, mockTokenService, mockPasswordManager)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
 
 	ctx := context.Background()
 	testUser := User{
@@ -35,6 +38,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, uint(1)).Return("access-token", entity.RefreshToken{}, nil)
 		mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 		mockPasswordManager.EXPECT().Hash(testUser.Password).Return(hashedPassword, nil)
+		mockEmailService.EXPECT().Registered(testUser.Name, testUser.Email)
 
 		accessToken, refreshToken, err := userService.CreateUser(ctx, testUser, fingerprint)
 
@@ -99,7 +103,8 @@ func TestUserService_Authenticate(t *testing.T) {
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
 	mockPasswordManager := NewMockPasswordManager(ctrl)
-	userService := NewService(mockRepo, mockTokenService, mockPasswordManager)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
 
 	ctx := context.Background()
 	email := "test@example.com"
@@ -237,7 +242,8 @@ func TestUserService_Refresh(t *testing.T) {
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
 	mockPasswordManager := NewMockPasswordManager(ctrl)
-	userService := NewService(mockRepo, mockTokenService, mockPasswordManager)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -383,7 +389,8 @@ func TestUserService_Logout(t *testing.T) {
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
 	mockPasswordManager := NewMockPasswordManager(ctrl)
-	userService := NewService(mockRepo, mockTokenService, mockPasswordManager)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
 
 	ctx := context.Background()
 	refreshTokenStr := uuid.New().String()
@@ -472,7 +479,8 @@ func TestUserService_GetUserByID(t *testing.T) {
 	mockRepo := NewMockRepository(ctrl)
 	mockTokenService := NewMockTokenService(ctrl)
 	mockPasswordManager := NewMockPasswordManager(ctrl)
-	userService := NewService(mockRepo, mockTokenService, mockPasswordManager)
+	mockEmailService := mock_email.NewMockMailerService(ctrl)
+	userService := NewService(mockRepo, mockTokenService, mockPasswordManager, mockEmailService)
 
 	ctx := context.Background()
 	userID := uint(1)
