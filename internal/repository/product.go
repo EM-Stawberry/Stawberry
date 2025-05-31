@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
@@ -23,6 +24,28 @@ func NewProductRepository(db *sqlx.DB, logger *zap.Logger) *productRepository {
 	}
 }
 
+func isExist(ctx context.Context, logger *zap.Logger, q sq.StatementBuilderType, productModel model.Product) error {
+	var id uint
+
+	err := q.Select("id").
+		From("products").
+		Where(sq.Eq{"name": productModel.Name,
+			"description": productModel.Description,
+			"category_id": productModel.CategoryID}).
+		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &id)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		logger.Error("failed to check if product exists, InsertProduct, productRepository", zap.Error(err))
+		return fmt.Errorf("failed to check if product exists: %w", err)
+	}
+
+	if id != 0 {
+		logger.Error("product already exists, InsertProduct, productRepository", zap.Error(err))
+		return errors.New("product already exists")
+	}
+
+	return nil
+}
+
 func (pr *productRepository) InsertProduct(ctx context.Context, product *product.Product) (uint, error) {
 
 	productModel := model.Product{
@@ -37,24 +60,13 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 		Quantity:    product.Quantity,
 	}
 
+	q := sq.StatementBuilder.RunWith(pr.db)
+
 	//Проверяем существование продукта
-	var id uint
 
-	err := sq.Select("id").
-		From("products").
-		Where(sq.Eq{"name": productModel.Name,
-			"description": productModel.Description,
-			"category_id": productModel.CategoryID}).
-		RunWith(pr.db).
-		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &id)
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		pr.logger.Error("failed to check if product exists, InsertProduct, productRepository", zap.Error(err))
-		return 0, fmt.Errorf("failed to check if product exists: %w", err)
-	}
-
-	if id != 0 {
-		pr.logger.Error("product already exists, InsertProduct, productRepository", zap.Error(err))
-		return 0, fmt.Errorf("product already exists")
+	err := isExist(ctx, pr.logger, q, productModel)
+	if err != nil {
+		return 0, err
 	}
 
 	//Если продукта нет, то создаем
@@ -76,7 +88,7 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 	}()
 
 	//Добавляем инфу в таблицу products
-	sql, args, err := sq.Insert("products").
+	sql, args, err := q.Insert("products").
 		Columns("name", "description", "category_id").
 		Values(productModel.Name, productModel.Description, productModel.CategoryID).PlaceholderFormat(sq.Dollar).
 		Suffix("RETURNING id").ToSql()
@@ -94,7 +106,7 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 	SPInventoryModel.ProductID = productModel.ID
 
 	//Добавляем инфу в таблицу shop_point_inventory
-	sql, args, err = sq.Insert("shop_point_inventory").
+	sql, args, err = q.Insert("shop_point_inventory").
 		Columns("shop_point_id", "product_id", "price", "quantity").
 		Values(SPInventoryModel.ShopPointID,
 			SPInventoryModel.ProductID,
@@ -120,7 +132,7 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	return 0, nil
+	return productModel.ID, nil
 }
 
 func (pr *productRepository) GetProductByID(ctx context.Context, id uint) (*product.Product, error) {
@@ -290,54 +302,18 @@ func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update 
 		}
 	}()
 
-	if update.Name != nil || update.Description != nil || update.CategoryID != nil {
-
-		updateBuilder := sq.Update("products").Where(sq.Eq{"id": id})
-		if update.Name != nil {
-			updateBuilder = updateBuilder.Set("name", *update.Name)
-		}
-		if update.Description != nil {
-			updateBuilder = updateBuilder.Set("description", *update.Description)
-		}
-		if update.CategoryID != nil {
-			updateBuilder = updateBuilder.Set("category_id", *update.CategoryID)
-		}
-
-		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
-		if err != nil {
-			pr.logger.Error("failed to build update product query, UpdateProduct, productRepository", zap.Error(err))
-			return fmt.Errorf("failed to build update product query: %w", err)
-		}
-
-		_, err = tx.ExecContext(ctx, sql, args...)
-		if err != nil {
-			pr.logger.Error("failed to update product, UpdateProduct, productRepository", zap.Error(err))
-			return fmt.Errorf("failed to update product: %w", err)
-		}
+	err = updateProductTable(ctx, tx, update, id)
+	if err != nil {
+		pr.logger.Error("failed to update product table, UpdateProduct, productRepository", zap.Error(err))
+		return err
 	}
 
-	if update.Price != nil || update.Quantity != nil {
-		updateBuilder := sq.Update("shop_point_inventory").Where(sq.Eq{"shop_point_id": update.ShopPointID, "product_id": id})
-		if update.Price != nil {
-			updateBuilder = updateBuilder.Set("price", *update.Price)
-		}
-		if update.Quantity != nil {
-			updateBuilder = updateBuilder.Set("quantity", *update.Quantity)
-		}
-
-		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
-		if err != nil {
-			pr.logger.Error(
-				"failed to build update shop_point_inventory query, UpdateProduct, productRepository",
-				zap.Error(err))
-			return fmt.Errorf("failed to build update shop_point_inventory query: %w", err)
-		}
-
-		_, err = tx.ExecContext(ctx, sql, args...)
-		if err != nil {
-			pr.logger.Error("failed to update shop_point_inventory, UpdateProduct, productRepository", zap.Error(err))
-			return fmt.Errorf("failed to update shop_point_inventory: %w", err)
-		}
+	err = updateShopPointInventoryTable(ctx, tx, update, id)
+	if err != nil {
+		pr.logger.Error(
+			"failed to build update shop_point_inventory query, UpdateProduct, productRepository",
+			zap.Error(err))
+		return err
 	}
 
 	err = tx.Commit()
@@ -396,6 +372,60 @@ func (pr *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 	if err != nil {
 		pr.logger.Error("failed to delete product, DeleteProduct, productRepository", zap.Error(err))
 		return fmt.Errorf("failed to delete product: %w", err)
+	}
+
+	return nil
+}
+
+func updateProductTable(ctx context.Context, tx *sqlx.Tx, update *product.UpdateProduct, id uint) error {
+
+	if update.Name != nil || update.Description != nil || update.CategoryID != nil {
+
+		updateBuilder := sq.Update("products").Where(sq.Eq{"id": id})
+		if update.Name != nil {
+			updateBuilder = updateBuilder.Set("name", *update.Name)
+		}
+		if update.Description != nil {
+			updateBuilder = updateBuilder.Set("description", *update.Description)
+		}
+		if update.CategoryID != nil {
+			updateBuilder = updateBuilder.Set("category_id", *update.CategoryID)
+		}
+
+		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
+		if err != nil {
+			return fmt.Errorf("failed to build update product query: %w", err)
+		}
+
+		_, err = tx.ExecContext(ctx, sql, args...)
+		if err != nil {
+			return fmt.Errorf("failed to update product: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func updateShopPointInventoryTable(ctx context.Context, tx *sqlx.Tx, update *product.UpdateProduct, id uint) error {
+
+	if update.Price != nil || update.Quantity != nil {
+		updateBuilder := sq.Update("shop_point_inventory").Where(sq.Eq{"shop_point_id": update.ShopPointID, "product_id": id})
+		if update.Price != nil {
+			updateBuilder = updateBuilder.Set("price", *update.Price)
+		}
+		if update.Quantity != nil {
+			updateBuilder = updateBuilder.Set("quantity", *update.Quantity)
+		}
+
+		sql, args, err := updateBuilder.PlaceholderFormat(sq.Dollar).ToSql()
+		if err != nil {
+			return fmt.Errorf("failed to build update shop_point_inventory query: %w", err)
+		}
+
+		_, err = tx.ExecContext(ctx, sql, args...)
+		if err != nil {
+			return fmt.Errorf("failed to update shop_point_inventory: %w", err)
+		}
 	}
 
 	return nil

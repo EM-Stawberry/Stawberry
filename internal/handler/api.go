@@ -90,7 +90,7 @@ func SetupRouter(
 		public.GET("products/", productH.GetProducts)
 		public.GET("products/shop/:shop_id", productH.GetStoreProducts)
 		public.GET("products/:id", productH.GetProduct)
-		secured.POST("products/", productH.PatchProduct)
+		secured.POST("products/", productH.PostProduct)
 		secured.DELETE("products/:id", productH.DeleteProduct)
 		secured.PATCH("products/:id", productH.PatchProduct)
 	}
