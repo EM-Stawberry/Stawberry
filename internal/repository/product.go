@@ -296,10 +296,22 @@ func (r *ProductRepository) SelectShopProducts(
 
 // GetAttributesByID получает аттрибуты продукта по его ID
 func (r *ProductRepository) GetAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	queryBuilder := psql.
+		Select("attributes").
+		From("product_attributes").
+		Where(sq.Eq{"product_id": productID}).
+		Limit(1)
+
+	query, args, err := queryBuilder.ToSql()
+	if err != nil {
+		return nil, apperror.New(apperror.DatabaseError, "failed to build query", err)
+	}
+
 	var attributesJSONb []byte
 
-	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
-	err := r.Db.GetContext(ctx, &attributesJSONb, query, productID)
+	err = r.Db.GetContext(ctx, &attributesJSONb, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -311,7 +323,6 @@ func (r *ProductRepository) GetAttributesByID(ctx context.Context, productID str
 	if err := json.Unmarshal(attributesJSONb, &attributes); err != nil {
 		return nil, apperror.New(apperror.DatabaseError, "failed to unmarshal product attributes", err)
 	}
-
 	return attributes, nil
 }
 
@@ -340,15 +351,27 @@ func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, produc
 
 // GetAverageRatingByProductID получает средний рейтинг и количество отзывов на продукт
 func (r *ProductRepository) GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error) {
-	var reviewStats struct {
-		Average sql.NullFloat64 `Db:"average"`
-		Count   sql.NullInt64   `Db:"count"`
-	}
-	query := `SELECT AVG(rating) AS average, COUNT(*) AS count FROM product_reviews WHERE product_id = $1`
-	err := r.Db.GetContext(ctx, &reviewStats, query, productID)
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	queryBuilder := psql.
+		Select("AVG(rating) AS average", "COUNT(*) AS count").
+		From("product_reviews").
+		Where(sq.Eq{"product_id": productID})
+
+	query, args, err := queryBuilder.ToSql()
 	if err != nil {
+		return 0, 0, apperror.New(apperror.DatabaseError, "failed to build query", err)
+	}
+
+	var reviewStats struct {
+		Average sql.NullFloat64 `db:"average"`
+		Count   sql.NullInt64   `db:"count"`
+	}
+
+	if err := r.Db.GetContext(ctx, &reviewStats, query, args...); err != nil {
 		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate average rating/count of reviews", err)
 	}
+
 	avg := 0.0
 	count := 0
 	if reviewStats.Average.Valid {
