@@ -1,24 +1,15 @@
 package model
 
 import (
-	"time"
-
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 )
 
 type Product struct {
-	ID          uint `gorm:"primaryKey;autoIncrement"`
-	StoreID     uint
-	Name        string
-	Description string
-	Price       float64
-	Category    string
-	CategoryID  int
-	InStock     bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Store       Store `gorm:"foreignKey:StoreID"`
+	ID          uint   `db:"id"`
+	Name        string `db:"name"`
+	Description string `db:"description"`
+	CategoryID  uint   `db:"category_id"`
 }
 
 type UpdateProduct struct {
@@ -33,26 +24,21 @@ type UpdateProduct struct {
 func ConvertProductFromSvc(p product.Product) Product {
 	return Product{
 		ID:          p.ID,
-		StoreID:     p.StoreID,
 		Name:        p.Name,
 		Description: p.Description,
-		Price:       p.Price,
-		Category:    p.Category,
 		CategoryID:  p.CategoryID,
-		InStock:     p.InStock,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
 	}
 }
 
 func ConvertProductToEntity(p Product) entity.Product {
 	return entity.Product{
-		ID:          int(p.ID),
-		Name:        p.Name,
-		Description: p.Description,
-		CategoryID:  p.CategoryID,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		ID:           int(p.ID),
+		Name:         p.Name,
+		Description:  p.Description,
+		CategoryID:   p.CategoryID,
+		MinimalPrice: 0,
+		MaximalPrice: 0,
+		Attributes:   make(map[string]interface{}),
 	}
 }
 
