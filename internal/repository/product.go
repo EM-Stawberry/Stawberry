@@ -24,23 +24,53 @@ func NewProductRepository(db *sqlx.DB, logger *zap.Logger) *productRepository {
 	}
 }
 
-func isExist(ctx context.Context, logger *zap.Logger, q sq.StatementBuilderType, productModel model.Product) error {
-	var id uint
+func insertToProductTable(ctx context.Context,
+	tx *sqlx.Tx,
+	q sq.StatementBuilderType,
+	logger *zap.Logger,
+	productModel *model.Product) (uint, error) {
 
-	err := q.Select("id").
-		From("products").
-		Where(sq.Eq{"name": productModel.Name,
-			"description": productModel.Description,
-			"category_id": productModel.CategoryID}).
-		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &id)
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		logger.Error("failed to check if product exists, InsertProduct, productRepository", zap.Error(err))
-		return fmt.Errorf("failed to check if product exists: %w", err)
+	sql, args, err := q.Insert("products").
+		Columns("name", "description", "category_id").
+		Values(productModel.Name, productModel.Description, productModel.CategoryID).PlaceholderFormat(sq.Dollar).
+		Suffix("RETURNING id").ToSql()
+	if err != nil {
+		logger.Error("failed to build insert product query, InsertProduct, productRepository", zap.Error(err))
+		return 0, fmt.Errorf("failed to build insert product query: %w", err)
 	}
 
-	if id != 0 {
-		logger.Error("product already exists, InsertProduct, productRepository", zap.Error(err))
-		return errors.New("product already exists")
+	err = tx.QueryRowxContext(ctx, sql, args...).Scan(&productModel.ID)
+	if err != nil {
+		logger.Error("failed to insert product, InsertProduct, productRepository", zap.Error(err))
+		return 0, fmt.Errorf("failed to insert product: %w", err)
+	}
+
+	return productModel.ID, nil
+}
+
+func insertToShopPointInventoryTable(ctx context.Context,
+	tx *sqlx.Tx,
+	q sq.StatementBuilderType,
+	logger *zap.Logger,
+	SPInventoryModel *model.ShopPointInventory) error {
+
+	sql, args, err := q.Insert("shop_point_inventory").
+		Columns("shop_point_id", "product_id", "price", "quantity").
+		Values(SPInventoryModel.ShopPointID,
+			SPInventoryModel.ProductID,
+			SPInventoryModel.Price,
+			SPInventoryModel.Quantity).
+		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		logger.Error("failed to build insert product query, InsertProduct, productRepository", zap.Error(err))
+		return fmt.Errorf("failed to build insert product query: %w", err)
+
+	}
+
+	_, err = tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		logger.Error("failed to insert product, InsertProduct, productRepository", zap.Error(err))
+		return fmt.Errorf("failed to insert product: %w", err)
 	}
 
 	return nil
@@ -64,9 +94,24 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 
 	//Проверяем существование продукта
 
-	err := isExist(ctx, pr.logger, q, productModel)
+	query, args, err := q.Select("id").
+		From("products").
+		Where(sq.Eq{"name": productModel.Name,
+			"description": productModel.Description,
+			"category_id": productModel.CategoryID}).
+		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		pr.logger.Error("failed to build select product query, InsertProduct, productRepository", zap.Error(err))
+		return 0, fmt.Errorf("failed to build select product query: %w", err)
+	}
+
+	isExist, err := isExist(ctx, pr.db, pr.logger, query, args...)
 	if err != nil {
 		return 0, err
+	}
+
+	if isExist {
+		return 0, errors.New("product already exists")
 	}
 
 	//Если продукта нет, то создаем
@@ -88,41 +133,15 @@ func (pr *productRepository) InsertProduct(ctx context.Context, product *product
 	}()
 
 	//Добавляем инфу в таблицу products
-	sql, args, err := q.Insert("products").
-		Columns("name", "description", "category_id").
-		Values(productModel.Name, productModel.Description, productModel.CategoryID).PlaceholderFormat(sq.Dollar).
-		Suffix("RETURNING id").ToSql()
+	SPInventoryModel.ProductID, err = insertToProductTable(ctx, tx, q, pr.logger, &productModel)
 	if err != nil {
-		pr.logger.Error("failed to build insert product query, InsertProduct, productRepository", zap.Error(err))
-		return 0, fmt.Errorf("failed to build insert product query: %w", err)
+		return 0, err
 	}
-
-	err = tx.QueryRowxContext(ctx, sql, args...).Scan(&productModel.ID)
-	if err != nil {
-		pr.logger.Error("failed to insert product, InsertProduct, productRepository", zap.Error(err))
-		return 0, fmt.Errorf("failed to insert product: %w", err)
-	}
-
-	SPInventoryModel.ProductID = productModel.ID
 
 	//Добавляем инфу в таблицу shop_point_inventory
-	sql, args, err = q.Insert("shop_point_inventory").
-		Columns("shop_point_id", "product_id", "price", "quantity").
-		Values(SPInventoryModel.ShopPointID,
-			SPInventoryModel.ProductID,
-			SPInventoryModel.Price,
-			SPInventoryModel.Quantity).
-		PlaceholderFormat(sq.Dollar).ToSql()
+	err = insertToShopPointInventoryTable(ctx, tx, q, pr.logger, &SPInventoryModel)
 	if err != nil {
-		pr.logger.Error("failed to build insert product query, InsertProduct, productRepository", zap.Error(err))
-		return 0, fmt.Errorf("failed to build insert product query: %w", err)
-
-	}
-
-	_, err = tx.ExecContext(ctx, sql, args...)
-	if err != nil {
-		pr.logger.Error("failed to insert product, InsertProduct, productRepository", zap.Error(err))
-		return 0, fmt.Errorf("failed to insert product: %w", err)
+		return 0, err
 	}
 
 	//Подтверждаем транзакцию
@@ -264,24 +283,43 @@ func (pr *productRepository) SelectStoreProducts(
 	return products, len(products), nil
 }
 
+func isExist(ctx context.Context, db *sqlx.DB, logger *zap.Logger, query string, args ...interface{}) (bool, error) {
+	var existingId uint
+
+	err := db.QueryRowContext(ctx, query, args...).Scan(&existingId)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		logger.Error("failed to check if product exists, UpdateProduct, productRepository", zap.Error(err))
+		return false, fmt.Errorf("failed to check if product exists: %w", err)
+	}
+
+	if existingId != 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func (pr *productRepository) UpdateProduct(ctx context.Context, id uint, update *product.UpdateProduct) error {
 
 	//Проверяем что продукт есть в бд
-	var existingId uint
 
-	err := sq.Select("id").
+	query, args, err := sq.Select("id").
 		From("products").
 		InnerJoin("shop_point_inventory ON products.id = shop_point_inventory.product_id").
 		Where(sq.Eq{"id": id, "shop_point_inventory.shop_point_id": *update.ShopPointID}).
 		RunWith(pr.db).
-		PlaceholderFormat(sq.Dollar).ScanContext(ctx, &existingId)
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		pr.logger.Error("failed to check if product exists, UpdateProduct, productRepository", zap.Error(err))
-		return fmt.Errorf("failed to check if product exists: %w", err)
+		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		pr.logger.Error("failed to build update product query, UpdateProduct, productRepository", zap.Error(err))
+		return fmt.Errorf("failed to build update product query: %w", err)
 	}
 
-	if existingId == 0 {
-		pr.logger.Error(fmt.Sprintf("product with id %d not found", id)+", UpdateProduct, productRepository", zap.Error(err))
+	isExist, err := isExist(ctx, pr.db, pr.logger, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if !isExist {
 		return fmt.Errorf("product with id %d not found", id)
 	}
 
