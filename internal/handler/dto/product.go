@@ -1,47 +1,31 @@
 package dto
 
-import "github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
-
 type PostProductReq struct {
-	StoreID     uint    `json:"store_id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
+	CategoryID  uint    `json:"category_id"`
+	ShopID      uint    `json:"shop_id"`
 	Price       float64 `json:"price"`
-	Category    string  `json:"category"`
-	InStock     bool    `json:"in_stock"`
+	Quantity    uint    `json:"quantity"`
 }
 
 type PostProductResp struct {
 	ID uint `json:"id"`
 }
 
-func (pp *PostProductReq) ConvertToSvc() product.Product {
-	return product.Product{
-		StoreID:     pp.StoreID,
-		Name:        pp.Name,
-		Description: pp.Description,
-		Price:       pp.Price,
-		Category:    pp.Category,
-		InStock:     pp.InStock,
-	}
-}
-
 type PatchProductReq struct {
-	StoreID     *uint    `json:"store_id,omitempty"`
 	Name        *string  `json:"name,omitempty"`
 	Description *string  `json:"description,omitempty"`
 	Price       *float64 `json:"price,omitempty"`
-	Category    *string  `json:"category,omitempty"`
-	InStock     *bool    `json:"in_stock,omitempty"`
+	CategoryID  *uint    `json:"category_id,omitempty"`
+	Quantity    *uint    `json:"quantity,omitempty"`
+	ShopID      *uint    `json:"shop_id,omitempty"`
+	ShopPointID *uint    `json:"shop_point_id,omitempty"`
 }
 
-func (pp *PatchProductReq) ConvertToSvc() product.UpdateProduct {
-	return product.UpdateProduct{
-		StoreID:     pp.StoreID,
-		Name:        pp.Name,
-		Description: pp.Description,
-		Price:       pp.Price,
-		Category:    pp.Category,
-		InStock:     pp.InStock,
-	}
+type GetProductResp struct {
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CategoryID  uint   `json:"category_id"`
 }
