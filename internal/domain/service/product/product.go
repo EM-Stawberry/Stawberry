@@ -57,7 +57,7 @@ func (ps *Service) SelectProducts(
 		return nil, 0, err
 	}
 
-	products, err = ps.EnrichProducts(ctx, products)
+	products, err = ps.enrichProducts(ctx, products)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -77,7 +77,7 @@ func (ps *Service) SelectProductsByName(
 		return nil, 0, err
 	}
 
-	products, err = ps.EnrichProducts(ctx, products)
+	products, err = ps.enrichProducts(ctx, products)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -97,7 +97,7 @@ func (ps *Service) SelectProductsByFilters(
 		return nil, 0, err
 	}
 
-	products, err = ps.EnrichProducts(ctx, products)
+	products, err = ps.enrichProducts(ctx, products)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -117,7 +117,7 @@ func (ps *Service) SelectShopProducts(
 		return nil, 0, err
 	}
 
-	products, err = ps.EnrichProducts(ctx, products)
+	products, err = ps.enrichProducts(ctx, products)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -126,7 +126,7 @@ func (ps *Service) SelectShopProducts(
 }
 
 // EnrichProducts выполняет обогащение продукта информацией о диапазоне цены, средней оценке и количестве отзывов
-func (ps *Service) EnrichProducts(
+func (ps *Service) enrichProducts(
 	ctx context.Context,
 	products []entity.Product,
 ) ([]entity.Product, error) {

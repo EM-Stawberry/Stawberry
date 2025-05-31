@@ -141,7 +141,7 @@ var _ = Describe("ProductRepository", func() {
 			rows := sqlmock.NewRows([]string{"average", "count"}).
 				AddRow(4.5, 10)
 
-			mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
+			mock.ExpectQuery(`SELECT AVG\(rating\) average, COUNT\(\*\) count FROM product_reviews WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnRows(rows)
 
@@ -158,7 +158,7 @@ var _ = Describe("ProductRepository", func() {
 			rows := sqlmock.NewRows([]string{"average", "count"}).
 				AddRow(nil, nil)
 
-			mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
+			mock.ExpectQuery(`SELECT AVG\(rating\) average, COUNT\(\*\) count FROM product_reviews WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnRows(rows)
 
@@ -172,7 +172,7 @@ var _ = Describe("ProductRepository", func() {
 
 		It("should return error when query fails", func() {
 			productID := 123
-			mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
+			mock.ExpectQuery(`SELECT AVG\(rating\) average, COUNT\(\*\) count FROM product_reviews WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnError(sql.ErrConnDone)
 

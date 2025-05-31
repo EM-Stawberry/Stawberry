@@ -16,7 +16,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 
-
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -162,14 +161,13 @@ func (r *ProductRepository) SelectProductsByFilters(
 ) ([]entity.Product, int, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-
 	selectBuilder := sq.StatementBuilder.
-	PlaceholderFormat(sq.Dollar).
-	Select("p.id", "p.name", "p.description", "p.category_id").
-	From("products p").
-	Where("category_id IN (SELECT id FROM category_tree)").
-	Limit(uint64(limit)).
-	Offset(uint64(offset))
+		PlaceholderFormat(sq.Dollar).
+		Select("p.id", "p.name", "p.description", "p.category_id").
+		From("products p").
+		Where("category_id IN (SELECT id FROM category_tree)").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
 
 	if len(filters) > 0 {
 		selectBuilder = selectBuilder.Join("product_attributes pa ON p.id = pa.product_id")
@@ -354,7 +352,7 @@ func (r *ProductRepository) GetAverageRatingByProductID(ctx context.Context, pro
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	queryBuilder := psql.
-		Select("AVG(rating) AS average", "COUNT(*) AS count").
+		Select("AVG(rating) average", "COUNT(*) count").
 		From("product_reviews").
 		Where(sq.Eq{"product_id": productID})
 
