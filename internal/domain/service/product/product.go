@@ -7,15 +7,13 @@ import (
 )
 
 type Repository interface {
-	InsertProduct(ctx context.Context, product Product) (uint, error)
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
 	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
 	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByCategoryAndAttributes(ctx context.Context, categoryID int, filters map[string]interface{}, 
-		                                 offset, limit int) ([]entity.Product, int, error)
+	SelectProductsByFilters(ctx context.Context, categoryID int, filters map[string]interface{},
+		offset, limit int) ([]entity.Product, int, error)
 	SelectShopProducts(ctx context.Context, shopID int, offset, limit int) ([]entity.Product, int, error)
-	UpdateProduct(ctx context.Context, id string, update UpdateProduct) error
-	GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
+	GetAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
 	GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error)
 	GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error)
 }
@@ -28,13 +26,6 @@ func NewService(productRepo Repository) *Service {
 	return &Service{ProductRepository: productRepo}
 }
 
-func (ps *Service) CreateProduct(
-	ctx context.Context,
-	product Product,
-) (uint, error) {
-	return ps.ProductRepository.InsertProduct(ctx, product)
-}
-
 // GetProductByID получает продукт по его ID
 func (ps *Service) GetProductByID(
 	ctx context.Context,
@@ -44,7 +35,7 @@ func (ps *Service) GetProductByID(
 	if err != nil {
 		return entity.Product{}, err
 	}
-	attrs, err := ps.ProductRepository.GetProductAttributesByID(ctx, id)
+	attrs, err := ps.ProductRepository.GetAttributesByID(ctx, id)
 	if err != nil {
 		return entity.Product{}, err
 	}
@@ -54,6 +45,7 @@ func (ps *Service) GetProductByID(
 	product.MaximalPrice = maxPrice
 	return product, nil
 }
+
 // SelectProducts получает весь список продуктов
 func (ps *Service) SelectProducts(
 	ctx context.Context,
@@ -93,14 +85,14 @@ func (ps *Service) SelectProductsByName(
 	return products, total, nil
 }
 
-// SelectProductsByCategoryAndAttributes выполняет фильтрацию по ID категории и аттрибутам продукта
-func (ps *Service) SelectProductsByCategoryAndAttributes(
+// SelectProductsByFilters выполняет фильтрацию по ID категории и аттрибутам продукта
+func (ps *Service) SelectProductsByFilters(
 	ctx context.Context,
 	categoryID int,
 	filters map[string]interface{},
 	offset, limit int,
 ) ([]entity.Product, int, error) {
-	products, total, err := ps.ProductRepository.SelectProductsByCategoryAndAttributes(ctx, categoryID, filters, offset, limit)
+	products, total, err := ps.ProductRepository.SelectProductsByFilters(ctx, categoryID, filters, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -131,14 +123,6 @@ func (ps *Service) SelectShopProducts(
 	}
 
 	return products, total, nil
-}
-
-func (ps *Service) UpdateProduct(
-	ctx context.Context,
-	id string,
-	updateProduct UpdateProduct,
-) error {
-	return ps.ProductRepository.UpdateProduct(ctx, id, updateProduct)
 }
 
 // EnrichProducts выполняет обогащение продукта информацией о диапазоне цены, средней оценке и количестве отзывов

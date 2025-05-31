@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"strings"
+	"regexp"
+	"strconv"
 
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
 
@@ -14,7 +14,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
+	sq "github.com/Masterminds/squirrel"
+
+
 	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
@@ -28,22 +30,25 @@ func NewProductRepository(Db *sqlx.DB) *ProductRepository {
 	return &ProductRepository{Db: Db}
 }
 
-func (r *ProductRepository) InsertProduct(
-	ctx context.Context,
-	product product.Product,
-) (uint, error) {
-	productModel := model.ConvertProductFromSvc(product)
-	return productModel.ID, nil
-}
-
 // GetProductByID позволяет получить продукт по его ID
 func (r *ProductRepository) GetProductByID(
 	ctx context.Context,
 	id string,
 ) (entity.Product, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	queryBuilder := psql.
+		Select("id", "name", "description", "category_id").
+		From("products").
+		Where(sq.Eq{"id": id})
+
+	query, args, err := queryBuilder.ToSql()
+	if err != nil {
+		return entity.Product{}, apperror.New(apperror.DatabaseError, "failed to build SQL query", err)
+	}
+
 	var productModel model.Product
-	query := "SELECT id, name, description, category_id from products WHERE id = $1"
-	if err := r.Db.GetContext(ctx, &productModel, query, id); err != nil {
+	if err := r.Db.GetContext(ctx, &productModel, query, args...); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Product{}, apperror.ErrProductNotFound
 		}
@@ -59,15 +64,35 @@ func (r *ProductRepository) SelectProducts(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
-	var total int
-	countQuery := "SELECT COUNT(*) FROM products"
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	if err := r.Db.GetContext(ctx, &total, countQuery); err != nil {
+	countBuilder := psql.
+		Select("COUNT(*)").
+		From("products")
+
+	countQuery, countArgs, err := countBuilder.ToSql()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build count query", err)
+	}
+
+	var total int
+	if err := r.Db.GetContext(ctx, &total, countQuery, countArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
-	query := "SELECT * FROM products LIMIT $1 OFFSET $2"
+
+	selectBuilder := psql.
+		Select("*").
+		From("products").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	selectQuery, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build select query", err)
+	}
+
 	var productModels []model.Product
-	if err := r.Db.SelectContext(ctx, &productModels, query, limit, offset); err != nil {
+	if err := r.Db.SelectContext(ctx, &productModels, selectQuery, selectArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
@@ -86,20 +111,38 @@ func (r *ProductRepository) SelectProductsByName(
 	offset,
 	limit int,
 ) ([]entity.Product, int, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	nameLike := fmt.Sprintf("%%%s%%", name)
+
+	countBuilder := psql.
+		Select("COUNT(*)").
+		From("products").
+		Where(sq.ILike{"name": nameLike})
+
+	countQuery, countArgs, err := countBuilder.ToSql()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build count query", err)
+	}
+
 	var total int64
-	countQuery := `
-		SELECT COUNT(*) FROM products 
-		WHERE name ILIKE '%' || $1 || '%'`
-	if err := r.Db.GetContext(ctx, &total, countQuery, name); err != nil {
+	if err := r.Db.GetContext(ctx, &total, countQuery, countArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
 
+	selectBuilder := psql.
+		Select("*").
+		From("products").
+		Where(sq.ILike{"name": nameLike}).
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	selectQuery, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build select query", err)
+	}
 	var models []model.Product
-	searchQuery := `
-		SELECT * FROM products 
-		WHERE name ILIKE '%' || $1 || '%' 
-		LIMIT $2 OFFSET $3`
-	if err := r.Db.SelectContext(ctx, &models, searchQuery, name, limit, offset); err != nil {
+	if err := r.Db.SelectContext(ctx, &models, selectQuery, selectArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
@@ -111,112 +154,95 @@ func (r *ProductRepository) SelectProductsByName(
 }
 
 // SelectProductsByCategoryAndAttributes выполняет фильтрацию по ID категории и аттрибутам продукта
-func (r *ProductRepository) SelectProductsByCategoryAndAttributes(
+func (r *ProductRepository) SelectProductsByFilters(
 	ctx context.Context,
 	categoryID int,
 	filters map[string]interface{},
 	offset, limit int,
 ) ([]entity.Product, int, error) {
-	var models []model.Product
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	var params []interface{}
 
-	params = append(params, categoryID)
+	selectBuilder := sq.StatementBuilder.
+	PlaceholderFormat(sq.Dollar).
+	Select("p.id", "p.name", "p.description", "p.category_id").
+	From("products p").
+	Where("category_id IN (SELECT id FROM category_tree)").
+	Limit(uint64(limit)).
+	Offset(uint64(offset))
 
-	paramIdx := 2
-
-	var joinAttributes bool
-	var attrConditions []string
-
-	for attr, val := range filters {
-		joinAttributes = true
-		attrConditions = append(attrConditions, fmt.Sprintf("pa.attributes ->> '%s' = $%d", attr, paramIdx))
-		params = append(params, val)
-		paramIdx++
+	if len(filters) > 0 {
+		selectBuilder = selectBuilder.Join("product_attributes pa ON p.id = pa.product_id")
+		for attr, val := range filters {
+			condition := fmt.Sprintf("pa.attributes ->> '%s' = ?", attr)
+			strVal := fmt.Sprintf("%v", val)
+			selectBuilder = selectBuilder.Where(sq.Expr(condition, strVal))
+		}
 	}
 
-	var query string
-	if joinAttributes {
-		query = fmt.Sprintf(`
-		WITH RECURSIVE category_tree AS (
-			SELECT id FROM categories WHERE id = $1
-			UNION
-			SELECT c.id FROM categories c
-			INNER JOIN category_tree ct ON c.parent_id = ct.id
-		)
-			SELECT p.id, p.name, p.description, p.category_id
-			FROM products p
-			JOIN product_attributes pa ON p.id = pa.product_id
-			WHERE category_id IN (SELECT id FROM category_tree) AND %s
-			LIMIT $%d OFFSET $%d
-		`,
-			strings.Join(attrConditions, " AND "),
-			paramIdx, paramIdx+1,
-		)
-	} else {
-		query = fmt.Sprintf(`
-		WITH RECURSIVE category_tree AS (
-			SELECT id FROM categories WHERE id = $1
-			UNION
-			SELECT c.id FROM categories c
-			INNER JOIN category_tree ct ON c.parent_id = ct.id
-		)
-			SELECT p.id, p.name, p.description, p.category_id
-			FROM products p
-			WHERE category_id IN (SELECT id FROM category_tree)
-			LIMIT $%d OFFSET $%d
-		`,
-			paramIdx, paramIdx+1,
-		)
-	}
-
-	params = append(params, offset, limit)
-
-	err := r.Db.SelectContext(ctx, &models, query, params...)
+	selectSQL, selectArgs, err := selectBuilder.ToSql()
 	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build select query", err)
+	}
+
+	selectSQL = shiftPlaceholders(selectSQL, 1)
+
+	recursivePart := `
+	WITH RECURSIVE category_tree AS (
+		SELECT id FROM categories WHERE id = $1
+		UNION
+		SELECT c.id FROM categories c
+		INNER JOIN category_tree ct ON c.parent_id = ct.id
+	)
+	`
+
+	fullSQL := recursivePart + selectSQL
+	args := append([]interface{}{categoryID}, selectArgs...)
+
+	fmt.Println(fullSQL)
+	fmt.Printf("%#v\n", args)
+
+	var models []model.Product
+	if err := r.Db.SelectContext(ctx, &models, fullSQL, args...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
-	var totalCount int
-	var countQuery string
-	if joinAttributes {
-		countQuery = fmt.Sprintf(`
-		WITH RECURSIVE category_tree AS (
-			SELECT id FROM categories WHERE id = $1
-			UNION
-			SELECT c.id FROM categories c
-			INNER JOIN category_tree ct ON c.parent_id = ct.id
-		)
-			SELECT COUNT(*)
-			FROM products p
-			JOIN product_attributes pa ON p.id = pa.product_id
-			WHERE category_id IN (SELECT id FROM category_tree) AND %s
-		`,
-			strings.Join(attrConditions, " AND "),
-		)
-	} else {
-		countQuery = `
-		WITH RECURSIVE category_tree AS (
-			SELECT id FROM categories WHERE id = $1
-			UNION
-			SELECT c.id FROM categories c
-			INNER JOIN category_tree ct ON c.parent_id = ct.id
-		)
-			SELECT COUNT(*)
-			FROM products p
-			WHERE category_id IN (SELECT id FROM category_tree)
-		`
+	countBuilder := psql.
+		Select("COUNT(*)").
+		From("products p").
+		Where("category_id IN (SELECT id FROM category_tree)")
+
+	if len(filters) > 0 {
+		countBuilder = countBuilder.Join("product_attributes pa ON p.id = pa.product_id")
+		for attr, val := range filters {
+			condition := fmt.Sprintf("pa.attributes ->> '%s' = ?", attr)
+			strVal := fmt.Sprintf("%v", val)
+			countBuilder = countBuilder.Where(sq.Expr(condition, strVal))
+		}
 	}
 
-	err = r.Db.GetContext(ctx, &totalCount, countQuery, params[:paramIdx-1]...)
+	countSQL, countArgs, err := countBuilder.ToSql()
 	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build count query", err)
+	}
+
+	countSQL = shiftPlaceholders(countSQL, 1)
+
+	fullCountSQL := recursivePart + countSQL
+
+	countArgs = append([]interface{}{categoryID}, countArgs...)
+
+	var total int
+	if err := r.Db.GetContext(ctx, &total, fullCountSQL, countArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
+
 	products := make([]entity.Product, len(models))
 	for i, pm := range models {
 		products[i] = model.ConvertProductToEntity(pm)
 	}
-	return products, totalCount, nil
+
+	return products, total, nil
 }
 
 // SelectShopProducts выполняет фильтрацию по ID магазина
@@ -224,21 +250,39 @@ func (r *ProductRepository) SelectShopProducts(
 	ctx context.Context,
 	shopID int, offset, limit int,
 ) ([]entity.Product, int, error) {
-	var total int64
-	countQuery := `
-		SELECT COUNT(*) FROM products p
-		JOIN shop_inventory si ON p.id = si.product_id 
-		WHERE si.shop_id = $1 `
-	if err := r.Db.GetContext(ctx, &total, countQuery, shopID); err != nil {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	countBuilder := psql.
+		Select("COUNT(*)").
+		From("products p").
+		Join("shop_inventory si ON p.id = si.product_id").
+		Where(sq.Eq{"si.shop_id": shopID})
+
+	countQuery, countArgs, err := countBuilder.ToSql()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build count query", err)
+	}
+
+	var total int
+	if err := r.Db.GetContext(ctx, &total, countQuery, countArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to count products", err)
 	}
+
+	selectBuilder := psql.
+		Select("p.id", "p.name", "p.category_id", "p.description").
+		From("products p").
+		Join("shop_inventory si ON p.id = si.product_id").
+		Where(sq.Eq{"si.shop_id": shopID}).
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	selectQuery, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to build select query", err)
+	}
+
 	var models []model.Product
-	searchQuery := `
-		SELECT id, name, category_id, description  FROM products p
-		JOIN shop_inventory si ON p.id = si.product_id 
-		WHERE si.shop_id = $1
-		LIMIT $2 OFFSET $3 `
-	if err := r.Db.SelectContext(ctx, &models, searchQuery, shopID, limit, offset); err != nil {
+	if err := r.Db.SelectContext(ctx, &models, selectQuery, selectArgs...); err != nil {
 		return nil, 0, apperror.New(apperror.DatabaseError, "failed to fetch products", err)
 	}
 
@@ -246,24 +290,12 @@ func (r *ProductRepository) SelectShopProducts(
 	for i, pm := range models {
 		products[i] = model.ConvertProductToEntity(pm)
 	}
-	return products, int(total), nil
+
+	return products, total, nil
 }
 
-func (r *ProductRepository) UpdateProduct(
-	ctx context.Context,
-	id string,
-	update product.UpdateProduct,
-) error {
-
-	_ = ctx
-	_ = id
-	_ = update
-
-	return nil
-}
-
-// GetProductAttributesByID получает аттрибуты продукта по его ID
-func (r *ProductRepository) GetProductAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
+// GetAttributesByID получает аттрибуты продукта по его ID
+func (r *ProductRepository) GetAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error) {
 	var attributesJSONb []byte
 
 	query := `SELECT attributes FROM product_attributes WHERE product_id = $1`
@@ -327,4 +359,12 @@ func (r *ProductRepository) GetAverageRatingByProductID(ctx context.Context, pro
 	}
 
 	return avg, count, nil
+}
+
+func shiftPlaceholders(sql string, offset int) string {
+	re := regexp.MustCompile(`\$(\d+)`)
+	return re.ReplaceAllStringFunc(sql, func(match string) string {
+		num, _ := strconv.Atoi(match[1:])
+		return "$" + strconv.Itoa(num+offset)
+	})
 }

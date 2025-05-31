@@ -7,19 +7,19 @@ import (
 	"errors"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/EM-Stawberry/Stawberry/internal/repository"
 	"github.com/jmoiron/sqlx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/EM-Stawberry/Stawberry/internal/repository"
 )
 
 var _ = Describe("ProductRepository", func() {
 	var (
-		db      *sql.DB
-		sqlxDB  *sqlx.DB
-		mock    sqlmock.Sqlmock
-		repo    *repository.ProductRepository
-		ctx     context.Context
+		db     *sql.DB
+		sqlxDB *sqlx.DB
+		mock   sqlmock.Sqlmock
+		repo   *repository.ProductRepository
+		ctx    context.Context
 	)
 
 	BeforeEach(func() {
@@ -49,7 +49,7 @@ var _ = Describe("ProductRepository", func() {
 				WillReturnRows(rows)
 
 			// Act
-			attrs, err := repo.GetProductAttributesByID(ctx, productID)
+			attrs, err := repo.GetAttributesByID(ctx, productID)
 
 			// Assert
 			Expect(err).ToNot(HaveOccurred())
@@ -65,7 +65,7 @@ var _ = Describe("ProductRepository", func() {
 				WithArgs(productID).
 				WillReturnError(sql.ErrNoRows)
 
-			attrs, err := repo.GetProductAttributesByID(ctx, productID)
+			attrs, err := repo.GetAttributesByID(ctx, productID)
 
 			Expect(err).To(BeNil())
 			Expect(attrs).To(BeNil())
@@ -78,7 +78,7 @@ var _ = Describe("ProductRepository", func() {
 				WithArgs(productID).
 				WillReturnError(sql.ErrConnDone)
 
-			attrs, err := repo.GetProductAttributesByID(ctx, productID)
+			attrs, err := repo.GetAttributesByID(ctx, productID)
 
 			Expect(err).To(HaveOccurred())
 			Expect(attrs).To(BeNil())
@@ -136,51 +136,51 @@ var _ = Describe("ProductRepository", func() {
 
 	Describe("GetAverageRatingByProductID", func() {
 
-	It("should return average rating and count when data exists", func() {
-		productID := 123
-		rows := sqlmock.NewRows([]string{"average", "count"}).
-			AddRow(4.5, 10)
+		It("should return average rating and count when data exists", func() {
+			productID := 123
+			rows := sqlmock.NewRows([]string{"average", "count"}).
+				AddRow(4.5, 10)
 
-		mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
-			WithArgs(productID).
-			WillReturnRows(rows)
+			mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
+				WithArgs(productID).
+				WillReturnRows(rows)
 
-		avg, count, err := repo.GetAverageRatingByProductID(ctx, productID)
+			avg, count, err := repo.GetAverageRatingByProductID(ctx, productID)
 
-		Expect(err).ToNot(HaveOccurred())
-		Expect(avg).To(Equal(4.5))
-		Expect(count).To(Equal(10))
-		Expect(mock.ExpectationsWereMet()).To(Succeed())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(avg).To(Equal(4.5))
+			Expect(count).To(Equal(10))
+			Expect(mock.ExpectationsWereMet()).To(Succeed())
+		})
+
+		It("should return zeros when no reviews (NULL values)", func() {
+			productID := 123
+			rows := sqlmock.NewRows([]string{"average", "count"}).
+				AddRow(nil, nil)
+
+			mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
+				WithArgs(productID).
+				WillReturnRows(rows)
+
+			avg, count, err := repo.GetAverageRatingByProductID(ctx, productID)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(avg).To(Equal(0.0))
+			Expect(count).To(Equal(0))
+			Expect(mock.ExpectationsWereMet()).To(Succeed())
+		})
+
+		It("should return error when query fails", func() {
+			productID := 123
+			mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
+				WithArgs(productID).
+				WillReturnError(sql.ErrConnDone)
+
+			avg, count, err := repo.GetAverageRatingByProductID(ctx, productID)
+
+			Expect(err).To(HaveOccurred())
+			Expect(avg).To(Equal(0.0))
+			Expect(count).To(Equal(0))
+		})
 	})
-
-	It("should return zeros when no reviews (NULL values)", func() {
-		productID := 123
-		rows := sqlmock.NewRows([]string{"average", "count"}).
-			AddRow(nil, nil)
-
-		mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
-			WithArgs(productID).
-			WillReturnRows(rows)
-
-		avg, count, err := repo.GetAverageRatingByProductID(ctx, productID)
-
-		Expect(err).ToNot(HaveOccurred())
-		Expect(avg).To(Equal(0.0))
-		Expect(count).To(Equal(0))
-		Expect(mock.ExpectationsWereMet()).To(Succeed())
-	})
-
-	It("should return error when query fails", func() {
-		productID := 123
-		mock.ExpectQuery(`SELECT AVG\(rating\) AS average, COUNT\(\*\) AS count FROM product_reviews WHERE product_id = \$1`).
-			WithArgs(productID).
-			WillReturnError(sql.ErrConnDone)
-
-		avg, count, err := repo.GetAverageRatingByProductID(ctx, productID)
-
-		Expect(err).To(HaveOccurred())
-		Expect(avg).To(Equal(0.0))
-		Expect(count).To(Equal(0))
-	})
-})
 })

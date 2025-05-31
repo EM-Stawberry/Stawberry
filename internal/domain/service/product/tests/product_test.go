@@ -15,11 +15,11 @@ import (
 
 var _ = Describe("EnrichProducts", func() {
 	var (
-		mockCtrl          *gomock.Controller
-		mockRepo          *mocks.MockRepository
-		svc               *product.Service
-		ctx               context.Context
-		products          []entity.Product
+		mockCtrl *gomock.Controller
+		mockRepo *mocks.MockRepository
+		svc      *product.Service
+		ctx      context.Context
+		products []entity.Product
 	)
 
 	BeforeEach(func() {

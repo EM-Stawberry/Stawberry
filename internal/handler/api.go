@@ -70,7 +70,7 @@ func SetupRouter(
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
 	}
-	product := base.Group("/product")
+	product := public.Group("/product")
 	{
 		product.GET("/all", productH.SelectProducts)
 		product.GET("/id", productH.GetProduct)
