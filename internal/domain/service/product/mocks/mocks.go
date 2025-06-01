@@ -67,11 +67,11 @@ func (mr *MockRepositoryMockRecorder) GetAverageRatingByProductID(ctx, productID
 }
 
 // GetPriceRangeByProductID mocks base method.
-func (m *MockRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error) {
+func (m *MockRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (int, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPriceRangeByProductID", ctx, productID)
-	ret0, _ := ret[0].(float64)
-	ret1, _ := ret[1].(float64)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }

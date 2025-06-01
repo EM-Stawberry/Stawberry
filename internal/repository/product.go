@@ -325,23 +325,39 @@ func (r *ProductRepository) GetAttributesByID(ctx context.Context, productID str
 }
 
 // GetPriceRangeByProductID получает минимальную и максимальную цену на продукт
-func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error) {
+func (r *ProductRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (int, int, error) {
 	var priceRange struct {
-		Min sql.NullFloat64 `Db:"min"`
-		Max sql.NullFloat64 `Db:"max"`
+		Min sql.NullInt64 `db:"min"`
+		Max sql.NullInt64 `db:"max"`
 	}
-	query := `SELECT MIN(price) AS min, MAX(price) AS max FROM shop_inventory WHERE product_id = $1`
-	err := r.Db.GetContext(ctx, &priceRange, query, productID)
+
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	queryBuilder := psql.
+	Select(
+		"CAST(MIN(price) * 100 AS BIGINT) AS min",
+		"CAST(MAX(price) * 100 AS BIGINT) AS max",
+	).
+	From("shop_inventory").
+	Where(sq.Eq{"product_id": productID})
+
+	query, args, err := queryBuilder.ToSql()
+	if err != nil {
+		return 0, 0, apperror.New(apperror.DatabaseError, "failed to build price range query", err)
+	}
+
+	err = r.Db.GetContext(ctx, &priceRange, query, args...)
 	if err != nil {
 		return 0, 0, apperror.New(apperror.DatabaseError, "failed to calculate min/max price", err)
 	}
-	minPrice := 0.0
-	maxPrice := 0.0
+
+	minPrice := 0
+	maxPrice := 0
 	if priceRange.Min.Valid {
-		minPrice = priceRange.Min.Float64
+		minPrice = int(priceRange.Min.Int64)
 	}
 	if priceRange.Max.Valid {
-		maxPrice = priceRange.Max.Float64
+		maxPrice = int(priceRange.Max.Int64)
 	}
 
 	return minPrice, maxPrice, nil

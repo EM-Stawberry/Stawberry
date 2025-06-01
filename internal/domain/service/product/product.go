@@ -14,7 +14,7 @@ type Repository interface {
 		offset, limit int) ([]entity.Product, int, error)
 	SelectShopProducts(ctx context.Context, shopID int, offset, limit int) ([]entity.Product, int, error)
 	GetAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
-	GetPriceRangeByProductID(ctx context.Context, productID int) (float64, float64, error)
+	GetPriceRangeByProductID(ctx context.Context, productID int) (int, int, error)
 	GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error)
 }
 
