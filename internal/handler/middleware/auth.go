@@ -58,9 +58,11 @@ func AuthMiddleware(userGetter UserGetter, validator TokenValidator) gin.Handler
 
 		c.Set(helpers.UserIDKey, user.ID)
 		c.Set(helpers.UserIsStoreKey, user.IsStore)
+		c.Set(helpers.UserName, user.Name)
+		c.Set(helpers.UserEmail, user.Email)
 
 		c.Set(helpers.UserIsAdminKey, false)
-		c.Set("userID", int(user.ID))
+		c.Set("userID", int(user.ID)) // это надо убрать в будущем
 		c.Next()
 	}
 }
