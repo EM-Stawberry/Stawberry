@@ -29,6 +29,15 @@ func NewProductHandler(productService ProductService) *ProductHandler {
 	return &ProductHandler{productService: productService}
 }
 
+// GetProductByID godoc
+// @Summary      Получить продукт по его ID
+// @Description  Возвращает один продукт по его идентификатору
+// @Tags         products
+// @Param        id   path      int  true  "ID продукта"
+// @Success      200  {object}  entity.Product
+// @Failure      400  {object}  apperror.BadRequest "Некорректный ID"
+// @Failure      500  {object}  apperror.DatabaseError "Ошибка сервера при получении продукта"
+// @Router       /product/{id} [get]
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -53,6 +62,24 @@ func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
+// GetProducts godoc
+// @Summary      Получить список продуктов с фильтрацией и пагинацией
+// @Description  Возвращает список продуктов по фильтрам (категория, цена, магазин, имя, атрибуты) с поддержкой пагинации
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        page         query     int     false  "Номер страницы (по умолчанию 1)"
+// @Param        limit        query     int     false  "Размер страницы (по умолчанию 10, максимум 100)"
+// @Param        name         query     string  false  "Фильтр по названию продукта (поиск по подстроке)"
+// @Param        min_price    query     int     false  "Минимальная цена (в копейках)"
+// @Param        max_price    query     int     false  "Максимальная цена (в копейках)"
+// @Param        category_id  query     int     false  "ID категории (с учетом подкатегорий)"
+// @Param        shop_id      query     int     false  "ID магазина"
+// @Param        attributes   query     string  false  "JSON-строка с фильтрами по атрибутам (пример: {"color":"Black"})"
+// @Success      200  {object}  map[string]interface{} "Список продуктов и метаинформация"
+// @Failure      400  {object}  apperror.BadRequest "Некорректный запрос"
+// @Failure      500  {object}  apperror.DatabaseError "Ошибка сервера при получении продуктов"
+// @Router       /product [get]
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	var filter model.ProductFilter
 
