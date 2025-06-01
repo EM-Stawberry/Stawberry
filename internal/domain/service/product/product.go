@@ -2,17 +2,17 @@ package product
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+
+	"github.com/EM-Stawberry/Stawberry/internal/repository/model"
 )
 
 type Repository interface {
+	GetFilteredProducts(ctx context.Context, filter model.ProductFilter, limit, offset int) ([]entity.Product, error)
+	GetFilteredProductsCount(ctx context.Context, filter model.ProductFilter) (int, error)
 	GetProductByID(ctx context.Context, id string) (entity.Product, error)
-	SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error)
-	SelectProductsByFilters(ctx context.Context, categoryID int, filters map[string]interface{},
-		offset, limit int) ([]entity.Product, int, error)
-	SelectShopProducts(ctx context.Context, shopID int, offset, limit int) ([]entity.Product, int, error)
 	GetAttributesByID(ctx context.Context, productID string) (map[string]interface{}, error)
 	GetPriceRangeByProductID(ctx context.Context, productID int) (int, int, error)
 	GetAverageRatingByProductID(ctx context.Context, productID int) (float64, int, error)
@@ -40,111 +40,60 @@ func (ps *Service) GetProductByID(
 		return entity.Product{}, err
 	}
 	product.Attributes = attrs
-	minPrice, maxPrice, _ := ps.ProductRepository.GetPriceRangeByProductID(ctx, product.ID)
-	product.MinimalPrice = minPrice
-	product.MaximalPrice = maxPrice
-	return product, nil
+
+	enrichedProduct, err := ps.enrichProducts(ctx, product)
+	if err != nil {
+		return entity.Product{}, err
+	}
+
+	return enrichedProduct, nil
 }
 
-// SelectProducts получает весь список продуктов
-func (ps *Service) SelectProducts(
-	ctx context.Context,
-	offset,
-	limit int,
-) ([]entity.Product, int, error) {
-	products, total, err := ps.ProductRepository.SelectProducts(ctx, offset, limit)
+func (ps *Service) GetFilteredProducts(ctx context.Context,
+	filter model.ProductFilter,
+	limit, offset int) ([]entity.Product, int, error) {
+	products, err := ps.ProductRepository.GetFilteredProducts(ctx, filter, limit, offset)
 	if err != nil {
+		fmt.Println("Ошибка при получении продуктов")
 		return nil, 0, err
 	}
 
-	products, err = ps.enrichProducts(ctx, products)
+	count, err := ps.ProductRepository.GetFilteredProductsCount(ctx, filter)
 	if err != nil {
+		fmt.Println("Ошибка при получении количества")
 		return nil, 0, err
 	}
-
-	return products, total, nil
-}
-
-// SelectProductsByName выполняет поиск продукта по его имени
-func (ps *Service) SelectProductsByName(
-	ctx context.Context,
-	name string,
-	offset,
-	limit int,
-) ([]entity.Product, int, error) {
-	products, total, err := ps.ProductRepository.SelectProductsByName(ctx, name, offset, limit)
-	if err != nil {
-		return nil, 0, err
+	for i := range products {
+		products[i], err = ps.enrichProducts(ctx, products[i])
+		if err != nil {
+			fmt.Println("Ошибка при обогащении продуктов")
+			return nil, 0, err
+		}
 	}
 
-	products, err = ps.enrichProducts(ctx, products)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return products, total, nil
-}
-
-// SelectProductsByFilters выполняет фильтрацию по ID категории и аттрибутам продукта
-func (ps *Service) SelectProductsByFilters(
-	ctx context.Context,
-	categoryID int,
-	filters map[string]interface{},
-	offset, limit int,
-) ([]entity.Product, int, error) {
-	products, total, err := ps.ProductRepository.SelectProductsByFilters(ctx, categoryID, filters, offset, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	products, err = ps.enrichProducts(ctx, products)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return products, total, nil
-}
-
-// SelectShopProducts выполняет фильтрацию по ID магазина
-func (ps *Service) SelectShopProducts(
-	ctx context.Context,
-	shopID int,
-	offset,
-	limit int,
-) ([]entity.Product, int, error) {
-	products, total, err := ps.ProductRepository.SelectShopProducts(ctx, shopID, offset, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	products, err = ps.enrichProducts(ctx, products)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return products, total, nil
+	return products, count, nil
 }
 
 // EnrichProducts выполняет обогащение продукта информацией о диапазоне цены, средней оценке и количестве отзывов
 func (ps *Service) enrichProducts(
 	ctx context.Context,
-	products []entity.Product,
-) ([]entity.Product, error) {
-	for i := range products {
-		minPrice, maxPrice, err := ps.ProductRepository.GetPriceRangeByProductID(ctx, products[i].ID)
-		if err != nil {
-			return nil, err
-		}
+	product entity.Product,
+) (entity.Product, error) {
 
-		avgRating, countReviews, err := ps.ProductRepository.GetAverageRatingByProductID(ctx, products[i].ID)
-		if err != nil {
-			return nil, err
-		}
-
-		products[i].MinimalPrice = minPrice
-		products[i].MaximalPrice = maxPrice
-		products[i].AverageRating = avgRating
-		products[i].CountReviews = countReviews
+	minPrice, maxPrice, err := ps.ProductRepository.GetPriceRangeByProductID(ctx, product.ID)
+	if err != nil {
+		return entity.Product{}, err
 	}
-	return products, nil
+
+	avgRating, countReviews, err := ps.ProductRepository.GetAverageRatingByProductID(ctx, product.ID)
+	if err != nil {
+		return entity.Product{}, err
+	}
+
+	product.MinimalPrice = minPrice
+	product.MaximalPrice = maxPrice
+	product.AverageRating = avgRating
+	product.CountReviews = countReviews
+
+	return product, nil
 }

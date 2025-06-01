@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	entity "github.com/EM-Stawberry/Stawberry/internal/domain/entity"
+	model "github.com/EM-Stawberry/Stawberry/internal/repository/model"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -66,6 +67,36 @@ func (mr *MockRepositoryMockRecorder) GetAverageRatingByProductID(ctx, productID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAverageRatingByProductID", reflect.TypeOf((*MockRepository)(nil).GetAverageRatingByProductID), ctx, productID)
 }
 
+// GetFilteredProducts mocks base method.
+func (m *MockRepository) GetFilteredProducts(ctx context.Context, filter model.ProductFilter, limit, offset int) ([]entity.Product, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFilteredProducts", ctx, filter, limit, offset)
+	ret0, _ := ret[0].([]entity.Product)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFilteredProducts indicates an expected call of GetFilteredProducts.
+func (mr *MockRepositoryMockRecorder) GetFilteredProducts(ctx, filter, limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilteredProducts", reflect.TypeOf((*MockRepository)(nil).GetFilteredProducts), ctx, filter, limit, offset)
+}
+
+// GetFilteredProductsCount mocks base method.
+func (m *MockRepository) GetFilteredProductsCount(ctx context.Context, filter model.ProductFilter) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFilteredProductsCount", ctx, filter)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFilteredProductsCount indicates an expected call of GetFilteredProductsCount.
+func (mr *MockRepositoryMockRecorder) GetFilteredProductsCount(ctx, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilteredProductsCount", reflect.TypeOf((*MockRepository)(nil).GetFilteredProductsCount), ctx, filter)
+}
+
 // GetPriceRangeByProductID mocks base method.
 func (m *MockRepository) GetPriceRangeByProductID(ctx context.Context, productID int) (int, int, error) {
 	m.ctrl.T.Helper()
@@ -95,68 +126,4 @@ func (m *MockRepository) GetProductByID(ctx context.Context, id string) (entity.
 func (mr *MockRepositoryMockRecorder) GetProductByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProductByID", reflect.TypeOf((*MockRepository)(nil).GetProductByID), ctx, id)
-}
-
-// SelectProducts mocks base method.
-func (m *MockRepository) SelectProducts(ctx context.Context, offset, limit int) ([]entity.Product, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectProducts", ctx, offset, limit)
-	ret0, _ := ret[0].([]entity.Product)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// SelectProducts indicates an expected call of SelectProducts.
-func (mr *MockRepositoryMockRecorder) SelectProducts(ctx, offset, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectProducts", reflect.TypeOf((*MockRepository)(nil).SelectProducts), ctx, offset, limit)
-}
-
-// SelectProductsByFilters mocks base method.
-func (m *MockRepository) SelectProductsByFilters(ctx context.Context, categoryID int, filters map[string]interface{}, offset, limit int) ([]entity.Product, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectProductsByFilters", ctx, categoryID, filters, offset, limit)
-	ret0, _ := ret[0].([]entity.Product)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// SelectProductsByFilters indicates an expected call of SelectProductsByFilters.
-func (mr *MockRepositoryMockRecorder) SelectProductsByFilters(ctx, categoryID, filters, offset, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectProductsByFilters", reflect.TypeOf((*MockRepository)(nil).SelectProductsByFilters), ctx, categoryID, filters, offset, limit)
-}
-
-// SelectProductsByName mocks base method.
-func (m *MockRepository) SelectProductsByName(ctx context.Context, name string, offset, limit int) ([]entity.Product, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectProductsByName", ctx, name, offset, limit)
-	ret0, _ := ret[0].([]entity.Product)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// SelectProductsByName indicates an expected call of SelectProductsByName.
-func (mr *MockRepositoryMockRecorder) SelectProductsByName(ctx, name, offset, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectProductsByName", reflect.TypeOf((*MockRepository)(nil).SelectProductsByName), ctx, name, offset, limit)
-}
-
-// SelectShopProducts mocks base method.
-func (m *MockRepository) SelectShopProducts(ctx context.Context, shopID, offset, limit int) ([]entity.Product, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectShopProducts", ctx, shopID, offset, limit)
-	ret0, _ := ret[0].([]entity.Product)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// SelectShopProducts indicates an expected call of SelectShopProducts.
-func (mr *MockRepositoryMockRecorder) SelectShopProducts(ctx, shopID, offset, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectShopProducts", reflect.TypeOf((*MockRepository)(nil).SelectShopProducts), ctx, shopID, offset, limit)
 }

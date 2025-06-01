@@ -89,17 +89,18 @@ var _ = Describe("ProductRepository", func() {
 		It("should return min and max price when data exists", func() {
 			productID := 123
 			rows := sqlmock.NewRows([]string{"min", "max"}).
-				AddRow(10.5, 99.9)
+				AddRow(1005, 9909)
 
-			mock.ExpectQuery(`SELECT MIN\(price\) AS min, MAX\(price\) AS max FROM shop_inventory WHERE product_id = \$1`).
+			mock.ExpectQuery(`SELECT CAST\(MIN\(price\) \* 100 AS BIGINT\) AS min,` +
+				`CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnRows(rows)
 
 			min, max, err := repo.GetPriceRangeByProductID(ctx, productID)
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(min).To(Equal(10.5))
-			Expect(max).To(Equal(99.9))
+			Expect(min).To(Equal(1005))
+			Expect(max).To(Equal(9909))
 			Expect(mock.ExpectationsWereMet()).To(Succeed())
 		})
 
@@ -108,29 +109,31 @@ var _ = Describe("ProductRepository", func() {
 			rows := sqlmock.NewRows([]string{"min", "max"}).
 				AddRow(nil, nil)
 
-			mock.ExpectQuery(`SELECT MIN\(price\) AS min, MAX\(price\) AS max FROM shop_inventory WHERE product_id = \$1`).
+			mock.ExpectQuery(`SELECT CAST\(MIN\(price\) \* 100 AS BIGINT\) AS min,` +
+				`CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnRows(rows)
 
 			min, max, err := repo.GetPriceRangeByProductID(ctx, productID)
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(min).To(Equal(0.0))
-			Expect(max).To(Equal(0.0))
+			Expect(min).To(Equal(0))
+			Expect(max).To(Equal(0))
 		})
 
 		It("should return error on query failure", func() {
 			productID := 123
 
-			mock.ExpectQuery(`SELECT MIN\(price\) AS min, MAX\(price\) AS max FROM shop_inventory WHERE product_id = \$1`).
+			mock.ExpectQuery(`SELECT CAST\(MIN\(price\) \* 100 AS BIGINT\) AS min,` +
+				`CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnError(errors.New("some db error"))
 
 			min, max, err := repo.GetPriceRangeByProductID(ctx, productID)
 
 			Expect(err).To(HaveOccurred())
-			Expect(min).To(Equal(0.0))
-			Expect(max).To(Equal(0.0))
+			Expect(min).To(Equal(0))
+			Expect(max).To(Equal(0))
 		})
 	})
 

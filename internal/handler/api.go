@@ -70,13 +70,9 @@ func SetupRouter(
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
 	}
-	product := public.Group("/product")
 	{
-		product.GET("/all", productH.SelectProducts)
-		product.GET("/id", productH.GetProduct)
-		product.GET("/name", productH.SearchProductsByName)
-		product.GET("/filters", productH.SelectFilteredProducts)
-		product.GET("/shops", productH.SelectShopProducts)
+		public.GET("/product", productH.GetProducts)
+		public.GET("/product/:id", productH.GetProductByID)
 	}
 
 	// эндпойнты запросов на покупку
