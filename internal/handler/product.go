@@ -35,9 +35,9 @@ func NewProductHandler(productService ProductService) *ProductHandler {
 // @Tags         products
 // @Param        id   path      int  true  "ID продукта"
 // @Success      200  {object}  entity.Product
-// @Failure      400  {object}  apperror.BadRequest "Некорректный ID"
-// @Failure      500  {object}  apperror.DatabaseError "Ошибка сервера при получении продукта"
-// @Router       /product/{id} [get]
+// @Failure      400  {object}  apperror.Error "Некорректный ID"
+// @Failure      500  {object}  apperror.Error "Ошибка сервера при получении продукта"
+// @Router       /products/{id} [get]
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -64,7 +64,7 @@ func (h *ProductHandler) GetProductByID(c *gin.Context) {
 
 // GetProducts godoc
 // @Summary      Получить список продуктов с фильтрацией и пагинацией
-// @Description  Возвращает список продуктов по фильтрам (категория, цена, магазин, имя, атрибуты) с поддержкой пагинации
+// @Description  Возвращает список продуктов по фильтру (категория, цена, магазин, имя, атрибуты) с поддержкой пагинации
 // @Tags         products
 // @Accept       json
 // @Produce      json
@@ -75,39 +75,33 @@ func (h *ProductHandler) GetProductByID(c *gin.Context) {
 // @Param        max_price    query     int     false  "Максимальная цена (в копейках)"
 // @Param        category_id  query     int     false  "ID категории (с учетом подкатегорий)"
 // @Param        shop_id      query     int     false  "ID магазина"
-// @Param        attributes   query     string  false  "JSON-строка с фильтрами по атрибутам (пример: {"color":"Black"})"
+// @Param        attributes   query     string  false  "JSON-строка с фильтрами по атрибутам (exmpl: {"color":"Black"})"
 // @Success      200  {object}  map[string]interface{} "Список продуктов и метаинформация"
-// @Failure      400  {object}  apperror.BadRequest "Некорректный запрос"
-// @Failure      500  {object}  apperror.DatabaseError "Ошибка сервера при получении продуктов"
-// @Router       /product [get]
+// @Failure      400  {object}  apperror.Error "Некорректный запрос"
+// @Failure      500  {object}  apperror.Error "Ошибка сервера при получении продуктов"
+// @Router       /products [get]
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	var filter model.ProductFilter
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid page number",
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid page number", err))
+		c.Abort()
 		return
 	}
 
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	if err != nil || limit < 1 || limit > 100 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Invalid limit value (should be between 1 and 100)",
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid limit value (should be between 1 and 100)", err))
+		c.Abort()
 		return
 	}
 
 	offset := (page - 1) * limit
 
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    apperror.BadRequest,
-			"message": "Query parameters",
-		})
+		_ = c.Error(apperror.New(apperror.BadRequest, "Invalid query parameters", err))
+		c.Abort()
 		return
 	}
 
@@ -115,10 +109,8 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 	if attrParam != "" {
 		var attrs map[string]string
 		if err := json.Unmarshal([]byte(attrParam), &attrs); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    apperror.BadRequest,
-				"message": "invalid attributes json"},
-			)
+			_ = c.Error(apperror.New(apperror.BadRequest, "Invalid attributes json", err))
+			c.Abort()
 			return
 		}
 		filter.Attributes = attrs
@@ -126,10 +118,8 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 
 	products, total, err := h.productService.GetFilteredProducts(c.Request.Context(), filter, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    apperror.DatabaseError,
-			"message": "failed to get products"},
-		)
+		_ = c.Error(apperror.New(apperror.DatabaseError, "Failed to get products", err))
+		c.Abort()
 		return
 	}
 
