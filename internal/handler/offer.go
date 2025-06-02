@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -20,7 +21,7 @@ import (
 
 type OfferService interface {
 	CreateOffer(ctx context.Context, offer offer.Offer) (uint, error)
-	GetUserOffers(ctx context.Context, userID uint, limit, offset int) ([]entity.Offer, int64, error)
+	GetUserOffers(ctx context.Context, userID uint, page, limit int) ([]entity.Offer, int, error)
 	GetOffer(ctx context.Context, offerID uint) (entity.Offer, error)
 	UpdateOfferStatus(ctx context.Context, offer entity.Offer, userID uint, isStore bool) (entity.Offer, error)
 	DeleteOffer(ctx context.Context, offerID uint) (entity.Offer, error)
@@ -63,44 +64,50 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 	c.JSON(http.StatusCreated, offer)
 }
 
+// @summary Get user's offers
+// @tags offer
+// @accept json
+// @produce json
+// @param page query int false "Page number for pagination" default(1)
+// @param limit query int false "Number of items per page (5-100)" default(10)
+// @success 200 {object} dto.GetUserOffersResp
+// @failure 400 {object} apperror.Error
+// @failure 500 {object} apperror.Error
+// @Router /offers/user [get]
 func (h *OfferHandler) GetUserOffers(c *gin.Context) {
-	userID, ok := c.Get("userID")
+	ctx, canc := context.WithTimeout(c.Request.Context(), time.Second*30)
+	defer canc()
+
+	userID, ok := helpers.UserIDContext(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
+		_ = c.Error(apperror.New(apperror.InternalError, "user ID not found in context", nil))
 		return
 	}
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
+		_ = c.Error(apperror.New(apperror.BadRequest, "invalid page number", err))
 		return
 	}
 
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if err != nil || limit < 1 || limit > 100 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit value"})
+	if err != nil || limit < 5 || limit > 100 {
+		_ = c.Error(apperror.New(apperror.BadRequest, "invalid limit value (must be 5-100)", err))
 		return
 	}
 
-	offset := (page - 1) * limit
-
-	offers, total, err := h.offerService.GetUserOffers(context.Background(), userID.(uint), offset, limit)
+	offersEnt, total, err := h.offerService.GetUserOffers(ctx, userID, page, limit)
 	if err != nil {
-		_ = c.Error(err)
+		_ = c.Error(apperror.New(apperror.InternalError,
+			fmt.Sprintf("failed to get user (userID: %d) offers", userID), err))
 		return
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": offers,
-		"meta": gin.H{
-			"current_page": page,
-			"per_page":     limit,
-			"total_items":  total,
-			"total_pages":  totalPages,
-		},
-	})
+	offersResp := dto.FormUserOffers(offersEnt, page, limit, total, totalPages)
+
+	c.JSON(http.StatusOK, offersResp)
 }
 
 func (h *OfferHandler) GetOffer(c *gin.Context) {
