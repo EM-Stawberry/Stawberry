@@ -84,6 +84,17 @@ func SetupRouter(
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
 
+	admin := base.Group("/admin", middleware.AuthMiddleware(userS, tokenS), middleware.CheckAdminRights())
+	{
+		product := admin.Group("/products")
+		{
+			product.GET("/", productH.GetProducts)
+			product.GET("/:productID", productH.GetProduct)
+			product.POST("/", productH.PostProduct)
+			product.PATCH("/", productH.PatchProduct)
+		}
+	}
+
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH
 	_ = notificationH
