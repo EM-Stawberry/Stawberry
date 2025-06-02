@@ -19,10 +19,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/EM-Stawberry/Stawberry/config"
+	guestofferservice "github.com/EM-Stawberry/Stawberry/internal/domain/service/guestoffer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/offer"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/product"
 	"github.com/EM-Stawberry/Stawberry/internal/handler"
+	guesthandler "github.com/EM-Stawberry/Stawberry/internal/handler/guestoffer"
 	hdlr "github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	guestofferrepo "github.com/EM-Stawberry/Stawberry/internal/repository/guestoffer"
 	repo "github.com/EM-Stawberry/Stawberry/internal/repository/reviews"
 	"github.com/gin-gonic/gin"
 )
@@ -66,6 +69,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	tokenRepository := repository.NewTokenRepository(db)
 	productReviewsRepository := repo.NewProductReviewRepository(db, log)
 	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
+	guestOfferRepository := guestofferrepo.NewRepository(db)
 	log.Info("Repositories initialized")
 
 	passwordManager := security.NewArgon2idPasswordManager()
@@ -83,6 +87,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationService := notification.NewService(notificationRepository)
 	productReviewsService := reviews.NewProductReviewService(productReviewsRepository, log)
 	sellerReviewsService := reviews.NewSellerReviewService(sellerReviewsRepository, log)
+	guestOfferService := guestofferservice.NewService(guestOfferRepository, mailer, log)
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()
@@ -92,6 +97,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
 	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
+	guestOfferHandler := guesthandler.NewHandler(guestOfferService, log)
 	log.Info("Handlers initialized")
 
 	router := handler.SetupRouter(
@@ -102,6 +108,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 		notificationHandler,
 		productReviewsHandler,
 		sellerReviewsHandler,
+		guestOfferHandler,
 		userService,
 		tokenService,
 		"api/v1",

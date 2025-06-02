@@ -64,6 +64,18 @@ func (mr *MockMailerServiceMockRecorder) Registered(userName, userMail any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Registered", reflect.TypeOf((*MockMailerService)(nil).Registered), userName, userMail)
 }
 
+// SendGuestOfferNotification mocks base method.
+func (m *MockMailerService) SendGuestOfferNotification(email, subject, body string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SendGuestOfferNotification", email, subject, body)
+}
+
+// SendGuestOfferNotification indicates an expected call of SendGuestOfferNotification.
+func (mr *MockMailerServiceMockRecorder) SendGuestOfferNotification(email, subject, body any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendGuestOfferNotification", reflect.TypeOf((*MockMailerService)(nil).SendGuestOfferNotification), email, subject, body)
+}
+
 // StatusUpdate mocks base method.
 func (m *MockMailerService) StatusUpdate(offerID uint, status, userMail string) {
 	m.ctrl.T.Helper()
