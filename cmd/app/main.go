@@ -60,7 +60,14 @@ func main() {
 	auditMiddleware.Close()
 }
 
-func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engine, email.MailerService, *middleware.AuditMiddleware) {
+func initializeApp(
+	cfg *config.Config,
+	db *sqlx.DB,
+	log *zap.Logger,
+) (
+	*gin.Engine,
+	email.MailerService,
+	*middleware.AuditMiddleware) {
 	mailer := email.NewMailer(log, &cfg.Email)
 	log.Info("Mailer initialized")
 
