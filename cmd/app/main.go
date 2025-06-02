@@ -101,7 +101,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
 	log.Info("Handlers initialized")
 
-	auditMiddleware := middleware.NewAuditMiddleware(cfg.Audit, auditService)
+	auditMiddleware := middleware.NewAuditMiddleware(&cfg.Audit, auditService)
 
 	router := handler.SetupRouter(
 		healthHandler,
