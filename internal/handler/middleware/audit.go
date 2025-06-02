@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/EM-Stawberry/Stawberry/config"
@@ -22,8 +23,8 @@ const maxBodySize = 10 * 1024
 
 type AuditMiddleware struct {
 	logChan chan entity.AuditEntry
-	done    chan struct{}
 	service AuditService
+	wg      *sync.WaitGroup
 }
 
 type bodyLogWriter struct {
@@ -43,10 +44,11 @@ type AuditService interface {
 func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService) *AuditMiddleware {
 	am := &AuditMiddleware{
 		logChan: make(chan entity.AuditEntry, cfg.QueueSize),
-		done:    make(chan struct{}),
 		service: as,
+		wg:      &sync.WaitGroup{},
 	}
 
+	am.wg.Add(cfg.WorkerPoolSize)
 	for range cfg.WorkerPoolSize {
 		go am.worker()
 	}
@@ -55,7 +57,7 @@ func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService) *AuditMiddlewa
 }
 
 func (am *AuditMiddleware) worker() {
-	defer close(am.done)
+	defer am.wg.Done()
 	for entry := range am.logChan {
 		sanitizeSensitiveData(entry.ReqBody)
 		sanitizeSensitiveData(entry.RespBody)
@@ -70,7 +72,7 @@ func (am *AuditMiddleware) worker() {
 
 func (am *AuditMiddleware) Close() {
 	close(am.logChan)
-	<-am.done
+	am.wg.Wait()
 }
 
 func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
