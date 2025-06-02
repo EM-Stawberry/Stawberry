@@ -47,6 +47,7 @@ func (r *UserRepository) InsertUser(
 		return 0, apperror.New(apperror.DuplicateError, "failed to create user", err)
 	}
 
+	userModel = model.ConvertUserFromSvc(user)
 	return userModel.ID, nil
 }
 

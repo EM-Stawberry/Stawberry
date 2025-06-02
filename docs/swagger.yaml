@@ -16,8 +16,19 @@ definitions:
       review:
         type: string
     required:
-      - rating
-      - review
+    - rating
+    - review
+    type: object
+  dto.GetProductResp:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   dto.LoginUserReq:
     properties:
@@ -28,9 +39,9 @@ definitions:
       password:
         type: string
     required:
-      - email
-      - fingerprint
-      - password
+    - email
+    - fingerprint
+    - password
     type: object
   dto.LoginUserResp:
     properties:
@@ -46,19 +57,56 @@ definitions:
       refresh_token:
         type: string
     required:
-      - fingerprint
+    - fingerprint
     type: object
   dto.PatchOfferStatusReq:
     properties:
       status:
         type: string
     required:
-      - status
+    - status
     type: object
   dto.PatchOfferStatusResp:
     properties:
       new_status:
         type: string
+    type: object
+  dto.PatchProductReq:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      shop_id:
+        type: integer
+      shop_point_id:
+        type: integer
+    type: object
+  dto.PostProductReq:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      shop_id:
+        type: integer
+    type: object
+  dto.PostProductResp:
+    properties:
+      id:
+        type: integer
     type: object
   dto.RefreshReq:
     properties:
@@ -67,7 +115,7 @@ definitions:
       refresh_token:
         type: string
     required:
-      - fingerprint
+    - fingerprint
     type: object
   dto.RefreshResp:
     properties:
@@ -89,11 +137,11 @@ definitions:
       phone:
         type: string
     required:
-      - email
-      - fingerprint
-      - name
-      - password
-      - phone
+    - email
+    - fingerprint
+    - name
+    - password
+    - phone
     type: object
   dto.RegistrationUserResp:
     properties:
@@ -138,30 +186,30 @@ paths:
   /api/products/{id}/reviews:
     get:
       consumes:
-        - application/json
+      - application/json
       description: Получает все отзывы о продукте по его ID
       parameters:
-        - description: Product ID
-          in: path
-          name: id
-          required: true
-          type: integer
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: Список отзывов
           schema:
             items:
               $ref: '#/definitions/entity.ProductReview'
             type: array
-        '400':
+        "400":
           description: Некорректный ID продукта
           schema:
             additionalProperties:
               type: string
             type: object
-        '500':
+        "500":
           description: Внутренняя ошибка сервера
           schema:
             additionalProperties:
@@ -169,88 +217,88 @@ paths:
             type: object
       summary: Получение списка отзывов о продукте
       tags:
-        - reviews
+      - reviews
     post:
       consumes:
-        - application/json
+      - application/json
       description: Добавляет новый отзыв о продукте
       parameters:
-        - description: Product ID
-          in: path
-          name: id
-          required: true
-          type: integer
-        - description: Данные отзыва
-          in: body
-          name: review
-          required: true
-          schema:
-            $ref: '#/definitions/dto.AddReviewDTO'
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные отзыва
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddReviewDTO'
       produces:
-        - application/json
+      - application/json
       responses:
-        '201':
+        "201":
           description: Отзыв успешно добавлен
           schema:
             additionalProperties:
               type: string
             type: object
-        '400':
+        "400":
           description: Некорректный ввод
           schema:
             additionalProperties:
               type: string
             type: object
-        '401':
+        "401":
           description: Неавторизованный доступ
           schema:
             additionalProperties:
               type: string
             type: object
-        '500':
+        "500":
           description: Внутренняя ошибка сервера
           schema:
             additionalProperties:
               type: string
             type: object
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       summary: Добавление отзыва о продукте
       tags:
-        - reviews
+      - reviews
   /api/sellers/{id}/reviews:
     get:
       consumes:
-        - application/json
+      - application/json
       description: Получает все отзывы о продавце по его ID
       parameters:
-        - description: Seller ID
-          in: path
-          name: id
-          required: true
-          type: integer
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: Список отзывов
           schema:
             items:
               $ref: '#/definitions/entity.SellerReview'
             type: array
-        '400':
+        "400":
           description: Некорректный ID продавца
           schema:
             additionalProperties:
               type: string
             type: object
-        '404':
+        "404":
           description: Продавец не найден
           schema:
             additionalProperties:
               type: string
             type: object
-        '500':
+        "500":
           description: Внутренняя ошибка сервера
           schema:
             additionalProperties:
@@ -258,223 +306,434 @@ paths:
             type: object
       summary: Получение списка отзывов о продавце
       tags:
-        - reviews
+      - reviews
     post:
       consumes:
-        - application/json
+      - application/json
       description: Добавляет новый отзыв о продавце
       parameters:
-        - description: Seller ID
-          in: path
-          name: id
-          required: true
-          type: integer
-        - description: Данные отзыва
-          in: body
-          name: review
-          required: true
-          schema:
-            $ref: '#/definitions/dto.AddReviewDTO'
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные отзыва
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddReviewDTO'
       produces:
-        - application/json
+      - application/json
       responses:
-        '201':
+        "201":
           description: Отзыв успешно добавлен
           schema:
             additionalProperties:
               type: string
             type: object
-        '400':
+        "400":
           description: Некорректный ввод
           schema:
             additionalProperties:
               type: string
             type: object
-        '401':
+        "401":
           description: Неавторизованный доступ
           schema:
             additionalProperties:
               type: string
             type: object
-        '404':
+        "404":
           description: Продавец не найден
           schema:
             additionalProperties:
               type: string
             type: object
-        '500':
+        "500":
           description: Внутренняя ошибка сервера
           schema:
             additionalProperties:
               type: string
             type: object
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       summary: Добавление отзыва о продавце
       tags:
-        - reviews
+      - reviews
   /auth/login:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Аутентифицирует пользователя и возвращает токены access/refresh
       parameters:
-        - description: Учетные данные пользователя
-          in: body
-          name: user
-          required: true
-          schema:
-            $ref: '#/definitions/dto.LoginUserReq'
+      - description: Учетные данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginUserReq'
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             $ref: '#/definitions/dto.LoginUserResp'
-        '400':
+        "400":
           description: Bad Request
           schema: {}
       summary: Аутентификация пользователя
       tags:
-        - auth
+      - auth
   /auth/logout:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Выход пользователя и инвалидация токена обновления
       parameters:
-        - description: Данные для выхода
-          in: body
-          name: logout
-          required: true
-          schema:
-            $ref: '#/definitions/dto.LogoutReq'
+      - description: Данные для выхода
+        in: body
+        name: logout
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LogoutReq'
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: OK
-        '400':
+        "400":
           description: Bad Request
           schema: {}
       summary: Выход из системы
       tags:
-        - auth
+      - auth
   /auth/refresh:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Обновляет токены access и refresh
       parameters:
-        - description: Данные токена refresh
-          in: body
-          name: refresh
-          required: true
-          schema:
-            $ref: '#/definitions/dto.RefreshReq'
+      - description: Данные токена refresh
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshReq'
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             $ref: '#/definitions/dto.RefreshResp'
-        '400':
+        "400":
           description: Bad Request
           schema: {}
       summary: Обновление токенов
       tags:
-        - auth
+      - auth
   /auth/reg:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Регистрирует нового пользователя и возвращает токены доступа/обновления
       parameters:
-        - description: Данные для регистрации пользователя
-          in: body
-          name: user
-          required: true
-          schema:
-            $ref: '#/definitions/dto.RegistrationUserReq'
+      - description: Данные для регистрации пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegistrationUserReq'
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             $ref: '#/definitions/dto.RegistrationUserResp'
-        '400':
+        "400":
           description: Bad Request
           schema: {}
       summary: Регистрация нового пользователя
       tags:
-        - auth
+      - auth
   /health:
     get:
       description: Возвращает статус сервера и текущее время
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: Успешный ответ с данными
           schema:
             additionalProperties: true
             type: object
       summary: Получить статус сервера
       tags:
-        - health
+      - health
   /offers/{offerID}:
     patch:
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - description: Offer ID
-          in: path
-          name: id
-          required: true
-          type: integer
-        - description: Offer status update request
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: '#/definitions/dto.PatchOfferStatusReq'
+      - description: Offer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Offer status update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PatchOfferStatusReq'
       produces:
-        - application/json
+      - application/json
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             $ref: '#/definitions/dto.PatchOfferStatusResp'
-        '400':
+        "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/apperror.Error'
-        '401':
+        "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/apperror.Error'
-        '404':
+        "404":
           description: Not Found
           schema:
             $ref: '#/definitions/apperror.Error'
-        '409':
+        "409":
           description: Conflict
           schema:
             $ref: '#/definitions/apperror.Error'
-        '500':
+        "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apperror.Error'
       summary: Update offer status
       tags:
-        - offer
-securityDefinitions:
-  BearerAuth:
-    description: 'Bearer token for authentication. Format: "Bearer <token>"'
-    in: header
-    name: Authorization
-    type: apiKey
-swagger: '2.0'
+      - offer
+  /products/:
+    get:
+      description: Возвращает список продуктов с пагинацией
+      parameters:
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Количество элементов на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  $ref: '#/definitions/dto.GetProductResp'
+                type: array
+              meta:
+                properties:
+                  current_page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total_items:
+                    type: integer
+                  total_pages:
+                    type: integer
+                type: object
+            type: object
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: object
+      summary: Получить список продуктов
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Создает новый продукт в системе
+      parameters:
+      - description: Данные продукта
+        in: body
+        name: productData
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PostProductReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.PostProductResp'
+        "400":
+          description: Неверные данные продукта
+          schema:
+            type: object
+        "500":
+          description: Ошибка создания
+          schema:
+            type: object
+      summary: Создать новый продукт
+      tags:
+      - products
+  /products/{product_id}:
+    delete:
+      description: Удаляет продукт по указанному ID
+      parameters:
+      - description: ID продукта
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Продукт удален
+          schema:
+            type: object
+        "400":
+          description: Неверный ID продукта
+          schema:
+            type: object
+        "500":
+          description: Ошибка удаления
+          schema:
+            type: object
+      summary: Удалить продукт
+      tags:
+      - products
+    get:
+      description: Возвращает продукт по указанному ID
+      parameters:
+      - description: ID продукта
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetProductResp'
+        "400":
+          description: Неверный ID продукта
+          schema:
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: object
+      summary: Получить продукт по ID
+      tags:
+      - products
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет информацию о продукте
+      parameters:
+      - description: ID продукта
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Данные для обновления
+        in: body
+        name: updateData
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PatchProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Продукт обновлен
+          schema:
+            type: object
+        "400":
+          description: Неверные данные
+          schema:
+            type: object
+        "500":
+          description: Ошибка обновления
+          schema:
+            type: object
+      summary: Обновить продукт
+      tags:
+      - products
+  /products/shop/{shop_id}:
+    get:
+      description: Возвращает список продуктов для указанного магазина
+      parameters:
+      - description: ID магазина
+        in: path
+        name: shop_id
+        required: true
+        type: integer
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Количество элементов на странице
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  $ref: '#/definitions/dto.GetProductResp'
+                type: array
+              meta:
+                properties:
+                  current_page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total_items:
+                    type: integer
+                  total_pages:
+                    type: integer
+                type: object
+            type: object
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: object
+      summary: Получить продукты магазина
+      tags:
+      - products
+swagger: "2.0"
