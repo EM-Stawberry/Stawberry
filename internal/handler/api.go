@@ -11,10 +11,9 @@ import (
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
@@ -43,6 +42,7 @@ func SetupRouter(
 	router.Use(middleware.ZapRecovery(logger))
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
+	router.Use(middleware.Timeout())
 
 	// Swagger UI эндпоинт
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
