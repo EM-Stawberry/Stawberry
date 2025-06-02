@@ -55,6 +55,11 @@ type EmailConfig struct {
 	QueueSize  int
 }
 
+type AuditConfig struct {
+	WorkerPoolSize int
+	QueueSize      int
+}
+
 type Config struct {
 	AccessKey     string
 	SecretKey     string
@@ -67,6 +72,7 @@ type Config struct {
 	Server ServerConfig
 	Token  TokenConfig
 	Email  EmailConfig
+	Audit  AuditConfig
 }
 
 func LoadConfig() *Config {
@@ -123,6 +129,10 @@ func LoadConfig() *Config {
 			SMTPPort:   viper.GetInt("SMTP_PORT"),
 			WorkerPool: viper.GetInt("EMAIL_WORKER_POOL"),
 			QueueSize:  viper.GetInt("EMAIL_QUEUE_SIZE"),
+		},
+		Audit: AuditConfig{
+			WorkerPoolSize: viper.GetInt("AUDIT_WORKER_POOL"),
+			QueueSize:      viper.GetInt("AUDIT_QUEUE_SIZE"),
 		},
 	}
 

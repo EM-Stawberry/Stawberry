@@ -35,9 +35,11 @@ func SetupRouter(
 	tokenS middleware.TokenValidator,
 	basePath string,
 	logger *zap.Logger,
+	auditMiddleware *middleware.AuditMiddleware,
 ) *gin.Engine {
 	router := gin.New()
 
+	router.Use(auditMiddleware.Middleware())
 	router.Use(middleware.ZapLogger(logger))
 	router.Use(middleware.ZapRecovery(logger))
 	router.Use(middleware.CORS())
