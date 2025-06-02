@@ -16,9 +16,6 @@ import (
 
 const maxBodySize = 10 * 1024
 
-var workerPoolSize int
-var queueSize int
-
 // 1) middleware collects data and forms an audit log entry
 // 2) sends it to a worker for data sanitizing and inserting into the database
 // 3) graceful shutdown through Close method that's being called at the end of main()
