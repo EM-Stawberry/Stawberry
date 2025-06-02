@@ -2,10 +2,11 @@ package repository
 
 import (
 	"context"
+	"time"
+
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	"time"
 )
 
 type AuditRepository struct {

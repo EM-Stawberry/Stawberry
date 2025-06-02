@@ -3,14 +3,15 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
+	"time"
+
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"io"
-	"net/http"
-	"time"
 )
 
 const maxBodySize = 10 * 1024
