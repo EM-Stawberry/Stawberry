@@ -25,8 +25,8 @@ type DisabledCore struct {
 }
 
 // With overrides the With method to ignore all fields
-func (c DisabledCore) With(_ []zapcore.Field) zapcore.Core {
-	return c
+func (c DisabledCore) With(fields []zapcore.Field) zapcore.Core {
+	return c.Core.With(fields)
 }
 
 // Check verifies if the entry should be logged and returns a CheckedEntry with empty fields
@@ -38,8 +38,8 @@ func (c DisabledCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 }
 
 // Write overrides the Write method to ignore all fields
-func (c DisabledCore) Write(ent zapcore.Entry, _ []zapcore.Field) error {
-	return c.Core.Write(ent, nil)
+func (c DisabledCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
+	return c.Core.Write(ent, fields)
 }
 
 // coloredTimeEncoder formats timestamps with gray color
@@ -111,6 +111,8 @@ func SetupLogger(env string) *zap.Logger {
 	if env == config.EnvDev || env == config.EnvTest {
 		core = DisabledCore{Core: core}
 	}
+
+	zap.ReplaceGlobals(zap.New(core, zap.AddCaller()))
 
 	return zap.New(core, zap.AddCaller())
 }
