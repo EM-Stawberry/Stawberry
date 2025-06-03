@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:generate mockgen -source=$GOFILE -destination=store_mock_test.go -package=store HandlerStore
 type HandlerStore interface {
 	Registration(c *gin.Context)
 }

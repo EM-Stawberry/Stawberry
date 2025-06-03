@@ -7,6 +7,8 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/repository/admin/store"
 )
 
+//go:generate mockgen -source=store.go -destination=mocks/ServiceStore.go -package=mocks ServiceStore
+
 type ServiceStore interface {
 	CreateUser(ctx context.Context, user user.User) error
 }
@@ -15,7 +17,7 @@ type Store struct {
 	repo store.RepositoryStore
 }
 
-func NewStoreService(repo store.RepositoryStore) *Store {
+func NewStoreService(repo store.RepositoryStore) ServiceStore {
 	return &Store{
 		repo: repo,
 	}

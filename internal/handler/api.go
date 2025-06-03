@@ -9,6 +9,7 @@ import (
 
 	// Импорт сваггер-генератора
 	_ "github.com/EM-Stawberry/Stawberry/docs"
+	"github.com/EM-Stawberry/Stawberry/internal/handler/admin"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
 	swaggerFiles "github.com/swaggo/files"
@@ -34,6 +35,7 @@ func SetupRouter(
 	sellerReviewH *reviews.SellerReviewsHandler,
 	userS middleware.UserGetter,
 	tokenS middleware.TokenValidator,
+	adminHandler *admin.Handler,
 	basePath string,
 	logger *zap.Logger,
 ) *gin.Engine {
@@ -87,6 +89,6 @@ func SetupRouter(
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH
 	_ = notificationH
-
+	_ = adminHandler
 	return router
 }

@@ -14,6 +14,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=store.go -destination=mocks/RepositoryStore.go -package=mocks RepositoryStore
+
 type RepositoryStore interface {
 	InsertStore(ctx context.Context, store user.User) error
 }
