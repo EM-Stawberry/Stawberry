@@ -2,12 +2,15 @@ package main
 
 import (
 	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
+	adminService "github.com/EM-Stawberry/Stawberry/internal/domain/service/admin"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/reviews"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/user"
+	adminHandler "github.com/EM-Stawberry/Stawberry/internal/handler/admin"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/repository"
+	"github.com/EM-Stawberry/Stawberry/internal/repository/admin"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/EM-Stawberry/Stawberry/pkg/email"
 	"github.com/EM-Stawberry/Stawberry/pkg/logger"
@@ -66,6 +69,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	tokenRepository := repository.NewTokenRepository(db)
 	productReviewsRepository := repo.NewProductReviewRepository(db, log)
 	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
+	adminRepository := admin.NewRepository(db, log)
 	log.Info("Repositories initialized")
 
 	passwordManager := security.NewArgon2idPasswordManager()
@@ -83,6 +87,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationService := notification.NewService(notificationRepository)
 	productReviewsService := reviews.NewProductReviewService(productReviewsRepository, log)
 	sellerReviewsService := reviews.NewSellerReviewService(sellerReviewsRepository, log)
+	adminS := adminService.NewAdminService(adminRepository)
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()
@@ -92,6 +97,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
 	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
+	adminH := adminHandler.NewAdminHandler(cfg, adminS)
 	log.Info("Handlers initialized")
 
 	router := handler.SetupRouter(
@@ -104,6 +110,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 		sellerReviewsHandler,
 		userService,
 		tokenService,
+		adminH,
 		"api/v1",
 		log,
 	)
