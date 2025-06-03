@@ -17,8 +17,6 @@ type HandlerStore interface {
 
 type Handler struct {
 	refreshLife  int
-	basePath     string
-	domain       string
 	adminService store.ServiceStore
 }
 

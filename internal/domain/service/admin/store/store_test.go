@@ -15,7 +15,7 @@ import (
 var _ = Describe("StoreService.CreateUser", func() {
 	var (
 		mockRepo *mocks.MockRepositoryStore
-		service  *store.Store
+		service  store.ServiceStore
 	)
 
 	BeforeEach(func() {

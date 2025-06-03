@@ -128,7 +128,7 @@ func runMigrations(t testing.TB, db *sqlx.DB, cfg dbOptions) {
 	if cfg.migrationsPath == "" {
 		return
 	}
-	goose.SetDialect("postgres")
+	_ = goose.SetDialect("postgres")
 	err := goose.Up(db.DB, cfg.migrationsPath)
 	require.NoError(t, err, "failed to apply migrations")
 }
