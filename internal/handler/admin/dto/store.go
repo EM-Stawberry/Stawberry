@@ -9,7 +9,7 @@ type RegisterStoreReq struct {
 	Password string `json:"password" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 	Phone    string `json:"phone" binding:"required"`
-	IsStore  bool   `json:"is_store"`
+	IsStore  bool   `json:"is_store" binding:"required"`
 }
 
 func (ru *RegisterStoreReq) ConvertToSvc() user.User {
