@@ -1,654 +1,731 @@
 {
-	"swagger": "2.0",
-	"info": {
-		"contact": {}
-	},
-	"paths": {
-		"/api/products/{id}/reviews": {
-			"get": {
-				"description": "Получает все отзывы о продукте по его ID",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["reviews"],
-				"summary": "Получение списка отзывов о продукте",
-				"parameters": [
-					{
-						"type": "integer",
-						"description": "Product ID",
-						"name": "id",
-						"in": "path",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Список отзывов",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/entity.ProductReview"
-							}
-						}
-					},
-					"400": {
-						"description": "Некорректный ID продукта",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"500": {
-						"description": "Внутренняя ошибка сервера",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					}
-				}
-			},
-			"post": {
-				"security": [
-					{
-						"BearerAuth": []
-					}
-				],
-				"description": "Добавляет новый отзыв о продукте",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["reviews"],
-				"summary": "Добавление отзыва о продукте",
-				"parameters": [
-					{
-						"type": "integer",
-						"description": "Product ID",
-						"name": "id",
-						"in": "path",
-						"required": true
-					},
-					{
-						"description": "Данные отзыва",
-						"name": "review",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.AddReviewDTO"
-						}
-					}
-				],
-				"responses": {
-					"201": {
-						"description": "Отзыв успешно добавлен",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"400": {
-						"description": "Некорректный ввод",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"401": {
-						"description": "Неавторизованный доступ",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"500": {
-						"description": "Внутренняя ошибка сервера",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/api/sellers/{id}/reviews": {
-			"get": {
-				"description": "Получает все отзывы о продавце по его ID",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["reviews"],
-				"summary": "Получение списка отзывов о продавце",
-				"parameters": [
-					{
-						"type": "integer",
-						"description": "Seller ID",
-						"name": "id",
-						"in": "path",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Список отзывов",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/entity.SellerReview"
-							}
-						}
-					},
-					"400": {
-						"description": "Некорректный ID продавца",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"404": {
-						"description": "Продавец не найден",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"500": {
-						"description": "Внутренняя ошибка сервера",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					}
-				}
-			},
-			"post": {
-				"security": [
-					{
-						"BearerAuth": []
-					}
-				],
-				"description": "Добавляет новый отзыв о продавце",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["reviews"],
-				"summary": "Добавление отзыва о продавце",
-				"parameters": [
-					{
-						"type": "integer",
-						"description": "Seller ID",
-						"name": "id",
-						"in": "path",
-						"required": true
-					},
-					{
-						"description": "Данные отзыва",
-						"name": "review",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.AddReviewDTO"
-						}
-					}
-				],
-				"responses": {
-					"201": {
-						"description": "Отзыв успешно добавлен",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"400": {
-						"description": "Некорректный ввод",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"401": {
-						"description": "Неавторизованный доступ",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"404": {
-						"description": "Продавец не найден",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					},
-					"500": {
-						"description": "Внутренняя ошибка сервера",
-						"schema": {
-							"type": "object",
-							"additionalProperties": {
-								"type": "string"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/auth/login": {
-			"post": {
-				"description": "Аутентифицирует пользователя и возвращает токены access/refresh",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["auth"],
-				"summary": "Аутентификация пользователя",
-				"parameters": [
-					{
-						"description": "Учетные данные пользователя",
-						"name": "user",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.LoginUserReq"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/dto.LoginUserResp"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {}
-					}
-				}
-			}
-		},
-		"/auth/logout": {
-			"post": {
-				"description": "Выход пользователя и инвалидация токена обновления",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["auth"],
-				"summary": "Выход из системы",
-				"parameters": [
-					{
-						"description": "Данные для выхода",
-						"name": "logout",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.LogoutReq"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK"
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {}
-					}
-				}
-			}
-		},
-		"/auth/refresh": {
-			"post": {
-				"description": "Обновляет токены access и refresh",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["auth"],
-				"summary": "Обновление токенов",
-				"parameters": [
-					{
-						"description": "Данные токена refresh",
-						"name": "refresh",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.RefreshReq"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/dto.RefreshResp"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {}
-					}
-				}
-			}
-		},
-		"/auth/reg": {
-			"post": {
-				"description": "Регистрирует нового пользователя и возвращает токены доступа/обновления",
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["auth"],
-				"summary": "Регистрация нового пользователя",
-				"parameters": [
-					{
-						"description": "Данные для регистрации пользователя",
-						"name": "user",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.RegistrationUserReq"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/dto.RegistrationUserResp"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {}
-					}
-				}
-			}
-		},
-		"/health": {
-			"get": {
-				"description": "Возвращает статус сервера и текущее время",
-				"produces": ["application/json"],
-				"tags": ["health"],
-				"summary": "Получить статус сервера",
-				"responses": {
-					"200": {
-						"description": "Успешный ответ с данными",
-						"schema": {
-							"type": "object",
-							"additionalProperties": true
-						}
-					}
-				}
-			}
-		},
-		"/offers/{offerID}": {
-			"patch": {
-				"consumes": ["application/json"],
-				"produces": ["application/json"],
-				"tags": ["offer"],
-				"summary": "Update offer status",
-				"parameters": [
-					{
-						"type": "integer",
-						"description": "Offer ID",
-						"name": "id",
-						"in": "path",
-						"required": true
-					},
-					{
-						"description": "Offer status update request",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/dto.PatchOfferStatusReq"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/dto.PatchOfferStatusResp"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/apperror.Error"
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"schema": {
-							"$ref": "#/definitions/apperror.Error"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/apperror.Error"
-						}
-					},
-					"409": {
-						"description": "Conflict",
-						"schema": {
-							"$ref": "#/definitions/apperror.Error"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/apperror.Error"
-						}
-					}
-				}
-			}
-		}
-	},
-	"definitions": {
-		"apperror.Error": {
-			"type": "object",
-			"properties": {
-				"errCode": {
-					"type": "string"
-				},
-				"errMsg": {
-					"type": "string"
-				},
-				"wrappedErr": {}
-			}
-		},
-		"dto.AddReviewDTO": {
-			"type": "object",
-			"required": ["rating", "review"],
-			"properties": {
-				"rating": {
-					"type": "integer",
-					"maximum": 5,
-					"minimum": 1
-				},
-				"review": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.LoginUserReq": {
-			"type": "object",
-			"required": ["email", "fingerprint", "password"],
-			"properties": {
-				"email": {
-					"type": "string"
-				},
-				"fingerprint": {
-					"type": "string"
-				},
-				"password": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.LoginUserResp": {
-			"type": "object",
-			"properties": {
-				"access_token": {
-					"type": "string"
-				},
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.LogoutReq": {
-			"type": "object",
-			"required": ["fingerprint"],
-			"properties": {
-				"fingerprint": {
-					"type": "string"
-				},
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.PatchOfferStatusReq": {
-			"type": "object",
-			"required": ["status"],
-			"properties": {
-				"status": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.PatchOfferStatusResp": {
-			"type": "object",
-			"properties": {
-				"new_status": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.RefreshReq": {
-			"type": "object",
-			"required": ["fingerprint"],
-			"properties": {
-				"fingerprint": {
-					"type": "string"
-				},
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.RefreshResp": {
-			"type": "object",
-			"properties": {
-				"access_token": {
-					"type": "string"
-				},
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.RegistrationUserReq": {
-			"type": "object",
-			"required": ["email", "fingerprint", "name", "password", "phone"],
-			"properties": {
-				"email": {
-					"type": "string"
-				},
-				"fingerprint": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				},
-				"password": {
-					"type": "string"
-				},
-				"phone": {
-					"type": "string"
-				}
-			}
-		},
-		"dto.RegistrationUserResp": {
-			"type": "object",
-			"properties": {
-				"access_token": {
-					"type": "string"
-				},
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"entity.ProductReview": {
-			"type": "object",
-			"properties": {
-				"created_at": {
-					"type": "string"
-				},
-				"id": {
-					"type": "integer"
-				},
-				"product_id": {
-					"type": "integer"
-				},
-				"rating": {
-					"type": "integer"
-				},
-				"review": {
-					"type": "string"
-				},
-				"user_id": {
-					"type": "integer"
-				}
-			}
-		},
-		"entity.SellerReview": {
-			"type": "object",
-			"properties": {
-				"created_at": {
-					"type": "string"
-				},
-				"id": {
-					"type": "integer"
-				},
-				"rating": {
-					"type": "integer"
-				},
-				"review": {
-					"type": "string"
-				},
-				"seller_id": {
-					"type": "integer"
-				},
-				"user_id": {
-					"type": "integer"
-				}
-			}
-		}
-	},
-	"securityDefinitions": {
-		"BearerAuth": {
-			"description": "Bearer token for authentication. Format: \"Bearer \u003ctoken\u003e\"",
-			"type": "apiKey",
-			"name": "Authorization",
-			"in": "header"
-		}
-	}
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api/products/{id}/reviews": {
+            "get": {
+                "description": "Получает все отзывы о продукте по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Получение списка отзывов о продукте",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список отзывов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entity.ProductReview"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID продукта",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Добавляет новый отзыв о продукте",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Добавление отзыва о продукте",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные отзыва",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddReviewDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Отзыв успешно добавлен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ввод",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизованный доступ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sellers/{id}/reviews": {
+            "get": {
+                "description": "Получает все отзывы о продавце по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Получение списка отзывов о продавце",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Seller ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список отзывов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entity.SellerReview"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID продавца",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Продавец не найден",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Добавляет новый отзыв о продавце",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "summary": "Добавление отзыва о продавце",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Seller ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные отзыва",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddReviewDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Отзыв успешно добавлен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ввод",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизованный доступ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Продавец не найден",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Аутентифицирует пользователя и возвращает токены access/refresh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Аутентификация пользователя",
+                "parameters": [
+                    {
+                        "description": "Учетные данные пользователя",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginUserReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginUserResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Выход пользователя и инвалидация токена обновления",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Выход из системы",
+                "parameters": [
+                    {
+                        "description": "Данные для выхода",
+                        "name": "logout",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LogoutReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Обновляет токены access и refresh",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Обновление токенов",
+                "parameters": [
+                    {
+                        "description": "Данные токена refresh",
+                        "name": "refresh",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefreshReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefreshResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/auth/reg": {
+            "post": {
+                "description": "Регистрирует нового пользователя и возвращает токены доступа/обновления",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации пользователя",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegistrationUserReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegistrationUserResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Возвращает статус сервера и текущее время",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Получить статус сервера",
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ с данными",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/offers/{offerID}": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "offer"
+                ],
+                "summary": "Update offer status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Offer ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Offer status update request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PatchOfferStatusReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PatchOfferStatusResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "apperror.Error": {
+            "type": "object",
+            "properties": {
+                "errCode": {
+                    "type": "string"
+                },
+                "errMsg": {
+                    "type": "string"
+                },
+                "wrappedErr": {}
+            }
+        },
+        "dto.AddReviewDTO": {
+            "type": "object",
+            "required": [
+                "rating",
+                "review"
+            ],
+            "properties": {
+                "rating": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                },
+                "review": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LoginUserReq": {
+            "type": "object",
+            "required": [
+                "email",
+                "fingerprint",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LoginUserResp": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LogoutReq": {
+            "type": "object",
+            "required": [
+                "fingerprint"
+            ],
+            "properties": {
+                "fingerprint": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PatchOfferStatusReq": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PatchOfferStatusResp": {
+            "type": "object",
+            "properties": {
+                "new_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RefreshReq": {
+            "type": "object",
+            "required": [
+                "fingerprint"
+            ],
+            "properties": {
+                "fingerprint": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RefreshResp": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RegistrationUserReq": {
+            "type": "object",
+            "required": [
+                "email",
+                "fingerprint",
+                "name",
+                "password",
+                "phone"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RegistrationUserResp": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.ProductReview": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "review": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.SellerReview": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "review": {
+                    "type": "string"
+                },
+                "seller_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Bearer token for authentication. Format: \"Bearer \u003ctoken\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }
