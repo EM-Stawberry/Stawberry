@@ -1,13 +1,14 @@
 -- +goose Up
 -- +goose StatementBegin
+create type user_role as enum ('user', 'store', 'admin', 'system');
 create table audit_logs (
     id bigserial primary key,
     method varchar(10),
     url text,
-    resp_status integer,
+    resp_status int,
     user_ip text,
-    user_id bigint,
-    user_role varchar(255),
+    user_id int,
+    user_role user_role,
     received_at timestamptz,
     req_body jsonb,
     resp_body jsonb
