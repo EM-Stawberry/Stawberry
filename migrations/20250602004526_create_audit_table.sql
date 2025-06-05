@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-create type user_role as enum ('user', 'store', 'admin', 'system');
+create type user_role as enum ('user', 'shop', 'admin', 'system');
 create table audit_logs (
     id bigserial primary key,
     method varchar(10),
