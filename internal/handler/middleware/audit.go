@@ -150,6 +150,9 @@ func getRole(c *gin.Context) string {
 }
 
 func sanitizeSensitiveData(data map[string]interface{}) {
+	if data == nil {
+		return
+	}
 	sensitiveFields := []string{"password", "fingerprint", "refresh_token", "access_token"}
 	for _, field := range sensitiveFields {
 		if _, ok := data[field]; ok {
