@@ -70,6 +70,10 @@ func SetupRouter(
 		auth.POST("/logout", userH.Logout)
 		auth.POST("/refresh", userH.Refresh)
 	}
+	{
+		public.GET("/products", productH.GetProducts)
+		public.GET("/products/:id", productH.GetProductByID)
+	}
 
 	// эндпойнты запросов на покупку
 	{

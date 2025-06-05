@@ -1,20 +1,10 @@
 package product
 
-import (
-	"time"
-)
-
 type Product struct {
-	ID          uint      `json:"id" gorm:"primaryKey"`
-	StoreID     uint      `json:"store_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Price       float64   `json:"price"`
-	Category    string    `json:"category"`
-	CategoryID  int       `json:"category_id"`
-	InStock     bool      `json:"in_stock"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CategoryID  uint   `json:"category_id"`
 }
 
 type UpdateProduct struct {
