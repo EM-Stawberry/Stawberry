@@ -36,6 +36,7 @@ func SetupRouter(
 	basePath string,
 	logger *zap.Logger,
 	auditMiddleware *middleware.AuditMiddleware,
+	auditH *AuditHandler,
 ) *gin.Engine {
 	router := gin.New()
 
@@ -87,6 +88,10 @@ func SetupRouter(
 		secured.POST("/products/:id/reviews", productReviewH.AddReview)
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
+
+	// заглушка эндпоинта админа
+	// admin := secured.Group("/admin", middleware.Admin)
+	secured.GET("/audit", auditH.DisplayLogs)
 
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH

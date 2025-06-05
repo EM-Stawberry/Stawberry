@@ -106,6 +106,7 @@ func initializeApp(
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
 	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
+	auditHandler := handler.NewAuditHandler(auditService)
 	log.Info("Handlers initialized")
 
 	auditMiddleware := middleware.NewAuditMiddleware(&cfg.Audit, auditService)
@@ -123,6 +124,7 @@ func initializeApp(
 		basePath,
 		log,
 		auditMiddleware,
+		auditHandler,
 	)
 
 	return router, mailer, auditMiddleware
