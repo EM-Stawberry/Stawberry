@@ -37,6 +37,24 @@ type AuditEntry struct {
 	RespBody   JSONBMap  `db:"resp_body"`
 }
 
+func ConvertEntityToAuditEntries(entries []entity.AuditEntry) []AuditEntry {
+	models := make([]AuditEntry, len(entries))
+	for i, entry := range entries {
+		models[i] = AuditEntry{
+			Method:     entry.Method,
+			Url:        entry.Url,
+			RespStatus: entry.RespStatus,
+			UserID:     entry.UserID,
+			IP:         entry.IP,
+			UserRole:   entry.UserRole,
+			ReceivedAt: entry.ReceivedAt,
+			ReqBody:    JSONBMap(entry.ReqBody),
+			RespBody:   JSONBMap(entry.RespBody),
+		}
+	}
+	return models
+}
+
 type AuditEntryMeta struct {
 	AuditEntry
 	TotalCount int `db:"total_count"`
