@@ -1,3 +1,7 @@
+// Package middleware implements audit logging with buffering and batching to:
+// 1. Protect against traffic spikes overwhelming the storage
+// 2. Minimize contention between HTTP handlers and storage system
+// 3. Ensure request processing isn't blocked by audit writes
 package middleware
 
 import (
@@ -22,16 +26,18 @@ const (
 
 type AuditMiddleware struct {
 	cfg             *config.AuditConfig
-	toFlushChan     chan []entity.AuditEntry
-	logChan         chan entity.AuditEntry
-	closeSignalChan chan struct{}
+	toFlushChan     chan []entity.AuditEntry // Pass batches to flusher (unbuffered to apply backpressure)
+	logChan         chan entity.AuditEntry   // Main intake channel for audit entries
+	closeSignalChan chan struct{}            // Coordinates graceful shutdown
 	service         AuditService
-	wg              *sync.WaitGroup
-	mutex           *sync.Mutex
-	buffer          []entity.AuditEntry
-	backupBuffer    []entity.AuditEntry
+	wg              *sync.WaitGroup     // Tracks worker goroutines
+	mutex           *sync.Mutex         // Protects double buffer swap
+	buffer          []entity.AuditEntry // Active buffer being filled
+	backupBuffer    []entity.AuditEntry // Buffer being flushed, then reused
 }
 
+// bodyLogWriter это обертка над ResponseWriter, которая записывает тело запроса в буфер
+// для сохранения в логах.
 type bodyLogWriter struct {
 	gin.ResponseWriter
 	body *bytes.Buffer
@@ -69,6 +75,8 @@ func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService) *AuditMiddlewa
 	return am
 }
 
+// Меняет местами буферы, очищает активный. Таким образом активный буфер доступен worker'ам для записи
+// с минимальными задержками, в то время как flusher пишет логи в бд из бэкап буфера.
 func (am *AuditMiddleware) swapAndFlush() {
 	am.buffer, am.backupBuffer = am.backupBuffer[:0], am.buffer
 	am.toFlushChan <- am.backupBuffer
@@ -80,6 +88,10 @@ func (am *AuditMiddleware) storeLogs(entries []entity.AuditEntry) {
 	}
 }
 
+// flusher периодически сбрасывает логи в бд, триггерится либо по тикеру,
+// либо по загруженности буфера на 90%.
+// Запускается в единственном потоке, это позволяет сохранить очередность логов при
+// их сбросе в бд и жонглировать двумя буферами без глубокого копирования.
 func (am *AuditMiddleware) flusher() {
 	ticker := time.NewTicker(tickrate)
 	defer ticker.Stop()
@@ -99,11 +111,17 @@ func (am *AuditMiddleware) flusher() {
 	}
 }
 
+// worker постоянно принимает логи из канала, вычищает их от конфиденциальных данных
+// и пихает в буфер, если там есть место.
+// Если буфер заполнен - свапает два буфера местами с очисткой старого, и отправляет в flusher.
+// Если flusher ещё занят записью в бд - виснет на записи в небуферизированный toFlushChan в swapAndFlush,
+// это может случиться если бд медленная. (Если один из воркеров висит на канале, остальные повиснут на мьютексе)
 func (am *AuditMiddleware) worker() {
 	defer am.wg.Done()
 	for entry := range am.logChan {
-		sanitizeSensitiveData(entry.ReqBody)
+		sanitizeSensitiveData(entry.ReqBody) // Sanitize before buffering to avoid holding sensitive data
 		sanitizeSensitiveData(entry.RespBody)
+
 		am.mutex.Lock()
 		if len(am.buffer) > int(0.9*float64(am.cfg.QueueSize)) {
 			zap.L().Warn("Audit log buffer full", zap.Int("size", len(am.buffer)))
@@ -138,7 +156,6 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 		receivedAt := time.Now()
 
 		bodyBytes, _ := c.GetRawData()
-		// truncate request body if too big
 		if len(bodyBytes) > maxBodySize {
 			bodyBytes = append(bodyBytes[:maxBodySize], []byte("... [TRUNCATED]")...)
 		}
@@ -158,7 +175,6 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 		}
 
 		respBodyBytes := blw.body.Bytes()
-		// truncate response body if too big
 		if len(respBodyBytes) > maxBodySize {
 			respBodyBytes = append(respBodyBytes[:maxBodySize], []byte("... [TRUNCATED]")...)
 		}
