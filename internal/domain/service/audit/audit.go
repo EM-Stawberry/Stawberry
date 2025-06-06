@@ -8,7 +8,7 @@ import (
 )
 
 type AuditRepository interface {
-	LogStore(entity.AuditEntry) error
+	LogStore([]entity.AuditEntry) error
 	GetLogs(context.Context, time.Time, time.Time, uint, int, int) ([]entity.AuditEntry, int, error)
 }
 
@@ -22,8 +22,8 @@ func NewAuditService(ar AuditRepository) *AuditService {
 	}
 }
 
-func (as *AuditService) Log(ae entity.AuditEntry) error {
-	return as.auditRepository.LogStore(ae)
+func (as *AuditService) Log(entries []entity.AuditEntry) error {
+	return as.auditRepository.LogStore(entries)
 }
 
 func (as *AuditService) DisplayLogs(

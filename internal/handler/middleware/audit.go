@@ -15,16 +15,21 @@ import (
 	"go.uber.org/zap"
 )
 
-const maxBodySize = 10 * 1024
-
-// 1) middleware collects data and forms an audit log entry
-// 2) sends it to a worker for data sanitizing and inserting into the database
-// 3) graceful shutdown through Close method that's being called at the end of main()
+const (
+	maxBodySize = 10 * 1024
+	tickrate    = time.Second * 5
+)
 
 type AuditMiddleware struct {
-	logChan chan entity.AuditEntry
-	service AuditService
-	wg      *sync.WaitGroup
+	cfg             *config.AuditConfig
+	toFlushChan     chan []entity.AuditEntry
+	logChan         chan entity.AuditEntry
+	closeSignalChan chan struct{}
+	service         AuditService
+	wg              *sync.WaitGroup
+	mutex           *sync.Mutex
+	buffer          []entity.AuditEntry
+	backupBuffer    []entity.AuditEntry
 }
 
 type bodyLogWriter struct {
@@ -38,14 +43,20 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 type AuditService interface {
-	Log(entry entity.AuditEntry) error
+	Log(entries []entity.AuditEntry) error
 }
 
 func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService) *AuditMiddleware {
 	am := &AuditMiddleware{
-		logChan: make(chan entity.AuditEntry, cfg.QueueSize),
-		service: as,
-		wg:      &sync.WaitGroup{},
+		cfg:             cfg,
+		toFlushChan:     make(chan []entity.AuditEntry), // unbuffered on purpose
+		logChan:         make(chan entity.AuditEntry, cfg.QueueSize),
+		closeSignalChan: make(chan struct{}, 1),
+		service:         as,
+		wg:              &sync.WaitGroup{},
+		mutex:           &sync.Mutex{},
+		buffer:          make([]entity.AuditEntry, 0, cfg.QueueSize),
+		backupBuffer:    make([]entity.AuditEntry, 0, cfg.QueueSize),
 	}
 
 	am.wg.Add(cfg.WorkerPoolSize)
@@ -53,7 +64,39 @@ func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService) *AuditMiddlewa
 		go am.worker()
 	}
 
+	go am.flusher()
+
 	return am
+}
+
+func (am *AuditMiddleware) swapAndFlush() {
+	am.buffer, am.backupBuffer = am.backupBuffer[:0], am.buffer
+	am.toFlushChan <- am.backupBuffer
+}
+
+func (am *AuditMiddleware) storeLogs(entries []entity.AuditEntry) {
+	if err := am.service.Log(entries); err != nil {
+		zap.L().Error("Failed to log audit entries", zap.Error(err))
+	}
+}
+
+func (am *AuditMiddleware) flusher() {
+	ticker := time.NewTicker(tickrate)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case toFlush := <-am.toFlushChan:
+			am.storeLogs(toFlush)
+		case <-ticker.C:
+			if len(am.buffer) > 0 {
+				am.buffer, am.backupBuffer = am.backupBuffer[:0], am.buffer
+				am.storeLogs(am.backupBuffer)
+			}
+		case <-am.closeSignalChan:
+			return
+		}
+	}
 }
 
 func (am *AuditMiddleware) worker() {
@@ -61,18 +104,28 @@ func (am *AuditMiddleware) worker() {
 	for entry := range am.logChan {
 		sanitizeSensitiveData(entry.ReqBody)
 		sanitizeSensitiveData(entry.RespBody)
-		if err := am.service.Log(entry); err != nil {
-			zap.L().Error("Audit log failure",
-				zap.Error(err),
-				zap.String("path", entry.Url),
-				zap.Int("status", entry.RespStatus))
+		am.mutex.Lock()
+		if len(am.buffer) > int(0.9*float64(am.cfg.QueueSize)) {
+			zap.L().Warn("Audit log buffer full", zap.Int("size", len(am.buffer)))
+			am.swapAndFlush()
+		} else {
+			am.buffer = append(am.buffer, entry)
 		}
+		am.mutex.Unlock()
 	}
 }
 
 func (am *AuditMiddleware) Close() {
 	close(am.logChan)
 	am.wg.Wait()
+	close(am.closeSignalChan)
+
+	if len(am.buffer) > 0 {
+		am.storeLogs(am.buffer)
+	}
+	if len(am.backupBuffer) > 0 {
+		am.storeLogs(am.backupBuffer)
+	}
 }
 
 func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
