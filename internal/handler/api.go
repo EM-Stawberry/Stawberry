@@ -48,17 +48,18 @@ func SetupRouter(
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// base это эндпойнты без префикса версии
-	base := router.Group(basePath)
+	base := router.Group("/")
 
 	// public это эндпойнты с префиксом версии
-	public := base.Group("/")
+	public := base.Group(basePath)
 
 	// secured это эндпойнты, которые не сработают без авторизационного токера
-	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
+	secured := public.Group("/").Use(middleware.AuthMiddleware(userS, tokenS))
 
 	// healtcheck эндпойнты
 	{
 		base.GET("/health", healthH.health)
+		public.GET("/health", healthH.health)
 		secured.GET("/auth_required", healthH.authCheck)
 	}
 
