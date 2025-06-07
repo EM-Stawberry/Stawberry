@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: ./..
-      dockerfile: deploy/Dockerfile
+    image: ghcr.io/em-stawberry/stawberry:latest
     restart: unless-stopped
     environment:
       - DB_HOST=db
