@@ -30,6 +30,7 @@ type AuditMiddleware struct {
 	logChan         chan entity.AuditEntry   // Main intake channel for audit entries
 	closeSignalChan chan struct{}            // Coordinates graceful shutdown
 	service         AuditService
+	log             *zap.Logger
 	wg              *sync.WaitGroup     // Tracks worker goroutines
 	mutex           *sync.Mutex         // Protects double buffer swap
 	buffer          []entity.AuditEntry // Active buffer being filled
@@ -52,17 +53,18 @@ type AuditService interface {
 	Log(entries []entity.AuditEntry) error
 }
 
-func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService) *AuditMiddleware {
+func NewAuditMiddleware(cfg *config.AuditConfig, as AuditService, log *zap.Logger) *AuditMiddleware {
 	am := &AuditMiddleware{
 		cfg:             cfg,
 		toFlushChan:     make(chan []entity.AuditEntry), // unbuffered on purpose
 		logChan:         make(chan entity.AuditEntry, cfg.QueueSize),
 		closeSignalChan: make(chan struct{}, 1),
 		service:         as,
+		log:             log,
 		wg:              &sync.WaitGroup{},
 		mutex:           &sync.Mutex{},
-		buffer:          make([]entity.AuditEntry, 0, cfg.QueueSize),
-		backupBuffer:    make([]entity.AuditEntry, 0, cfg.QueueSize),
+		buffer:          make([]entity.AuditEntry, 0, cfg.BatchSize),
+		backupBuffer:    make([]entity.AuditEntry, 0, cfg.BatchSize),
 	}
 
 	am.wg.Add(cfg.WorkerPoolSize)
@@ -84,7 +86,7 @@ func (am *AuditMiddleware) swapAndFlush() {
 
 func (am *AuditMiddleware) storeLogs(entries []entity.AuditEntry) {
 	if err := am.service.Log(entries); err != nil {
-		zap.L().Error("Failed to log audit entries", zap.Error(err))
+		am.log.Error("Failed to log audit entries", zap.Error(err))
 	}
 }
 
@@ -124,7 +126,7 @@ func (am *AuditMiddleware) worker() {
 
 		am.mutex.Lock()
 		if len(am.buffer) > int(0.9*float64(am.cfg.QueueSize)) {
-			zap.L().Warn("Audit log buffer full", zap.Int("size", len(am.buffer)))
+			am.log.Warn("Audit log buffer full", zap.Int("size", len(am.buffer)))
 			am.swapAndFlush()
 		} else {
 			am.buffer = append(am.buffer, entry)
@@ -171,7 +173,7 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 
 		reqBody := make(map[string]interface{})
 		if err := json.Unmarshal(bodyBytes, &reqBody); err != nil {
-			zap.L().Error("Failed to unmarshal request body", zap.Error(err))
+			am.log.Error("Failed to unmarshal request body", zap.Error(err))
 		}
 
 		respBodyBytes := blw.body.Bytes()
@@ -181,7 +183,7 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 
 		respBody := make(map[string]interface{})
 		if err := json.Unmarshal(respBodyBytes, &respBody); err != nil {
-			zap.L().Error("Failed to unmarshal response body", zap.Error(err))
+			am.log.Error("Failed to unmarshal response body", zap.Error(err))
 		}
 
 		logE := entity.AuditEntry{
@@ -199,7 +201,7 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 		select {
 		case am.logChan <- logE:
 		default:
-			zap.L().Warn("Audit log channel full, dropping audit log entry",
+			am.log.Warn("Audit log channel full, dropping audit log entry",
 				zap.String("path", logE.Url),
 				zap.Int("status", logE.RespStatus))
 		}
