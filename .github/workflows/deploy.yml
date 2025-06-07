@@ -22,8 +22,8 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/stawberry:latest -f deploy/Dockerfile .
-          docker push ghcr.io/${{ github.repository_owner }}/stawberry:latest
+          docker build -t ghcr.io/em-stawberry/stawberry:latest -f deploy/Dockerfile .
+          docker push ghcr.io/em-stawberry/stawberry:latest
 
   deploy:
     runs-on: ubuntu-latest
