@@ -42,6 +42,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /var/www/stawberry/Stawberry &&
             git pull origin deployment &&
+            docker pull ghcr.io/em-stawberry/stawberry:latest &&
             docker compose -f deploy/docker-compose.prod.yml down &&
             docker compose --env-file ./.env -f deploy/docker-compose.prod.yml up -d
           "
