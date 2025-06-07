@@ -111,7 +111,8 @@ func (r *OfferRepository) UpdateOfferStatus(
 			MustSql()
 	}
 
-	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
+	var offerResp model.Offer
+	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offerResp)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Offer{}, apperror.New(apperror.Unauthorized,
@@ -125,7 +126,7 @@ func (r *OfferRepository) UpdateOfferStatus(
 		return entity.Offer{}, apperror.New(apperror.DatabaseError, "failed to commit transaction", err)
 	}
 
-	return offer.ConvertToEntity(), nil
+	return offerResp.ConvertToEntity(), nil
 }
 
 func isUserShopOwner(ctx context.Context, offerID, userID uint, tx *sqlx.Tx) error {

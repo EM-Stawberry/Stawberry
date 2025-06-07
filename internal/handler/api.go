@@ -36,9 +36,12 @@ func SetupRouter(
 	tokenS middleware.TokenValidator,
 	basePath string,
 	logger *zap.Logger,
+	auditMiddleware *middleware.AuditMiddleware,
+	auditH *AuditHandler,
 ) *gin.Engine {
 	router := gin.New()
 
+	router.Use(auditMiddleware.Middleware())
 	router.Use(middleware.ZapLogger(logger))
 	router.Use(middleware.ZapRecovery(logger))
 	router.Use(middleware.CORS())
@@ -83,6 +86,10 @@ func SetupRouter(
 		secured.POST("/products/:id/reviews", productReviewH.AddReview)
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
+
+	// заглушка эндпоинта админа
+	// admin := secured.Group("/admin", middleware.Admin)
+	secured.GET("/audit", auditH.DisplayLogs)
 
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH

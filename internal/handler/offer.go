@@ -162,19 +162,17 @@ func (h *OfferHandler) PatchOfferStatus(c *gin.Context) {
 	//	return
 	//}
 
-	iid, ok := c.Get(helpers.UserIDKey)
+	usrID, ok := helpers.UserIDContext(c)
 	if !ok {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			"user id key not found in ctx", nil))
 	}
-	usrID := iid.(uint)
 
-	iisStore, ok := c.Get(helpers.UserIsStoreKey)
+	usrIsStore, ok := helpers.UserIsStoreContext(c)
 	if !ok {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			"user isstore key not found in ctx", nil))
 	}
-	usrIsStore := iisStore.(bool)
 
 	offerEntity := req.ConvertToEntity()
 	offerEntity.ID = uint(id)
