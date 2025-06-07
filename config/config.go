@@ -58,6 +58,7 @@ type EmailConfig struct {
 type AuditConfig struct {
 	WorkerPoolSize int
 	QueueSize      int
+	BatchSize      int
 }
 
 type Config struct {
@@ -94,6 +95,7 @@ func LoadConfig() *Config {
 	viper.SetDefault("DB_MAX_OPEN_CONNS", 25)
 	viper.SetDefault("DB_MAX_IDLE_CONNS", 10)
 	viper.SetDefault("SERVER_PORT", 8080)
+	viper.SetDefault("AUDIT_BATCH_SIZE", 100)
 
 	config := &Config{
 		AccessKey:     viper.GetString("ACCESS_KEY"),
@@ -133,6 +135,7 @@ func LoadConfig() *Config {
 		Audit: AuditConfig{
 			WorkerPoolSize: viper.GetInt("AUDIT_WORKER_POOL"),
 			QueueSize:      viper.GetInt("AUDIT_QUEUE_SIZE"),
+			BatchSize:      viper.GetInt("AUDIT_BATCH_SIZE"),
 		},
 	}
 

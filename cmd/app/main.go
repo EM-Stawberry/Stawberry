@@ -109,7 +109,7 @@ func initializeApp(
 	auditHandler := handler.NewAuditHandler(auditService)
 	log.Info("Handlers initialized")
 
-	auditMiddleware := middleware.NewAuditMiddleware(&cfg.Audit, auditService)
+	auditMiddleware := middleware.NewAuditMiddleware(&cfg.Audit, auditService, log)
 
 	router := handler.SetupRouter(
 		healthHandler,
