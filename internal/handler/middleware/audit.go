@@ -86,7 +86,18 @@ func (am *AuditMiddleware) swapAndFlush() {
 
 func (am *AuditMiddleware) storeLogs(entries []entity.AuditEntry) {
 	if err := am.service.Log(entries); err != nil {
-		am.log.Error("Failed to log audit entries", zap.Error(err))
+		am.log.Error("Failed to log audit entries, retrying...", zap.Error(err))
+		delay := time.Second * 250
+		for range 3 {
+			time.Sleep(delay)
+			delay = delay * 2
+			if err = am.service.Log(entries); err != nil {
+				am.log.Error("Failed to log audit entries, retrying...", zap.Error(err))
+			}
+		}
+		if err != nil {
+			am.log.Error("Failed to log audit entries, giving up", zap.Error(err))
+		}
 	}
 }
 
