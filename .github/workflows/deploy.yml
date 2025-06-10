@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - deployment
 
 jobs:
   build-and-push:
@@ -42,7 +41,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /var/www/stawberry &&
-            curl -L -o docker-compose.prod.yml https://raw.githubusercontent.com/em-stawberry/stawberry/deployment/deploy/docker-compose.prod.yml &&
+            curl -L -o docker-compose.prod.yml https://raw.githubusercontent.com/em-stawberry/stawberry/master/deploy/docker-compose.prod.yml &&
             docker pull ghcr.io/em-stawberry/stawberry:latest &&
             docker compose -f docker-compose.prod.yml down &&
             docker compose --env-file ./.env -f docker-compose.prod.yml up -d
