@@ -75,6 +75,7 @@ func SetupRouter(
 	// эндпойнты запросов на покупку
 	{
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+
 	}
 
 	// эндпойнты отзывов
@@ -85,8 +86,17 @@ func SetupRouter(
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
 
+	// эндпоинты продуктов
+	{
+		public.GET("products/", productH.GetProducts)
+		public.GET("products/shop/:shop_id", productH.GetStoreProducts)
+		public.GET("products/:id", productH.GetProduct)
+		secured.POST("products/", productH.PostProduct)
+		secured.DELETE("products/:id", productH.DeleteProduct)
+		secured.PATCH("products/:id", productH.PatchProduct)
+	}
+
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
-	_ = productH
 	_ = notificationH
 
 	return router
