@@ -19,6 +19,24 @@ definitions:
     - rating
     - review
     type: object
+  dto.GetUserOffersResp:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.OfferResp'
+        type: array
+      meta:
+        properties:
+          current_page:
+            type: integer
+          per_page:
+            type: integer
+          total_items:
+            type: integer
+          total_pages:
+            type: integer
+        type: object
+    type: object
   dto.LoginUserReq:
     properties:
       email:
@@ -47,6 +65,25 @@ definitions:
         type: string
     required:
     - fingerprint
+    type: object
+  dto.OfferResp:
+    properties:
+      createdAt:
+        type: string
+      currency:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: integer
+      price:
+        type: number
+      productID:
+        type: integer
+      shopID:
+        type: integer
+      status:
+        type: string
     type: object
   dto.PatchOfferStatusReq:
     properties:
@@ -313,6 +350,54 @@ paths:
       summary: Добавление отзыва о продавце
       tags:
       - reviews
+  /audit/logs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve audit trail entries with time range filtering and pagination
+      parameters:
+      - description: 'Start time in RFC3339 format (default: 24h ago)'
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: 'End time in RFC3339 format (default: now)'
+        format: date-time
+        in: query
+        name: to
+        type: string
+      - description: Filter by user ID
+        in: query
+        name: uid
+        type: integer
+      - description: Items per page (default 100)
+        in: query
+        maximum: 500
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Page number (default 1)
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns paginated audit logs
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request parameters
+          schema: {}
+        "500":
+          description: Internal server error
+          schema: {}
+      summary: Get audit logs
+      tags:
+      - Audit
   /auth/login:
     post:
       consumes:
@@ -469,6 +554,39 @@ paths:
           schema:
             $ref: '#/definitions/apperror.Error'
       summary: Update offer status
+      tags:
+      - offer
+  /offers/user:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page (5-100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetUserOffersResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Get user's offers
       tags:
       - offer
 securityDefinitions:
