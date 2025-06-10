@@ -3,9 +3,9 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/EM-Stawberry/Stawberry/config"
 	"github.com/EM-Stawberry/Stawberry/internal/app/apperror"
@@ -106,7 +106,7 @@ var _ = Describe("UserHandler", func() {
 
 				mockService.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any(), "fp123").
-					Return("", "", errors.New("service error"))
+					Return("", "", apperror.New(apperror.InternalError, "service error", nil))
 
 				jsonData, _ := json.Marshal(input)
 				req := httptest.NewRequest("POST", "/register", bytes.NewBuffer(jsonData))
@@ -289,7 +289,7 @@ var _ = Describe("UserHandler", func() {
 
 				mockService.EXPECT().
 					Refresh(gomock.Any(), "invalid_token", "fp123").
-					Return("", "", errors.New("invalid refresh token"))
+					Return("", "", apperror.New(apperror.InternalError, "invalid refresh token", nil))
 
 				jsonData, _ := json.Marshal(input)
 				req := httptest.NewRequest("POST", "/refresh", bytes.NewBuffer(jsonData))
@@ -392,7 +392,7 @@ var _ = Describe("UserHandler", func() {
 
 				mockService.EXPECT().
 					Logout(gomock.Any(), "invalid_token", "fp123").
-					Return(errors.New("logout failed"))
+					Return(apperror.New(apperror.InternalError, "logout failed", nil))
 
 				jsonData, _ := json.Marshal(input)
 				req := httptest.NewRequest("POST", "/logout", bytes.NewBuffer(jsonData))
@@ -417,3 +417,8 @@ var _ = Describe("UserHandler", func() {
 		})
 	})
 })
+
+func TestUserHandler(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "UserHandler Suite")
+}
