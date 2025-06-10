@@ -61,7 +61,9 @@ var _ = Describe("UserService", func() {
 			It("should create user and return tokens", func() {
 				mockPasswordManager.EXPECT().Hash(testUser.Password).Return(hashedPassword, nil)
 				mockRepo.EXPECT().InsertUser(ctx, gomock.Any()).Return(uint(1), nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, uint(1)).Return("access-token", entity.RefreshToken{UUID: uuid.New()}, nil)
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, uint(1)).
+					Return("access-token", entity.RefreshToken{UUID: uuid.New()}, nil)
 				mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 				mockEmailService.EXPECT().Registered(testUser.Name, testUser.Email)
 
@@ -102,7 +104,9 @@ var _ = Describe("UserService", func() {
 			It("should return error", func() {
 				mockPasswordManager.EXPECT().Hash(testUser.Password).Return(hashedPassword, nil)
 				mockRepo.EXPECT().InsertUser(ctx, gomock.Any()).Return(uint(1), nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, uint(1)).Return("", entity.RefreshToken{}, errors.New("token generation error"))
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, uint(1)).
+					Return("", entity.RefreshToken{}, errors.New("token generation error"))
 
 				accessToken, refreshToken, err := userService.CreateUser(ctx, testUser, fingerprint)
 
@@ -116,8 +120,12 @@ var _ = Describe("UserService", func() {
 			It("should return error", func() {
 				mockPasswordManager.EXPECT().Hash(testUser.Password).Return(hashedPassword, nil)
 				mockRepo.EXPECT().InsertUser(ctx, gomock.Any()).Return(uint(1), nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, uint(1)).Return("access-token", entity.RefreshToken{}, nil)
-				mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(errors.New("token insertion error"))
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, uint(1)).
+					Return("access-token", entity.RefreshToken{}, nil)
+				mockTokenService.EXPECT().
+					InsertToken(ctx, gomock.Any()).
+					Return(errors.New("token insertion error"))
 
 				accessToken, refreshToken, err := userService.CreateUser(ctx, testUser, fingerprint)
 
@@ -155,7 +163,9 @@ var _ = Describe("UserService", func() {
 				mockPasswordManager.EXPECT().Compare(password, hashedPassword).Return(true, nil)
 				mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 				mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{UUID: uuid.New()}, nil)
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, testUser.ID).
+					Return("access-token", entity.RefreshToken{UUID: uuid.New()}, nil)
 				mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
 				accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
@@ -243,7 +253,9 @@ var _ = Describe("UserService", func() {
 				mockPasswordManager.EXPECT().Compare(password, hashedPassword).Return(true, nil)
 				mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 				mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("", entity.RefreshToken{}, errors.New("token generation error"))
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, testUser.ID).
+					Return("", entity.RefreshToken{}, errors.New("token generation error"))
 
 				accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
 
@@ -259,7 +271,9 @@ var _ = Describe("UserService", func() {
 				mockPasswordManager.EXPECT().Compare(password, hashedPassword).Return(true, nil)
 				mockTokenService.EXPECT().RevokeActivesByUserID(ctx, testUser.ID).Return(nil)
 				mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, testUser.ID).Return(nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, testUser.ID).Return("access-token", entity.RefreshToken{}, nil)
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, testUser.ID).
+					Return("access-token", entity.RefreshToken{}, nil)
 				mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(errors.New("insert error"))
 
 				accessToken, refreshToken, err := userService.Authenticate(ctx, email, password, fingerprint)
@@ -296,7 +310,9 @@ var _ = Describe("UserService", func() {
 				mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(validRefreshToken, nil)
 				mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
 				mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).Return("new-access-token", entity.RefreshToken{UUID: uuid.New()}, nil)
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, userID).
+					Return("new-access-token", entity.RefreshToken{UUID: uuid.New()}, nil)
 				mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, userID).Return(nil)
 				mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(nil)
 
@@ -339,7 +355,9 @@ var _ = Describe("UserService", func() {
 
 		Context("when getting refresh token by UUID fails", func() {
 			It("should return error", func() {
-				mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(entity.RefreshToken{}, errors.New("database error"))
+				mockTokenService.EXPECT().
+					GetByUUID(ctx, refreshTokenStr).
+					Return(entity.RefreshToken{}, errors.New("database error"))
 
 				accessToken, newRefreshToken, err := userService.Refresh(ctx, refreshTokenStr, fingerprint)
 
@@ -381,7 +399,9 @@ var _ = Describe("UserService", func() {
 				mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(validRefreshToken, nil)
 				mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
 				mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).Return("", entity.RefreshToken{}, errors.New("token generation error"))
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, userID).
+					Return("", entity.RefreshToken{}, errors.New("token generation error"))
 
 				accessToken, newRefreshToken, err := userService.Refresh(ctx, refreshTokenStr, fingerprint)
 
@@ -396,7 +416,9 @@ var _ = Describe("UserService", func() {
 				mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(validRefreshToken, nil)
 				mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
 				mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).Return("new-access-token", entity.RefreshToken{}, nil)
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, userID).
+					Return("new-access-token", entity.RefreshToken{}, nil)
 				mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, userID).Return(errors.New("cleanup error"))
 
 				accessToken, newRefreshToken, err := userService.Refresh(ctx, refreshTokenStr, fingerprint)
@@ -413,7 +435,9 @@ var _ = Describe("UserService", func() {
 				mockTokenService.EXPECT().GetByUUID(ctx, refreshTokenStr).Return(validRefreshToken, nil)
 				mockTokenService.EXPECT().Update(ctx, gomock.Any()).Return(validRefreshToken, nil)
 				mockRepo.EXPECT().GetUserByID(ctx, userID).Return(entity.User{ID: userID}, nil)
-				mockTokenService.EXPECT().GenerateTokens(ctx, fingerprint, userID).Return("new-access-token", entity.RefreshToken{}, nil)
+				mockTokenService.EXPECT().
+					GenerateTokens(ctx, fingerprint, userID).
+					Return("new-access-token", entity.RefreshToken{}, nil)
 				mockTokenService.EXPECT().CleanUpExpiredByUserID(ctx, userID).Return(nil)
 				mockTokenService.EXPECT().InsertToken(ctx, gomock.Any()).Return(errors.New("insert error"))
 

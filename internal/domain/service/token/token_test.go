@@ -10,7 +10,6 @@ import (
 	"github.com/EM-Stawberry/Stawberry/internal/domain/entity"
 	"github.com/google/uuid"
 
-	// Import Ginkgo and Gomega
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
@@ -65,7 +64,7 @@ var _ = Describe("TokenService", func() {
 					jwtManager.EXPECT().
 						Generate(userID, accessLife).
 						Return(mockJWT, nil).
-						Times(1) // Expect exactly one call
+						Times(1)
 
 					accessToken, refreshToken, err := service.GenerateTokens(context.Background(), fingerprint, userID)
 
@@ -126,7 +125,7 @@ var _ = Describe("TokenService", func() {
 					expiredAccessToken := entity.AccessToken{
 						UserID:    1,
 						IssuedAt:  time.Now().Add(-2 * time.Hour),
-						ExpiresAt: time.Now().Add(-1 * time.Hour), // This token is expired
+						ExpiresAt: time.Now().Add(-1 * time.Hour),
 					}
 
 					jwtManager.EXPECT().Parse(expiredToken).Return(expiredAccessToken, nil).Times(1)
@@ -134,8 +133,8 @@ var _ = Describe("TokenService", func() {
 					accessToken, err := service.ValidateToken(context.Background(), expiredToken)
 
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(MatchError(apperror.ErrInvalidToken)) // Match the specific error
-					Expect(accessToken).To(Equal(entity.AccessToken{}))  // Ensure zero value on error
+					Expect(err).To(MatchError(apperror.ErrInvalidToken))
+					Expect(accessToken).To(Equal(entity.AccessToken{}))
 				})
 			})
 
@@ -148,8 +147,8 @@ var _ = Describe("TokenService", func() {
 					accessToken, err := service.ValidateToken(context.Background(), invalidToken)
 
 					Expect(err).To(HaveOccurred())
-					Expect(err).To(MatchError(apperror.ErrInvalidToken)) // Match the specific error
-					Expect(accessToken).To(Equal(entity.AccessToken{}))  // Ensure zero value on error
+					Expect(err).To(MatchError(apperror.ErrInvalidToken))
+					Expect(accessToken).To(Equal(entity.AccessToken{}))
 				})
 			})
 		})
@@ -256,7 +255,7 @@ var _ = Describe("TokenService", func() {
 				It("should return the error and zero value token", func() {
 					mockErr := fmt.Errorf("db get by uuid error")
 					uuidStr := refreshToken.UUID.String()
-					repo.EXPECT().GetByUUID(ctx, uuidStr).Return(entity.RefreshToken{}, mockErr).Times(1) // Return zero value on error
+					repo.EXPECT().GetByUUID(ctx, uuidStr).Return(entity.RefreshToken{}, mockErr).Times(1)
 
 					token, err := service.GetByUUID(ctx, uuidStr)
 
