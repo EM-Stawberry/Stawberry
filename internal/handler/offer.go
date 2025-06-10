@@ -74,9 +74,6 @@ func (h *OfferHandler) PostOffer(c *gin.Context) {
 // @failure 500 {object} apperror.Error
 // @Router /offers/user [get]
 func (h *OfferHandler) GetUserOffers(c *gin.Context) {
-	ctx, canc := context.WithTimeout(c.Request.Context(), time.Second*30)
-	defer canc()
-
 	userID, ok := helpers.UserIDContext(c)
 	if !ok {
 		_ = c.Error(apperror.New(apperror.InternalError, "user ID not found in context", nil))
@@ -95,7 +92,7 @@ func (h *OfferHandler) GetUserOffers(c *gin.Context) {
 		return
 	}
 
-	offersEnt, total, err := h.offerService.GetUserOffers(ctx, userID, page, limit)
+	offersEnt, total, err := h.offerService.GetUserOffers(c.Request.Context(), userID, page, limit)
 	if err != nil {
 		_ = c.Error(apperror.New(apperror.InternalError,
 			fmt.Sprintf("failed to get user (userID: %d) offers", userID), err))
