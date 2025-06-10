@@ -11,7 +11,7 @@ import (
 	"golang.org/x/text/currency"
 
 	// Импорт сваггер-генератора
-	_ "github.com/EM-Stawberry/Stawberry/docs"
+	"github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
 	"github.com/EM-Stawberry/Stawberry/pkg/database"
@@ -55,6 +55,7 @@ func SetupRouter(
 	router.Use(middleware.Timeout())
 
 	// Swagger UI эндпоинт
+	docs.SwaggerInfo.BasePath = basePath
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// base это эндпойнты без префикса версии

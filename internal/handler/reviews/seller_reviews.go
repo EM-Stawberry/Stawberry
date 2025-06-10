@@ -44,7 +44,7 @@ func NewSellerReviewsHandler(srs SellerReviewsService, l *zap.Logger) *SellerRev
 // @Failure 401 {object} map[string]string "Неавторизованный доступ"
 // @Failure 404 {object} map[string]string "Продавец не найден"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
-// @Router /api/sellers/{id}/reviews [post]
+// @Router /sellers/{id}/reviews [post]
 func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
 	const op = "sellerReviewsHandler.AddReviews()"
 	log := h.logger.With(zap.String("op", op))
@@ -103,7 +103,7 @@ func (h *SellerReviewsHandler) AddReview(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Некорректный ID продавца"
 // @Failure 404 {object} map[string]string "Продавец не найден"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
-// @Router /api/sellers/{id}/reviews [get]
+// @Router /sellers/{id}/reviews [get]
 func (h *SellerReviewsHandler) GetReviews(c *gin.Context) {
 	const op = "sellerReviewsHandler.GetReviews()"
 	log := h.logger.With(zap.String("op", op))

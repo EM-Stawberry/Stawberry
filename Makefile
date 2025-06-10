@@ -26,6 +26,10 @@ test:
 	go test -v -coverprofile=cov.out ./...
 	go tool cover -func=cov.out
 
+.PHONY: docs
+docs:
+	swag init -g ./internal/handler/api.go -o docs
+
 coverage:
 	go tool cover -html=cov.out
 
