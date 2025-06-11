@@ -29,7 +29,11 @@ type GuestOfferService struct {
 }
 
 // NewService creates a new instance of GuestOfferService and returns the Service interface
-func NewService(storeInfoGetter guestofferrepo.StoreInfoGetter, notificationSender NotificationSender, log *zap.Logger) Service {
+func NewService(
+	storeInfoGetter guestofferrepo.StoreInfoGetter,
+	notificationSender NotificationSender,
+	log *zap.Logger,
+) Service {
 	return &GuestOfferService{
 		storeInfoGetter:    storeInfoGetter,
 		notificationSender: notificationSender,

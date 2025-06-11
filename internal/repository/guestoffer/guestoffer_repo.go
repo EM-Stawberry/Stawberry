@@ -34,7 +34,10 @@ func (r *Repository) GetStoreOwnerEmailByStoreID(ctx context.Context, storeID ui
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		return "", apperror.NewGuestOfferError(apperror.GuestOfferDatabaseError, "failed to build query for store owner email")
+		return "", apperror.NewGuestOfferError(
+			apperror.GuestOfferDatabaseError,
+			"failed to build query for store owner email",
+		)
 	}
 
 	var email string
