@@ -611,10 +611,87 @@ paths:
       summary: Get user's offers
       tags:
       - offer
-securityDefinitions:
-  BearerAuth:
-    description: 'Bearer token for authentication. Format: "Bearer <token>"'
-    in: header
-    name: Authorization
-    type: apiKey
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список продуктов по фильтру (категория, цена, магазин,
+        имя, атрибуты) с поддержкой пагинации
+      parameters:
+      - description: Номер страницы (по умолчанию 1)
+        in: query
+        name: page
+        type: integer
+      - description: Размер страницы (по умолчанию 10, максимум 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Фильтр по названию продукта (поиск по подстроке)
+        in: query
+        name: name
+        type: string
+      - description: Минимальная цена (в копейках)
+        in: query
+        name: min_price
+        type: integer
+      - description: Максимальная цена (в копейках)
+        in: query
+        name: max_price
+        type: integer
+      - description: ID категории (с учетом подкатегорий)
+        in: query
+        name: category_id
+        type: integer
+      - description: ID магазина
+        in: query
+        name: shop_id
+        type: integer
+      - description: 'JSON-строка с фильтрами по атрибутам (exmpl: {'
+        in: query
+        name: attributes
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список продуктов и метаинформация
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Ошибка сервера при получении продуктов
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Получить список продуктов с фильтрацией и пагинацией
+      tags:
+      - products
+  /products/{id}:
+    get:
+      description: Возвращает один продукт по его идентификатору
+      parameters:
+      - description: ID продукта
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Product'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Ошибка сервера при получении продукта
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Получить продукт по его ID
+      tags:
+      - products
 swagger: "2.0"

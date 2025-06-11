@@ -634,6 +634,130 @@
                     }
                 }
             }
+        },
+        "/products": {
+            "get": {
+                "description": "Возвращает список продуктов по фильтру (категория, цена, магазин, имя, атрибуты) с поддержкой пагинации",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Получить список продуктов с фильтрацией и пагинацией",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Размер страницы (по умолчанию 10, максимум 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по названию продукта (поиск по подстроке)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Минимальная цена (в копейках)",
+                        "name": "min_price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Максимальная цена (в копейках)",
+                        "name": "max_price",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID категории (с учетом подкатегорий)",
+                        "name": "category_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID магазина",
+                        "name": "shop_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "JSON-строка с фильтрами по атрибутам (exmpl: {",
+                        "name": "attributes",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список продуктов и метаинформация",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера при получении продуктов",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{id}": {
+            "get": {
+                "description": "Возвращает один продукт по его идентификатору",
+                "tags": [
+                    "products"
+                ],
+                "summary": "Получить продукт по его ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID продукта",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера при получении продукта",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -849,6 +973,39 @@
                 }
             }
         },
+        "entity.Product": {
+            "type": "object",
+            "properties": {
+                "average_rating": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "count_reviews": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "maximal_price": {
+                    "type": "integer"
+                },
+                "minimal_price": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "product_attributes": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
         "entity.ProductReview": {
             "type": "object",
             "properties": {
@@ -894,14 +1051,6 @@
                     "type": "integer"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Bearer token for authentication. Format: \"Bearer \u003ctoken\u003e\"",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
         }
     }
 }
