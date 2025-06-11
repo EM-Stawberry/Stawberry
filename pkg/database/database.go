@@ -1,21 +1,24 @@
 package database
 
 import (
-	"log"
-
-	"go.uber.org/zap"
-
 	"github.com/EM-Stawberry/Stawberry/config"
+	"go.uber.org/zap"
 
 	// Import pgx driver to enable database connection via database/sql
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
-func InitDB(cfg *config.DBConfig) (*sqlx.DB, func()) {
+var (
+	pkgDB  *sqlx.DB
+	pkgLog *zap.Logger
+	pkgCfg *config.DBConfig
+)
+
+func InitDB(cfg *config.DBConfig, log *zap.Logger) (*sqlx.DB, func()) {
 	db, err := sqlx.Connect("pgx", cfg.GetDBConnString())
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Fatal("Failed to connect to database:", zap.Error(err))
 	}
 
 	db.SetMaxOpenConns(cfg.MaxOpenConns)
@@ -23,20 +26,13 @@ func InitDB(cfg *config.DBConfig) (*sqlx.DB, func()) {
 
 	closer := func() {
 		if err := db.Close(); err != nil {
-			log.Printf("Error closing database: %v", err)
+			log.Error("error closing database", zap.Error(err))
 		}
 	}
+
+	pkgDB = db
+	pkgLog = log
+	pkgCfg = cfg
 
 	return db, closer
-}
-
-func SeedDatabase(cfg *config.Config, db *sqlx.DB, log *zap.Logger) {
-	if cfg.Environment == config.EnvDev || cfg.Environment == config.EnvTest {
-		log.Info("Seeding database with test data")
-		_, err := sqlx.LoadFile(db, "migrations/seed_data/seed_data.sql")
-		if err != nil {
-			log.Error("Failed to load seed data SQL", zap.Error(err))
-		}
-		log.Info("Database seeded with test data")
-	}
 }

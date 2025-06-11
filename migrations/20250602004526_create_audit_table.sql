@@ -21,4 +21,5 @@ create index audit_logs_received_at_idx on audit_logs (received_at);
 -- +goose Down
 -- +goose StatementBegin
 drop table audit_logs;
+drop type user_role;
 -- +goose StatementEnd

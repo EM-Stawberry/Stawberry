@@ -2,13 +2,15 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/EM-Stawberry/Stawberry/pkg/email"
 
@@ -16,7 +18,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StartServer(router *gin.Engine, mailer email.MailerService, cfg *config.ServerConfig) error {
+func StartServer(
+	router *gin.Engine,
+	mailer email.MailerService,
+	cfg *config.ServerConfig,
+	log *zap.Logger) error {
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           router,
@@ -35,8 +41,8 @@ func StartServer(router *gin.Engine, mailer email.MailerService, cfg *config.Ser
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		log.Printf("Server is starting on port %s", cfg.Port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Info("Starting server", zap.String("port", cfg.Port))
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErrors <- fmt.Errorf("error starting server: %w", err)
 		}
 	}()
@@ -49,7 +55,7 @@ func StartServer(router *gin.Engine, mailer email.MailerService, cfg *config.Ser
 		return fmt.Errorf("server error: %w", err)
 
 	case sig := <-shutdown:
-		log.Printf("Starting shutdown, signal: %v", sig)
+		log.Info("Initiating shutdown", zap.Any("signal", sig))
 
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()

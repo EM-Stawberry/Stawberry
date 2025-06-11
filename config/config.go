@@ -20,6 +20,7 @@ type DBConfig struct {
 	Host         string
 	User         string
 	Password     string
+	DefAdmPswd   string
 	Name         string
 	Port         string
 	MaxOpenConns int
@@ -108,6 +109,7 @@ func LoadConfig() *Config {
 			Host:         viper.GetString("DB_HOST"),
 			User:         viper.GetString("DB_USER"),
 			Password:     viper.GetString("DB_PASSWORD"),
+			DefAdmPswd:   viper.GetString("DEFAULT_ADMIN_PSWD"),
 			Name:         viper.GetString("DB_NAME"),
 			Port:         viper.GetString("DB_PORT"),
 			MaxOpenConns: viper.GetInt("DB_MAX_OPEN_CONNS"),

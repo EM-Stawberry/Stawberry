@@ -183,8 +183,10 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 		usrID, _ := helpers.UserIDContext(c)
 
 		reqBody := make(map[string]interface{})
-		if err := json.Unmarshal(bodyBytes, &reqBody); err != nil {
-			am.log.Error("Failed to unmarshal request body", zap.Error(err))
+		if len(bodyBytes) > 0 {
+			if err := json.Unmarshal(bodyBytes, &reqBody); err != nil {
+				am.log.Error("Failed to unmarshal request body", zap.Error(err))
+			}
 		}
 
 		respBodyBytes := blw.body.Bytes()
@@ -193,8 +195,10 @@ func (am *AuditMiddleware) Middleware() gin.HandlerFunc {
 		}
 
 		respBody := make(map[string]interface{})
-		if err := json.Unmarshal(respBodyBytes, &respBody); err != nil {
-			am.log.Error("Failed to unmarshal response body", zap.Error(err))
+		if len(respBodyBytes) > 0 {
+			if err := json.Unmarshal(respBodyBytes, &respBody); err != nil {
+				am.log.Error("Failed to unmarshal response body", zap.Error(err))
+			}
 		}
 
 		logE := entity.AuditEntry{

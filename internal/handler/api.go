@@ -14,6 +14,7 @@ import (
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	"github.com/EM-Stawberry/Stawberry/pkg/database"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -105,6 +106,12 @@ func SetupRouter(
 	// admin := secured.Group("/admin", middleware.Admin)
 	secured.GET("/audit", auditH.DisplayLogs)
 
+	// Эндпоинты для бд
+	{
+		secured.POST("/dev/seed-db", seedDB)
+		secured.POST("/dev/clear-db", clearDB)
+	}
+
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH
 	_ = notificationH
@@ -125,4 +132,12 @@ var currencyValidator validator.Func = func(fl validator.FieldLevel) bool {
 	currencyCode := fl.Field().String()
 	_, err := currency.ParseISO(currencyCode)
 	return err == nil
+}
+
+func seedDB(c *gin.Context) {
+	database.SeedDB()
+}
+
+func clearDB(c *gin.Context) {
+	database.ClearDB()
 }

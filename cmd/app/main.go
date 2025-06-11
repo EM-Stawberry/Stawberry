@@ -44,16 +44,16 @@ func main() {
 	middleware.SetupGinWithZap(log)
 	log.Info("Logger initialized")
 
-	db, closer := database.InitDB(&cfg.DB)
+	db, closer := database.InitDB(&cfg.DB, log)
 	defer closer()
 
 	migrator.RunMigrationsWithZap(db, "migrations", log)
 
-	database.SeedDatabase(cfg, db, log)
+	database.DefaultAdminAcc()
 
 	router, mailer, auditMiddleware := initializeApp(cfg, db, log)
 
-	if err := server.StartServer(router, mailer, &cfg.Server); err != nil {
+	if err := server.StartServer(router, mailer, &cfg.Server, log); err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}
 
