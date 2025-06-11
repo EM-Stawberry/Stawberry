@@ -1,4 +1,7 @@
 version: "2"
+run:
+  skip-files:
+    - ^docs/docs\.go$
 linters:
   enable:
     - govet # Catches suspicious constructs
