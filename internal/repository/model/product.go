@@ -5,10 +5,10 @@ import (
 )
 
 type Product struct {
-	ID          uint   `db:"id"`
+	ID          int    `db:"id"`
 	Name        string `db:"name"`
 	Description string `db:"description"`
-	CategoryID  uint   `db:"category_id"`
+	CategoryID  int    `db:"category_id"`
 }
 
 type ProductFilter struct {
