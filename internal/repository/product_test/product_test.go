@@ -92,7 +92,7 @@ var _ = Describe("ProductRepository", func() {
 				AddRow(1005, 9909)
 
 			mock.ExpectQuery(`SELECT CAST\(MIN\(price\) \* 100 AS BIGINT\) AS min,` +
-				`CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
+				` CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnRows(rows)
 
@@ -110,7 +110,7 @@ var _ = Describe("ProductRepository", func() {
 				AddRow(nil, nil)
 
 			mock.ExpectQuery(`SELECT CAST\(MIN\(price\) \* 100 AS BIGINT\) AS min,` +
-				`CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
+				` CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnRows(rows)
 
@@ -125,7 +125,7 @@ var _ = Describe("ProductRepository", func() {
 			productID := 123
 
 			mock.ExpectQuery(`SELECT CAST\(MIN\(price\) \* 100 AS BIGINT\) AS min,` +
-				`CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
+				` CAST\(MAX\(price\) \* 100 AS BIGINT\) AS max FROM shop_inventory WHERE product_id = \$1`).
 				WithArgs(productID).
 				WillReturnError(errors.New("some db error"))
 
