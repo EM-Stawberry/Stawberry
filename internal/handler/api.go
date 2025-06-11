@@ -11,10 +11,9 @@ import (
 	_ "github.com/EM-Stawberry/Stawberry/docs"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/middleware"
 	"github.com/EM-Stawberry/Stawberry/internal/handler/reviews"
+	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
@@ -36,29 +35,34 @@ func SetupRouter(
 	tokenS middleware.TokenValidator,
 	basePath string,
 	logger *zap.Logger,
+	auditMiddleware *middleware.AuditMiddleware,
+	auditH *AuditHandler,
 ) *gin.Engine {
 	router := gin.New()
 
+	router.Use(auditMiddleware.Middleware())
 	router.Use(middleware.ZapLogger(logger))
 	router.Use(middleware.ZapRecovery(logger))
 	router.Use(middleware.CORS())
 	router.Use(middleware.Errors())
+	router.Use(middleware.Timeout())
 
 	// Swagger UI эндпоинт
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// base это эндпойнты без префикса версии
-	base := router.Group(basePath)
+	base := router.Group("/")
 
 	// public это эндпойнты с префиксом версии
-	public := base.Group("/")
+	public := base.Group(basePath)
 
 	// secured это эндпойнты, которые не сработают без авторизационного токера
-	secured := base.Use(middleware.AuthMiddleware(userS, tokenS))
+	secured := public.Group("/").Use(middleware.AuthMiddleware(userS, tokenS))
 
 	// healtcheck эндпойнты
 	{
 		base.GET("/health", healthH.health)
+		public.GET("/health", healthH.health)
 		secured.GET("/auth_required", healthH.authCheck)
 	}
 
@@ -82,6 +86,7 @@ func SetupRouter(
 	// эндпойнты запросов на покупку
 	{
 		secured.PATCH("offers/:offerID", offerH.PatchOfferStatus)
+		secured.GET("offers", offerH.GetUserOffers)
 	}
 
 	// эндпойнты отзывов
@@ -91,6 +96,10 @@ func SetupRouter(
 		secured.POST("/products/:id/reviews", productReviewH.AddReview)
 		secured.POST("/sellers/:id/reviews", sellerReviewH.AddReview)
 	}
+
+	// заглушка эндпоинта админа
+	// admin := secured.Group("/admin", middleware.Admin)
+	secured.GET("/audit", auditH.DisplayLogs)
 
 	// Эти заглушки можно убрать после реализации соответствующих хендлеров
 	_ = productH

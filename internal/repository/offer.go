@@ -51,17 +51,76 @@ func (r *OfferRepository) SelectUserOffers(
 	ctx context.Context,
 	userID uint,
 	limit, offset int,
-) ([]entity.Offer, int64, error) {
-	var total int64
+) ([]entity.Offer, int, error) {
+	var total int
 
-	var offers []entity.Offer
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError,
+			"failed to begin transaction", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
-	_ = ctx
-	_ = userID
-	_ = limit
-	_ = offset
+	// lazy update
+	if err = r.updateExpiredOffers(ctx, userID, tx); err != nil {
+		return nil, 0, err
+	}
+
+	selectUserOffersQuery, args := squirrel.Select("id, offer_price, currency, status, " +
+		"created_at, updated_at, expires_at, shop_id, product_id, user_id," +
+		"COUNT (*) OVER() as total_count").
+		From("offers").
+		Where(squirrel.Eq{"status": "pending", "user_id": userID}).
+		OrderBy("created_at desc").
+		Offset(uint64(offset)).
+		Limit(uint64(limit)).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	offersWithCount := make([]model.OfferWithCount, 0, limit)
+
+	err = tx.SelectContext(ctx, &offersWithCount, selectUserOffersQuery, args...)
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "error selecting user offers after lazy update", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, 0, apperror.New(apperror.DatabaseError, "failed to commit transaction for lazy update", err)
+	}
+
+	if len(offersWithCount) == 0 {
+		return []entity.Offer{}, 0, nil
+	}
+
+	total = offersWithCount[0].TotalCount
+
+	offers := make([]entity.Offer, len(offersWithCount))
+	for i, offerModel := range offersWithCount {
+		offers[i] = offerModel.ConvertToEntity()
+	}
 
 	return offers, total, nil
+}
+
+// SelectUserOffers lazy update helper function
+func (r *OfferRepository) updateExpiredOffers(ctx context.Context, userID uint, tx *sqlx.Tx) error {
+	updateExpiredQuery, args := squirrel.Update("offers").
+		Set("status", "cancelled").
+		Set("updated_at", time.Now()).
+		Where(squirrel.Lt{"expires_at": time.Now()}).
+		Where(squirrel.Eq{"status": "pending"}).
+		Where(squirrel.Eq{"user_id": userID}).
+		PlaceholderFormat(squirrel.Dollar).
+		MustSql()
+
+	_, err := tx.ExecContext(ctx, updateExpiredQuery, args...)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return apperror.New(apperror.DatabaseError, "error updating expired offers", err)
+	}
+	return nil
 }
 
 func (r *OfferRepository) UpdateOfferStatus(
@@ -111,8 +170,13 @@ func (r *OfferRepository) UpdateOfferStatus(
 			MustSql()
 	}
 
-	err = tx.QueryRowx(updateOfferStatusQuery, args...).StructScan(&offer)
+	var offerResp model.Offer
+	err = tx.QueryRowxContext(ctx, updateOfferStatusQuery, args...).StructScan(&offerResp)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Offer{}, apperror.New(apperror.Unauthorized,
+				"unauthorized to update offer status", nil)
+		}
 		return entity.Offer{}, apperror.New(apperror.DatabaseError, "error scanning into struct", err)
 	}
 
@@ -121,7 +185,7 @@ func (r *OfferRepository) UpdateOfferStatus(
 		return entity.Offer{}, apperror.New(apperror.DatabaseError, "failed to commit transaction", err)
 	}
 
-	return offer.ConvertToEntity(), nil
+	return offerResp.ConvertToEntity(), nil
 }
 
 func isUserShopOwner(ctx context.Context, offerID, userID uint, tx *sqlx.Tx) error {
@@ -134,7 +198,7 @@ func isUserShopOwner(ctx context.Context, offerID, userID uint, tx *sqlx.Tx) err
 		MustSql()
 
 	var requiredID uint
-	err := tx.QueryRowContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
+	err := tx.QueryRowxContext(ctx, validateShopOwnerIDQuery, args...).Scan(&requiredID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return apperror.ErrUserNotFound

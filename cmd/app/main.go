@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/EM-Stawberry/Stawberry/internal/adapter/auth"
+	"github.com/EM-Stawberry/Stawberry/internal/domain/service/audit"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/notification"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/reviews"
 	"github.com/EM-Stawberry/Stawberry/internal/domain/service/token"
@@ -27,6 +28,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const basePath = "/api/v1"
+
 var enableMail bool
 
 func init() {
@@ -48,14 +51,23 @@ func main() {
 
 	database.SeedDatabase(cfg, db, log)
 
-	router, mailer := initializeApp(cfg, db, log)
+	router, mailer, auditMiddleware := initializeApp(cfg, db, log)
 
 	if err := server.StartServer(router, mailer, &cfg.Server); err != nil {
 		log.Fatal("Failed to start server", zap.Error(err))
 	}
+
+	auditMiddleware.Close()
 }
 
-func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engine, email.MailerService) {
+func initializeApp(
+	cfg *config.Config,
+	db *sqlx.DB,
+	log *zap.Logger,
+) (
+	*gin.Engine,
+	email.MailerService,
+	*middleware.AuditMiddleware) {
 	mailer := email.NewMailer(log, &cfg.Email)
 	log.Info("Mailer initialized")
 
@@ -66,6 +78,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	tokenRepository := repository.NewTokenRepository(db)
 	productReviewsRepository := repo.NewProductReviewRepository(db, log)
 	sellerReviewsRepository := repo.NewSellerReviewRepository(db, log)
+	auditRepository := repository.NewAuditRepository(db)
 	log.Info("Repositories initialized")
 
 	passwordManager := security.NewArgon2idPasswordManager()
@@ -83,6 +96,7 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationService := notification.NewService(notificationRepository)
 	productReviewsService := reviews.NewProductReviewService(productReviewsRepository, log)
 	sellerReviewsService := reviews.NewSellerReviewService(sellerReviewsRepository, log)
+	auditService := audit.NewAuditService(auditRepository)
 	log.Info("Services initialized")
 
 	healthHandler := handler.NewHealthHandler()
@@ -92,7 +106,10 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 	productReviewsHandler := hdlr.NewProductReviewHandler(productReviewsService, log)
 	sellerReviewsHandler := hdlr.NewSellerReviewsHandler(sellerReviewsService, log)
+	auditHandler := handler.NewAuditHandler(auditService)
 	log.Info("Handlers initialized")
+
+	auditMiddleware := middleware.NewAuditMiddleware(&cfg.Audit, auditService, log)
 
 	router := handler.SetupRouter(
 		healthHandler,
@@ -104,9 +121,11 @@ func initializeApp(cfg *config.Config, db *sqlx.DB, log *zap.Logger) (*gin.Engin
 		sellerReviewsHandler,
 		userService,
 		tokenService,
-		"api/v1",
+		basePath,
 		log,
+		auditMiddleware,
+		auditHandler,
 	)
 
-	return router, mailer
+	return router, mailer, auditMiddleware
 }
