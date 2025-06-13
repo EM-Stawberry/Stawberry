@@ -526,7 +526,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/offers/user": {
+        "/offers": {
             "get": {
                 "consumes": [
                     "application/json"
@@ -563,6 +563,61 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "offer"
+                ],
+                "summary": "Create offer",
+                "parameters": [
+                    {
+                        "description": "Offer creation request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PostOfferReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PostOfferResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/apperror.Error"
                         }
@@ -918,6 +973,38 @@ const docTemplate = `{
             "properties": {
                 "new_status": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PostOfferReq": {
+            "type": "object",
+            "required": [
+                "currency",
+                "price",
+                "product_id",
+                "shop_id"
+            ],
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "shop_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PostOfferResp": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
                 }
             }
         },

@@ -97,6 +97,28 @@ definitions:
       new_status:
         type: string
     type: object
+  dto.PostOfferReq:
+    properties:
+      currency:
+        type: string
+      price:
+        minimum: 0
+        type: number
+      product_id:
+        type: integer
+      shop_id:
+        type: integer
+    required:
+    - currency
+    - price
+    - product_id
+    - shop_id
+    type: object
+  dto.PostOfferResp:
+    properties:
+      id:
+        type: integer
+    type: object
   dto.RefreshReq:
     properties:
       fingerprint:
@@ -532,6 +554,75 @@ paths:
       summary: Получить статус сервера
       tags:
       - health
+  /offers:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page (5-100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetUserOffersResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Get user's offers
+      tags:
+      - offer
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Offer creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PostOfferReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.PostOfferResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/apperror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apperror.Error'
+      summary: Create offer
+      tags:
+      - offer
   /offers/{offerID}:
     patch:
       consumes:
@@ -576,39 +667,6 @@ paths:
           schema:
             $ref: '#/definitions/apperror.Error'
       summary: Update offer status
-      tags:
-      - offer
-  /offers/user:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - default: 1
-        description: Page number for pagination
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: Number of items per page (5-100)
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetUserOffersResp'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/apperror.Error'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/apperror.Error'
-      summary: Get user's offers
       tags:
       - offer
   /products:
