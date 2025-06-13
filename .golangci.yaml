@@ -26,7 +26,12 @@ linters:
     gosec:
       excludes:
         - G115
-        
+  exclusions:
+    rules:
+      - path: "docs/"
+        linters:
+          - lll
+
 formatters:
   enable:
     - gofmt # checks if the code is formatted according to 'gofmt' command
