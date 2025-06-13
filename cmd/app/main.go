@@ -47,7 +47,7 @@ func main() {
 	db, closer := database.InitDB(&cfg.DB)
 	defer closer()
 
-	migrator.RunMigrationsWithZap(db, "../../migrations", log)
+	migrator.RunMigrationsWithZap(db, "migrations", log)
 
 	database.SeedDatabase(cfg, db, log)
 
