@@ -752,10 +752,4 @@ paths:
       summary: Получить продукт по его ID
       tags:
       - products
-securityDefinitions:
-  BearerAuth:
-    description: 'Bearer token for authentication. Format: "Bearer <token>"'
-    in: header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"
