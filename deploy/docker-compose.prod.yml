@@ -14,7 +14,7 @@ services:
       - TOKEN_SECRET=${TOKEN_SECRET}
       - TOKEN_ACCESS_DURATION=15m
       - TOKEN_REFRESH_DURATION=24h
-      - ENVIRONMENT=production
+      - ENVIRONMENT=prod
     depends_on:
       - db
     networks:
