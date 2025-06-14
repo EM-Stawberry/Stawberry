@@ -215,6 +215,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: Это API для управления сделками по продуктам.
+  title: Stawberry API
+  version: "1.0"
 paths:
   /audit/logs:
     get:
@@ -752,4 +755,10 @@ paths:
       summary: Добавление отзыва о продавце
       tags:
       - reviews
+securityDefinitions:
+  BearerAuth:
+    description: 'Bearer token for authentication. Format: "Bearer <token>"'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
