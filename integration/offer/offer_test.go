@@ -166,6 +166,9 @@ func (m *mockMailer) StatusUpdate(offerID uint, status string, userMail string) 
 func (m *mockMailer) OfferReceived(offerID uint, userMail string) {
 }
 
+func (m *mockMailer) SendGuestOfferNotification(email string, subject string, body string) {
+}
+
 func (m *mockMailer) Stop(ctx context.Context) {
 }
 
