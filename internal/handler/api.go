@@ -96,7 +96,7 @@ func SetupRouter(
 
 	// эндпойнты для гостевых заявок
 	{
-		public.POST("/guest/offers", guestOfferH.PostGuestOffer)
+		base.POST("/guest/offers", guestOfferH.PostGuestOffer)
 	}
 
 	// эндпойнты запросов на покупку
