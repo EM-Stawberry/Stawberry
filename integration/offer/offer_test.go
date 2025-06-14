@@ -170,7 +170,8 @@ func (m *mockMailer) Stop(ctx context.Context) {
 }
 
 func setupRouter(authMiddleware gin.HandlerFunc, method, path string, handlerFunc gin.HandlerFunc) *gin.Engine {
-	router := gin.Default()
+	router := gin.New()
+	gin.SetMode(gin.TestMode)
 	router.Use(middleware.Errors())
 	router.Use(authMiddleware)
 
