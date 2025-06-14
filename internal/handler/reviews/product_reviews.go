@@ -44,7 +44,7 @@ func NewProductReviewHandler(prs ProductReviewsService, l *zap.Logger) *ProductR
 // @Failure 400 {object} map[string]string "Некорректный ввод"
 // @Failure 401 {object} map[string]string "Неавторизованный доступ"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
-// @Router /api/products/{id}/reviews [post]
+// @Router /products/{id}/reviews [post]
 func (h *ProductReviewsHandler) AddReview(c *gin.Context) {
 	const op = "productReviewsHandler.AddReviews()"
 	log := h.logger.With(zap.String("op", op))
@@ -103,7 +103,7 @@ func (h *ProductReviewsHandler) AddReview(c *gin.Context) {
 // @Success 200 {array} entity.ProductReview "Список отзывов"
 // @Failure 400 {object} map[string]string "Некорректный ID продукта"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
-// @Router /api/products/{id}/reviews [get]
+// @Router /products/{id}/reviews [get]
 func (h *ProductReviewsHandler) GetReviews(c *gin.Context) {
 	const op = "productReviewsHandler.GetReviews()"
 	log := h.logger.With(zap.String("op", op))
