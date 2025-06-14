@@ -6,7 +6,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/EM-Stawberry/Stawberry/internal/handler/helpers"
 
